@@ -16,12 +16,19 @@ $is_production = (
     getenv('RAILWAY_ENVIRONMENT') !== false
 );
 
-// Set CORS headers — baca dari env var FRONTEND_URL
-// Development: http://localhost:5173
-// Production:  https://gas-website.netlify.app  (set di Railway)
-$allowed_origin = $is_production
-    ? (getenv('FRONTEND_URL') ?: 'https://gas-website.netlify.app')
-    : 'http://localhost:5173';
+// Set CORS headers dynamically based on Origin header to prevent CORS issues
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+$allowed_origins = [
+    'http://localhost:5173',
+    'https://gas-website.netlify.app',
+    'https://gaslearn.netlify.app'
+];
+
+if (in_array($origin, $allowed_origins)) {
+    $allowed_origin = $origin;
+} else {
+    $allowed_origin = getenv('FRONTEND_URL') ?: 'https://gaslearn.netlify.app';
+}
 header("Access-Control-Allow-Origin: $allowed_origin");
 header("Access-Control-Allow-Credentials: true");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
@@ -93,8 +100,12 @@ try {
             INDEX idx_student (student_id)
         ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     ");
+
+    // Ensure default teacher and evaluation row exist for eco_challenge_comments foreign key constraint
+    $pdo->exec("INSERT IGNORE INTO users (id, full_name, email, role) VALUES (9999, 'Sistem Guru', 'sistem.guru@gas.website', 'teacher')");
+    $pdo->exec("INSERT IGNORE INTO eco_challenge_evaluations (id, teacher_id, evaluation_text) VALUES (1, 9999, 'Evaluasi Kimia Hijau')");
 } catch (PDOException $e) {
-    error_log('Failed to auto-migrate eco_creation_video_comments: ' . $e->getMessage());
+    error_log('Failed to auto-migrate/seed database: ' . $e->getMessage());
 }
 
 // ── HELPER FUNCTIONS ─────────────────────────────────────────────────────────

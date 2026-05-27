@@ -50,9 +50,10 @@ export default function TeacherSubmissionsView() {
     setLoading(true);
     setError('');
     try {
+      const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
       const url = filterStatus === 'all' 
-        ? '/api/teacher/submissions.php' 
-        : `/api/teacher/submissions.php?status=${filterStatus}`;
+        ? `${API_BASE}/teacher/submissions.php` 
+        : `${API_BASE}/teacher/submissions.php?status=${filterStatus}`;
         
       const res = await fetch(url, {
         headers: { 'X-Requested-With': 'XMLHttpRequest' },
@@ -87,7 +88,8 @@ export default function TeacherSubmissionsView() {
 
     setSubmitLoading(true);
     try {
-      const res = await fetch('/api/teacher/grade-submission.php', {
+      const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
+      const res = await fetch(`${API_BASE}/teacher/grade-submission.php`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -53,7 +53,8 @@ export default function TeacherMeetingsView() {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('/api/teacher/meetings.php', {
+      const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
+      const res = await fetch(`${API_BASE}/teacher/meetings.php`, {
         headers: { 'X-Requested-With': 'XMLHttpRequest' },
         credentials: 'include'
       });
@@ -88,7 +89,8 @@ export default function TeacherMeetingsView() {
   // Change meeting status
   const handleStatusChange = async (meetingId: string, currentMeeting: Meeting, newStatus: 'completed' | 'ongoing' | 'scheduled') => {
     try {
-      const res = await fetch('/api/teacher/meetings.php', {
+      const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
+      const res = await fetch(`${API_BASE}/teacher/meetings.php`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -138,7 +140,8 @@ export default function TeacherMeetingsView() {
         });
       }, 100);
 
-      const res = await fetch('/api/teacher/upload-material.php', {
+      const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
+      const res = await fetch(`${API_BASE}/teacher/upload-material.php`, {
         method: 'POST',
         headers: {
           'X-Requested-With': 'XMLHttpRequest'
@@ -176,7 +179,8 @@ export default function TeacherMeetingsView() {
     }
     setFormLoading(true);
     try {
-      const res = await fetch('/api/teacher/meetings.php', {
+      const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
+      const res = await fetch(`${API_BASE}/teacher/meetings.php`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -219,7 +223,8 @@ export default function TeacherMeetingsView() {
     }
 
     try {
-      const res = await fetch('/api/teacher/meetings.php', {
+      const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
+      const res = await fetch(`${API_BASE}/teacher/meetings.php`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',

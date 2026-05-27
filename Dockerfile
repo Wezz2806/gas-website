@@ -15,5 +15,5 @@ COPY . /app/
 # Buat folder uploads
 RUN mkdir -p /app/uploads && chmod -R 755 /app/uploads
 
-# Jalankan PHP built-in server di port yang Railway tentukan
-CMD php -S 0.0.0.0:${PORT:-80} -t /app
+# Jalankan PHP built-in server di port yang Railway tentukan dengan limit upload 100MB
+CMD php -d upload_max_filesize=100M -d post_max_size=110M -d memory_limit=256M -S 0.0.0.0:${PORT:-80} -t /app

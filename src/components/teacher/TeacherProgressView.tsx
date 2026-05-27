@@ -44,7 +44,8 @@ export default function TeacherProgressView() {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('/api/teacher/student-progress.php', {
+      const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
+      const res = await fetch(`${API_BASE}/teacher/student-progress.php`, {
         headers: { 'X-Requested-With': 'XMLHttpRequest' },
         credentials: 'include'
       });

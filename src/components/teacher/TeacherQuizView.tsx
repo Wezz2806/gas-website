@@ -45,7 +45,8 @@ export default function TeacherQuizView() {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('/api/teacher/quiz.php', {
+      const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
+      const res = await fetch(`${API_BASE}/teacher/quiz.php`, {
         headers: { 'X-Requested-With': 'XMLHttpRequest' },
         credentials: 'include'
       });
@@ -110,7 +111,8 @@ export default function TeacherQuizView() {
     };
 
     try {
-      const url = '/api/teacher/quiz.php';
+      const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
+      const url = `${API_BASE}/teacher/quiz.php`;
       const method = editingId ? 'PUT' : 'POST';
       const res = await fetch(url, {
         method,
@@ -143,7 +145,8 @@ export default function TeacherQuizView() {
     }
 
     try {
-      const res = await fetch('/api/teacher/quiz.php', {
+      const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
+      const res = await fetch(`${API_BASE}/teacher/quiz.php`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',

@@ -57,7 +57,8 @@ export default function DashboardView({
     if (hasCheckedInToday) return;
 
     try {
-      const response = await fetch('/api/checkin.php', {
+      const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
+      const response = await fetch(`${API_BASE}/checkin.php`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
