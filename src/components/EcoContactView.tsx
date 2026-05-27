@@ -1,221 +1,172 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { 
   Phone, 
   Mail, 
-  MessageSquare, 
-  Send, 
   MapPin, 
   Clock, 
-  CheckCircle,
-  User,
-  BookOpen
+  GraduationCap,
+  MessageCircle,
 } from 'lucide-react';
 
 interface EcoContactViewProps {}
 
-const teacherInfo = {
-  name: 'Pak Ahmad Rifa\'i, S.Pd.',
-  subject: 'Guru Kimia & Koordinator GAS',
-  email: 'ahmad.rifai@sekolah.sch.id',
-  phone: '0812-3456-7890',
-  officeHours: 'Senin–Jumat, 08.00–15.00 WIB',
-  location: 'Ruang Guru Lt. 2, Lab Kimia',
-  avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDtRaF3N8yCBiYfLhuRpzfcdjfE7CHzcuQRfQpBFIbGIHz4ol-yq5s2ontlbkkO1PE3vyXwPXFrdVH0LVL-2_34uafPrXxR9ppQAK9-V23jX8lDmtIxfdoK5pddLNa9k2a-ZlqjSYnO2UNMgSEyWmQG9lBIAmF4N1drnsAinDqbVhmouTuNl6WVftABSp0KZuFPKDcGwbIKY7d5qgYMCw3hcqJfZNsRK1tBuzVr5wBlzQxv86YHEWrcGZ92Ne3vtu-PqL23edAmHUkR',
-};
-
 export default function EcoContactView({}: EcoContactViewProps) {
-  const [name, setName] = useState('');
-  const [subject, setSubject] = useState('');
-  const [message, setMessage] = useState('');
-  const [sent, setSent] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const guruInfo = {
+    name: 'Azza Nuriah Widowati, M.Pd.',
+    role: 'Guru & Peneliti',
+    program: 'S3 Pendidikan Sains',
+    instansi: 'Universitas Negeri Surabaya',
+    email: 'azzanuriahw@gmail.com',
+    phone: '081554319722',
+    officeHours: '08.00 - 15.00 WIB',
+    avatar: '/azza.jpg'
+  };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim() || !subject.trim() || !message.trim()) return;
-    setLoading(true);
-    // Simulate sending
-    await new Promise(r => setTimeout(r, 1200));
-    setSent(true);
-    setLoading(false);
+  const promotorInfo = {
+    name: 'Prof. Dr. Endang Susantini, M.Pd.',
+    role: 'Promotor',
+    instansi: 'Universitas Negeri Surabaya',
+    avatar: '/prof endang.jpg'
+  };
+
+  const coPromotorInfo = {
+    name: 'Prof. Dr. Utiya Azizah, M.Pd.',
+    role: 'Co-Promotor',
+    instansi: 'Universitas Negeri Surabaya',
+    avatar: '/prof utiya.jpg'
   };
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-3 duration-300">
-
       {/* Header */}
       <header className="text-left">
         <h2 className="font-display font-black text-2xl text-[#154212] mb-2">
-          EcoContact — Hubungi Guru
+          EcoContact — Informasi Kontak & Tim Pengembang
         </h2>
         <p className="font-sans text-sm text-[#42493e] max-w-2xl leading-relaxed">
-          Ada pertanyaan tentang materi, LKM, atau proyek GAS? Kirim pesan langsung ke guru pengajar atau hubungi melalui kontak yang tersedia.
+          Hubungi guru pengajar untuk konsultasi LKM dan proyek GAS, serta kenali tim promotor akademik di balik penelitian platform ini.
         </p>
       </header>
 
-      <div className="grid grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 text-left">
+        {/* Left: Guru (Main Contact) */}
+        <div className="lg:col-span-7 space-y-6">
+          <div className="bg-white/95 rounded-3xl p-6 border border-gray-150 shadow-sm relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-50 rounded-full -mr-8 -mt-8 -z-10 opacity-50 blur-lg"></div>
+            
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 mb-6 pb-6 border-b border-gray-100">
+              <img
+                src={guruInfo.avatar}
+                alt={guruInfo.name}
+                referrerPolicy="no-referrer"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=400&q=80';
+                }}
+                className="w-24 h-24 sm:w-32 sm:h-32 rounded-2xl object-cover border-2 border-emerald-500 shadow-md shrink-0"
+              />
+              <div className="text-center sm:text-left space-y-2">
+                <span className="inline-block px-3 py-1 bg-emerald-100 text-emerald-950 text-[10px] font-bold uppercase tracking-wider rounded-full">
+                  {guruInfo.role}
+                </span>
+                <h3 className="font-display font-black text-lg sm:text-xl text-[#154212] leading-tight">
+                  {guruInfo.name}
+                </h3>
+                <p className="text-xs text-gray-500 font-medium flex items-center justify-center sm:justify-start gap-1.5">
+                  <GraduationCap className="w-4 h-4 text-emerald-700 shrink-0" />
+                  {guruInfo.program}
+                </p>
+                <p className="text-xs text-gray-500 font-medium flex items-center justify-center sm:justify-start gap-1.5">
+                  <MapPin className="w-4 h-4 text-emerald-700 shrink-0" />
+                  {guruInfo.instansi}
+                </p>
+              </div>
+            </div>
 
-        {/* Left: Contact Form */}
-        <div className="col-span-12 lg:col-span-7 space-y-6">
-          <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm">
-            <h3 className="font-display font-bold text-base text-[#154212] mb-5 flex items-center gap-2">
-              <MessageSquare className="w-5 h-5 text-[#006e1c]" />
-              Kirim Pesan ke Guru
-            </h3>
-
-            {sent ? (
-              <div className="py-10 flex flex-col items-center justify-center text-center space-y-3 animate-in zoom-in-95 duration-300">
-                <div className="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center">
-                  <CheckCircle className="w-9 h-9 text-[#006e1c]" />
+            <div className="space-y-4">
+              <h4 className="font-display font-bold text-xs text-gray-400 uppercase tracking-widest mb-3">Detail Kontak & Konsultasi</h4>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 space-y-1">
+                  <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block">Email</span>
+                  <a href={`mailto:${guruInfo.email}`} className="text-xs text-[#154212] font-semibold hover:underline block break-all">
+                    {guruInfo.email}
+                  </a>
                 </div>
-                <div>
-                  <p className="font-bold text-base text-[#154212]">Pesan Terkirim!</p>
-                  <p className="text-xs text-gray-500 mt-1 max-w-xs">
-                    Guru akan merespons pesan Anda dalam waktu 1×24 jam pada hari kerja.
+
+                <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 space-y-1">
+                  <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider block">Jam Konsultasi</span>
+                  <p className="text-xs text-[#154212] font-semibold flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-emerald-700" />
+                    {guruInfo.officeHours}
                   </p>
                 </div>
-                <button
-                  onClick={() => { setSent(false); setName(''); setSubject(''); setMessage(''); }}
-                  className="text-xs font-bold text-[#154212] hover:underline cursor-pointer"
-                >
-                  Kirim pesan lain
-                </button>
               </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-bold text-[#42493e] uppercase tracking-wider mb-1">Nama Lengkap Anda</label>
-                  <div className="relative">
-                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
-                      <User className="w-4 h-4" />
-                    </span>
-                    <input
-                      type="text"
-                      required
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="Masukkan nama Anda"
-                      className="w-full bg-[#f3f3f4] border border-[#c2c9bb] focus:border-[#154212] focus:bg-white text-xs text-[#1a1c1c] rounded-xl pl-10 pr-4 py-2.5 focus:outline-none transition-all"
-                    />
-                  </div>
-                </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-[#42493e] uppercase tracking-wider mb-1">Perihal / Subjek</label>
-                  <div className="relative">
-                    <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
-                      <BookOpen className="w-4 h-4" />
-                    </span>
-                    <input
-                      type="text"
-                      required
-                      value={subject}
-                      onChange={(e) => setSubject(e.target.value)}
-                      placeholder="Misal: Pertanyaan tentang LKM Meeting 2"
-                      className="w-full bg-[#f3f3f4] border border-[#c2c9bb] focus:border-[#154212] focus:bg-white text-xs text-[#1a1c1c] rounded-xl pl-10 pr-4 py-2.5 focus:outline-none transition-all"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-[#42493e] uppercase tracking-wider mb-1">Isi Pesan</label>
-                  <textarea
-                    required
-                    rows={5}
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    placeholder="Tulis pertanyaan atau pesan Anda di sini..."
-                    className="w-full bg-[#f3f3f4] border border-[#c2c9bb] focus:border-[#154212] focus:bg-white text-xs text-[#1a1c1c] rounded-xl px-4 py-2.5 focus:outline-none transition-all resize-none"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full flex items-center justify-center gap-2 py-3 bg-[#154212] hover:bg-[#276e23] disabled:bg-gray-300 disabled:cursor-not-allowed text-white text-xs font-bold rounded-xl shadow-lg transition-all cursor-pointer"
+              <div className="pt-2">
+                <a 
+                  href={`https://wa.me/62${guruInfo.phone.substring(1)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full flex items-center justify-center gap-2 py-3.5 bg-[#006e1c] hover:bg-[#005215] text-white text-xs font-bold rounded-2xl shadow-md transition-all cursor-pointer transform hover:-translate-y-0.5"
                 >
-                  {loading ? (
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                  ) : (
-                    <>
-                      <Send className="w-4 h-4" />
-                      <span>Kirim Pesan</span>
-                    </>
-                  )}
-                </button>
-              </form>
-            )}
+                  <MessageCircle className="w-4.5 h-4.5 fill-current" />
+                  <span>Hubungi via WhatsApp ({guruInfo.phone})</span>
+                </a>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Right: Teacher Info */}
-        <aside className="col-span-12 lg:col-span-5 space-y-6">
-          {/* Teacher profile card */}
-          <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm space-y-4">
-            <div className="flex items-center gap-4">
-              <img
-                src={teacherInfo.avatar}
-                alt={teacherInfo.name}
-                referrerPolicy="no-referrer"
-                className="w-16 h-16 rounded-2xl object-cover border-2 border-[#91f78e]"
-              />
-              <div>
-                <h4 className="font-display font-bold text-sm text-[#154212]">{teacherInfo.name}</h4>
-                <p className="text-xs text-gray-500 mt-0.5">{teacherInfo.subject}</p>
-              </div>
-            </div>
-
-            <div className="space-y-3 border-t border-gray-100 pt-4">
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 bg-emerald-50 rounded-xl flex items-center justify-center shrink-0">
-                  <Mail className="w-4 h-4 text-[#006e1c]" />
-                </div>
-                <div>
-                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Email</p>
-                  <a href={`mailto:${teacherInfo.email}`} className="text-xs text-[#154212] font-semibold hover:underline">
-                    {teacherInfo.email}
-                  </a>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 bg-emerald-50 rounded-xl flex items-center justify-center shrink-0">
-                  <Phone className="w-4 h-4 text-[#006e1c]" />
-                </div>
-                <div>
-                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">WhatsApp / Telepon</p>
-                  <a href={`tel:${teacherInfo.phone.replace(/-/g, '')}`} className="text-xs text-[#154212] font-semibold hover:underline">
-                    {teacherInfo.phone}
-                  </a>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 bg-emerald-50 rounded-xl flex items-center justify-center shrink-0">
-                  <Clock className="w-4 h-4 text-[#006e1c]" />
-                </div>
-                <div>
-                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Jam Konsultasi</p>
-                  <p className="text-xs text-[#154212] font-semibold">{teacherInfo.officeHours}</p>
-                </div>
-              </div>
-
-              <div className="flex items-start gap-3">
-                <div className="w-8 h-8 bg-emerald-50 rounded-xl flex items-center justify-center shrink-0">
-                  <MapPin className="w-4 h-4 text-[#006e1c]" />
-                </div>
-                <div>
-                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Lokasi</p>
-                  <p className="text-xs text-[#154212] font-semibold">{teacherInfo.location}</p>
-                </div>
-              </div>
+        {/* Right: Promotor & Co-Promotor */}
+        <aside className="lg:col-span-5 space-y-6">
+          {/* Promotor Card */}
+          <div className="bg-white/95 rounded-3xl p-5 border border-gray-100 shadow-sm flex items-center gap-4 relative overflow-hidden">
+            <img
+              src={promotorInfo.avatar}
+              alt={promotorInfo.name}
+              referrerPolicy="no-referrer"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&w=400&q=80';
+              }}
+              className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover border-2 border-amber-400 shadow-sm shrink-0"
+            />
+            <div className="space-y-1">
+              <span className="inline-block px-2.5 py-0.5 bg-amber-50 text-amber-800 text-[9px] font-bold uppercase tracking-wider rounded-full">
+                {promotorInfo.role}
+              </span>
+              <h4 className="font-display font-bold text-xs sm:text-sm text-[#154212] leading-tight">
+                {promotorInfo.name}
+              </h4>
+              <p className="text-[10px] text-gray-500 font-medium">{promotorInfo.instansi}</p>
             </div>
           </div>
 
-          {/* Note */}
+          {/* Co-Promotor Card */}
+          <div className="bg-white/95 rounded-3xl p-5 border border-gray-100 shadow-sm flex items-center gap-4 relative overflow-hidden">
+            <img
+              src={coPromotorInfo.avatar}
+              alt={coPromotorInfo.name}
+              referrerPolicy="no-referrer"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1580894732444-8fecef2271ff?auto=format&fit=crop&w=400&q=80';
+              }}
+              className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover border-2 border-emerald-400 shadow-sm shrink-0"
+            />
+            <div className="space-y-1">
+              <span className="inline-block px-2.5 py-0.5 bg-emerald-50 text-emerald-800 text-[9px] font-bold uppercase tracking-wider rounded-full">
+                {coPromotorInfo.role}
+              </span>
+              <h4 className="font-display font-bold text-xs sm:text-sm text-[#154212] leading-tight">
+                {coPromotorInfo.name}
+              </h4>
+              <p className="text-[10px] text-gray-500 font-medium">{coPromotorInfo.instansi}</p>
+            </div>
+          </div>
+          
+          {/* Note/Guidance */}
           <div className="bg-[#F5F5DC] border border-[#c2c9bb]/50 rounded-2xl p-4 text-left">
-            <p className="text-xs text-[#42493e] leading-relaxed font-medium">
-              💡 <strong>Tips:</strong> Untuk respons lebih cepat, sertakan nomor LKM dan nama proyek yang ingin ditanyakan dalam pesan Anda.
+            <p className="text-[11px] text-[#42493e] leading-relaxed font-medium">
+              💡 <strong>Informasi Penelitian:</strong> Platform GAS (Green Action Students) ini dikembangkan sebagai bagian dari penelitian disertasi doktoral untuk mendukung implementasi pembelajaran kimia hijau dan ekoenzim secara kolaboratif.
             </p>
           </div>
         </aside>
