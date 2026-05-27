@@ -1,2 +1,0 @@
-# Paksa Railway pakai PHP provider, bukan Node.js
-providers = ["php"]
