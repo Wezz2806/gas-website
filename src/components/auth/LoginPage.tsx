@@ -75,16 +75,7 @@ export default function LoginPage({ onNavigate, onLogin }: LoginPageProps) {
 
         {/* Input Password */}
         <div className="space-y-1">
-          <div className="flex justify-between items-center">
-            <label className="block text-[10px] font-bold text-[#42493e] uppercase tracking-wider">Kata Sandi</label>
-            <button 
-              type="button"
-              onClick={() => onNavigate('forgot-password')}
-              className="text-[10px] font-bold text-[#154212] hover:text-[#276e23] hover:underline transition-all"
-            >
-              Lupa Sandi?
-            </button>
-          </div>
+          <label className="block text-[10px] font-bold text-[#42493e] uppercase tracking-wider">Kata Sandi</label>
           <div className="relative">
             <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-gray-400">
               <Lock className="w-4 h-4" />
@@ -103,6 +94,15 @@ export default function LoginPage({ onNavigate, onLogin }: LoginPageProps) {
               className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 cursor-pointer"
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+          </div>
+          <div className="flex justify-end pt-1">
+            <button 
+              type="button"
+              onClick={() => onNavigate('forgot-password')}
+              className="text-[10px] font-bold text-[#154212] hover:text-[#276e23] hover:underline transition-all cursor-pointer"
+            >
+              Lupa Sandi?
             </button>
           </div>
         </div>

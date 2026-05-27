@@ -56,6 +56,8 @@ export default function EcoCreationView({ searchQuery }: EcoCreationViewProps) {
   const [editError, setEditError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editProgress, setEditProgress] = useState(-1);
+  const [deletingVideoId, setDeletingVideoId] = useState<number | null>(null);
+  const [isDeletingVideo, setIsDeletingVideo] = useState(false);
 
   const uploadFileInputRef = useRef<HTMLInputElement>(null);
   const editFileInputRef = useRef<HTMLInputElement>(null);
@@ -378,20 +380,25 @@ export default function EcoCreationView({ searchQuery }: EcoCreationViewProps) {
     }
   };
 
-  const handleDeleteClick = async (e: React.MouseEvent, videoId: number) => {
+  const handleDeleteClick = (e: React.MouseEvent, videoId: number) => {
     e.stopPropagation();
-    if (!window.confirm('Apakah Anda yakin ingin menghapus video ini secara permanen dari galeri EcoCreation?')) {
-      return;
-    }
+    setDeletingVideoId(videoId);
+  };
 
+  const handleConfirmDelete = async () => {
+    if (!deletingVideoId) return;
     try {
-      await videoService.deleteVideo(videoId);
-      setVideos(prev => prev.filter(v => v.id !== videoId));
-      if (editingVideo && editingVideo.id === videoId) {
+      setIsDeletingVideo(true);
+      await videoService.deleteVideo(deletingVideoId);
+      setVideos(prev => prev.filter(v => v.id !== deletingVideoId));
+      if (editingVideo && editingVideo.id === deletingVideoId) {
         closeEditModal();
       }
+      setDeletingVideoId(null);
     } catch (err: any) {
       alert(err.message || 'Gagal menghapus video.');
+    } finally {
+      setIsDeletingVideo(false);
     }
   };
 
@@ -1126,6 +1133,50 @@ export default function EcoCreationView({ searchQuery }: EcoCreationViewProps) {
                   </div>
                 )}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Delete Confirmation Modal */}
+      {deletingVideoId !== null && (
+        <div className="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl animate-in zoom-in-95 duration-200 text-center border border-gray-100">
+            <div className="w-12 h-12 rounded-full bg-red-50 text-red-600 flex items-center justify-center mx-auto mb-4 border border-red-100">
+              <Trash2 className="w-5 h-5 animate-pulse" />
+            </div>
+            
+            <h3 className="font-display font-bold text-base text-gray-900 mb-2">
+              Hapus Video?
+            </h3>
+            <p className="text-xs text-gray-500 leading-relaxed mb-6">
+              Apakah Anda yakin ingin menghapus video ini secara permanen dari galeri EcoCreation? Tindakan ini tidak dapat dibatalkan.
+            </p>
+
+            <div className="flex gap-2">
+              <button 
+                type="button" 
+                onClick={() => setDeletingVideoId(null)}
+                disabled={isDeletingVideo}
+                className="flex-1 px-4 py-2.5 text-xs font-bold text-gray-500 hover:bg-gray-100 rounded-xl cursor-pointer transition-colors disabled:opacity-50"
+              >
+                Batalkan
+              </button>
+              <button 
+                type="button" 
+                onClick={handleConfirmDelete}
+                disabled={isDeletingVideo}
+                className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-xl cursor-pointer shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
+              >
+                {isDeletingVideo ? (
+                  <>
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    <span>Menghapus...</span>
+                  </>
+                ) : (
+                  <span>Ya, Hapus</span>
+                )}
+              </button>
             </div>
           </div>
         </div>
