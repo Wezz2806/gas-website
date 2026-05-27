@@ -1,0 +1,9 @@
+# nixpacks.toml
+# Paksa Railway untuk pakai PHP, bukan Node.js
+# Meskipun ada package.json, kita mau jalankan PHP Apache
+
+[phases.setup]
+nixPkgs = ["php82", "php82Extensions.pdo", "php82Extensions.pdo_mysql", "php82Extensions.mbstring", "php82Extensions.fileinfo", "php82Extensions.gd"]
+
+[start]
+cmd = "php -S 0.0.0.0:$PORT -t ."
