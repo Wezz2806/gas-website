@@ -228,7 +228,18 @@ export default function EcoLabView({ setActiveTab, onSelectBook }: EcoLabViewPro
                 <div className="grid grid-cols-2 gap-2">
                   <button 
                     onClick={() => { 
-                      alert(`Mengunduh Panduan LKM Meeting ${meeting.number}...`);
+                      const lkmLinks: Record<number, string> = {
+                        1: 'https://drive.google.com/file/d/1Z-Chwff8-sdNg95u9GIxV4yNhwtTk7QK/view?usp=drive_link',
+                        2: 'https://drive.google.com/file/d/105lJBYZ3gc1-iO_Yl3oOFs3cv0ruT4dW/view?usp=drive_link',
+                        3: 'https://drive.google.com/file/d/1YT0AGogkVCVARHqsKuC3yv4D0SFopHWP/view?usp=drive_link',
+                        4: 'https://drive.google.com/file/d/1yYxeqD2IClegY1Tj0HvSKclxVLe-WQgk/view?usp=drive_link',
+                      };
+                      const link = lkmLinks[meeting.number];
+                      if (link) {
+                        window.open(link, '_blank');
+                      } else {
+                        alert(`Mengunduh Panduan LKM Meeting ${meeting.number}...`);
+                      }
                     }}
                     className="flex flex-col items-center justify-center p-2 rounded-xl border border-gray-200 hover:border-emerald-700 text-gray-600 hover:text-emerald-800 text-[9px] font-bold uppercase transition-all cursor-pointer"
                   >
