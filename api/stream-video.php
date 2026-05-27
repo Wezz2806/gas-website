@@ -93,7 +93,7 @@ header("Content-Length: $length");
 $buffer_size = 8192;
 $bytes_sent = 0;
 
-while (!feof($fp) && $bytes_sent < $length && (connection_status() == 0)) {
+while (!feof($fp) && $bytes_sent < $length) {
     $to_read = min($buffer_size, $length - $bytes_sent);
     $buffer = fread($fp, $to_read);
     echo $buffer;

@@ -507,7 +507,7 @@ export default function EcoCreationView({ searchQuery }: EcoCreationViewProps) {
       ) : filteredVideos.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredVideos.map((video) => {
-            const isOwner = user && video.student_id === user.id;
+            const isOwner = user && Number(video.student_id) === Number(user.id);
 
             return (
               <div 
@@ -1046,7 +1046,7 @@ export default function EcoCreationView({ searchQuery }: EcoCreationViewProps) {
                   </div>
                 ) : videoComments.length > 0 ? (
                   videoComments.map((c) => {
-                    const isOwner = user && c.student_id === user.id;
+                    const isOwner = user && Number(c.student_id) === Number(user.id);
                     const isEditingThis = editingCommentId === c.id;
 
                     return (

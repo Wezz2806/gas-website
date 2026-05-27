@@ -248,7 +248,7 @@ export default function EcoChallengeView({}: EcoChallengeViewProps) {
                 </div>
               ) : comments.length > 0 ? (
                 comments.map((c) => {
-                  const isOwner = user && c.student_id === user.id;
+                  const isOwner = user && Number(c.student_id) === Number(user.id);
                   const isEditingThis = editingCommentId === c.id;
 
                   return (
