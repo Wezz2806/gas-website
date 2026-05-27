@@ -13,7 +13,9 @@ error_reporting(E_ALL);
 // Detect environment — Railway otomatis set RAILWAY_ENVIRONMENT=production
 $is_production = (
     getenv('ENVIRONMENT') === 'production' ||
-    getenv('RAILWAY_ENVIRONMENT') !== false
+    getenv('RAILWAY_ENVIRONMENT') !== false ||
+    (isset($_SERVER['HTTP_HOST']) && strpos($_SERVER['HTTP_HOST'], 'localhost') === false && strpos($_SERVER['HTTP_HOST'], '127.0.0.1') === false) ||
+    (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
 );
 
 // Set CORS headers dynamically based on Origin header to prevent CORS issues
@@ -45,7 +47,6 @@ if (session_status() === PHP_SESSION_NONE) {
     session_set_cookie_params([
         'lifetime' => 86400 * 7,   // 7 hari
         'path'     => '/',
-        'domain'   => '',
         'secure'   => $is_production, // HTTPS-only di production
         'httponly' => true,
         // PENTING: 'None' wajib untuk cross-origin (Netlify ↔ Railway)
