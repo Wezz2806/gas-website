@@ -35,6 +35,7 @@ export default function Header({
 }: HeaderProps) {
   const { user, logout, updateUserProfile } = useAuth();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   // Edit Profile States
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
@@ -227,16 +228,14 @@ export default function Header({
                 </div>
                 
                 <button 
-                  onClick={async () => {
+                  onClick={() => {
                     setShowProfileMenu(false);
-                    if (confirm('Apakah Anda yakin ingin keluar?')) {
-                      await logout();
-                    }
+                    setShowLogoutConfirm(true);
                   }}
                   className="w-full px-3 py-2 flex items-center gap-2.5 text-xs text-red-600 rounded-xl hover:bg-red-50 font-bold cursor-pointer transition-colors"
                 >
                   <LogOut className="w-4 h-4 text-red-500" />
-                  <span>Keluar Sesi</span>
+                  <span>Logout</span>
                 </button>
               </div>
             </div>
@@ -391,6 +390,44 @@ export default function Header({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Logout Confirmation Modal */}
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl animate-in zoom-in-95 duration-200 text-center border border-gray-100">
+            <div className="w-12 h-12 rounded-full bg-red-50 text-red-600 flex items-center justify-center mx-auto mb-4 border border-red-100">
+              <LogOut className="w-5 h-5 animate-pulse" />
+            </div>
+            
+            <h3 className="font-display font-bold text-base text-gray-900 mb-2">
+              Konfirmasi Logout
+            </h3>
+            <p className="text-xs text-gray-500 leading-relaxed mb-6">
+              Apakah Anda yakin ingin keluar dari akun Anda? Sesi Anda saat ini akan diakhiri.
+            </p>
+
+            <div className="flex gap-2">
+              <button 
+                type="button" 
+                onClick={() => setShowLogoutConfirm(false)}
+                className="flex-1 px-4 py-2.5 text-xs font-bold text-gray-500 hover:bg-gray-100 rounded-xl cursor-pointer transition-colors"
+              >
+                Kembali
+              </button>
+              <button 
+                type="button" 
+                onClick={async () => {
+                  setShowLogoutConfirm(false);
+                  await logout();
+                }}
+                className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-xl cursor-pointer shadow-sm hover:shadow-md transition-all"
+              >
+                Logout
+              </button>
+            </div>
           </div>
         </div>
       )}

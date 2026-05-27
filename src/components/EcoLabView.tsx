@@ -49,6 +49,8 @@ export default function EcoLabView({ setActiveTab, onSelectBook }: EcoLabViewPro
   const [dragActive, setDragActive] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(-1);
   const [uploadedFile, setUploadedFile] = useState<string | null>(null);
+  const [deletingMeetingId, setDeletingMeetingId] = useState<string | null>(null);
+  const [isDeletingDocument, setIsDeletingDocument] = useState(false);
 
   const getMeetingIcon = (iconName: string) => {
     switch (iconName) {
@@ -116,18 +118,25 @@ export default function EcoLabView({ setActiveTab, onSelectBook }: EcoLabViewPro
     }
   };
 
-  const handleRemoveFile = async (meetingId: string) => {
-    if (confirm('Apakah Anda yakin ingin menghapus/mengubah berkas LKM yang diunggah?')) {
-      try {
-        await submissionService.deleteSubmission(meetingId);
-        setUploadedFiles(prev => {
-          const copy = { ...prev };
-          delete copy[meetingId];
-          return copy;
-        });
-      } catch (err: any) {
-        alert(err.message || 'Gagal menghapus berkas LKM.');
-      }
+  const handleRemoveFile = (meetingId: string) => {
+    setDeletingMeetingId(meetingId);
+  };
+
+  const handleConfirmDeleteDocument = async () => {
+    if (!deletingMeetingId) return;
+    try {
+      setIsDeletingDocument(true);
+      await submissionService.deleteSubmission(deletingMeetingId);
+      setUploadedFiles(prev => {
+        const copy = { ...prev };
+        delete copy[deletingMeetingId];
+        return copy;
+      });
+      setDeletingMeetingId(null);
+    } catch (err: any) {
+      alert(err.message || 'Gagal menghapus berkas LKM.');
+    } finally {
+      setIsDeletingDocument(false);
     }
   };
 
@@ -339,6 +348,48 @@ export default function EcoLabView({ setActiveTab, onSelectBook }: EcoLabViewPro
                   {uploadProgress === 100 ? 'Selesai' : 'Batal'}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      {/* Custom Delete Document Confirmation Modal */}
+      {deletingMeetingId !== null && (
+        <div className="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-300">
+          <div className="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl animate-in zoom-in-95 duration-200 text-center border border-gray-100">
+            <div className="w-12 h-12 rounded-full bg-red-50 text-red-600 flex items-center justify-center mx-auto mb-4 border border-red-100">
+              <X className="w-5 h-5 animate-pulse" />
+            </div>
+            
+            <h3 className="font-display font-bold text-base text-gray-900 mb-2">
+              Hapus Berkas LKM?
+            </h3>
+            <p className="text-xs text-gray-500 leading-relaxed mb-6">
+              Apakah Anda yakin ingin menghapus berkas LKM yang telah diunggah? Tindakan ini tidak dapat dibatalkan.
+            </p>
+
+            <div className="flex gap-2">
+              <button 
+                type="button" 
+                onClick={() => setDeletingMeetingId(null)}
+                disabled={isDeletingDocument}
+                className="flex-1 px-4 py-2.5 text-xs font-bold text-gray-500 hover:bg-gray-100 rounded-xl cursor-pointer transition-colors disabled:opacity-50"
+              >
+                Batalkan
+              </button>
+              <button 
+                type="button" 
+                onClick={handleConfirmDeleteDocument}
+                disabled={isDeletingDocument}
+                className="flex-1 px-4 py-2.5 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-xl cursor-pointer shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-1.5 disabled:opacity-50"
+              >
+                {isDeletingDocument ? (
+                  <>
+                    <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                    <span>Menghapus...</span>
+                  </>
+                ) : (
+                  <span>Hapus</span>
+                )}
+              </button>
             </div>
           </div>
         </div>

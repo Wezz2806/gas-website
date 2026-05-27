@@ -58,6 +58,8 @@ export default function EcoCreationView({ searchQuery }: EcoCreationViewProps) {
   const [editProgress, setEditProgress] = useState(-1);
   const [deletingVideoId, setDeletingVideoId] = useState<number | null>(null);
   const [isDeletingVideo, setIsDeletingVideo] = useState(false);
+  const [isDraggingOver, setIsDraggingOver] = useState(false);
+  const [isEditDraggingOver, setIsEditDraggingOver] = useState(false);
 
   const uploadFileInputRef = useRef<HTMLInputElement>(null);
   const editFileInputRef = useRef<HTMLInputElement>(null);
@@ -212,51 +214,57 @@ export default function EcoCreationView({ searchQuery }: EcoCreationViewProps) {
     videoEl.src = URL.createObjectURL(file);
   };
 
+  const handleFileSelection = (file: File) => {
+    if (!file.type.startsWith('video/')) {
+      setUploadError('File harus berupa video (MP4, MOV, dll.)');
+      setSelectedFile(null);
+      return;
+    }
+    if (file.size > 100 * 1024 * 1024) {
+      setUploadError('Ukuran file maksimal adalah 100MB.');
+      setSelectedFile(null);
+      return;
+    }
+
+    setUploadDuration('Calculating...');
+    calculateDuration(file, (durStr) => {
+      setUploadDuration(durStr);
+    });
+
+    setSelectedFile(file);
+    setUploadError(null);
+  };
+
   const handleUploadFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      if (!file.type.startsWith('video/')) {
-        setUploadError('File harus berupa video (MP4, MOV, dll.)');
-        setSelectedFile(null);
-        return;
-      }
-      if (file.size > 100 * 1024 * 1024) {
-        setUploadError('Ukuran file maksimal adalah 100MB.');
-        setSelectedFile(null);
-        return;
-      }
-
-      setUploadDuration('Calculating...');
-      calculateDuration(file, (durStr) => {
-        setUploadDuration(durStr);
-      });
-
-      setSelectedFile(file);
-      setUploadError(null);
+      handleFileSelection(e.target.files[0]);
     }
+  };
+
+  const handleEditFileSelection = (file: File) => {
+    if (!file.type.startsWith('video/')) {
+      setEditError('File harus berupa video (MP4, MOV, dll.)');
+      setNewFileToUpload(null);
+      return;
+    }
+    if (file.size > 100 * 1024 * 1024) {
+      setEditError('Ukuran file maksimal adalah 100MB.');
+      setNewFileToUpload(null);
+      return;
+    }
+
+    setEditDuration('Calculating...');
+    calculateDuration(file, (durStr) => {
+      setEditDuration(durStr);
+    });
+
+    setNewFileToUpload(file);
+    setEditError(null);
   };
 
   const handleEditFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      if (!file.type.startsWith('video/')) {
-        setEditError('File harus berupa video (MP4, MOV, dll.)');
-        setNewFileToUpload(null);
-        return;
-      }
-      if (file.size > 100 * 1024 * 1024) {
-        setEditError('Ukuran file maksimal adalah 100MB.');
-        setNewFileToUpload(null);
-        return;
-      }
-
-      setEditDuration('Calculating...');
-      calculateDuration(file, (durStr) => {
-        setEditDuration(durStr);
-      });
-
-      setNewFileToUpload(file);
-      setEditError(null);
+      handleEditFileSelection(e.target.files[0]);
     }
   };
 
@@ -747,10 +755,28 @@ export default function EcoCreationView({ searchQuery }: EcoCreationViewProps) {
               <div>
                 <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">File Video</label>
                 {uploadProgress === -1 ? (
-                  <label className="border-2 border-dashed border-gray-200 hover:border-[#154212] p-6 text-center rounded-2xl cursor-pointer block transition-colors bg-gray-50">
-                    <FileVideo className="w-8 h-8 text-gray-300 mx-auto mb-2" />
+                  <label 
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setIsDraggingOver(true);
+                    }}
+                    onDragLeave={() => setIsDraggingOver(false)}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setIsDraggingOver(false);
+                      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                        handleFileSelection(e.dataTransfer.files[0]);
+                      }
+                    }}
+                    className={`border-2 border-dashed p-6 text-center rounded-2xl cursor-pointer block transition-colors ${
+                      isDraggingOver 
+                        ? 'border-[#154212] bg-emerald-50/50' 
+                        : 'border-gray-200 hover:border-[#154212] bg-gray-50'
+                    }`}
+                  >
+                    <FileVideo className={`w-8 h-8 mx-auto mb-2 transition-colors ${isDraggingOver ? 'text-[#154212]' : 'text-gray-300'}`} />
                     <span className="text-xs text-gray-600 font-bold block truncate max-w-full px-2">
-                      {selectedFile ? selectedFile.name : 'Pilih file video'}
+                      {selectedFile ? selectedFile.name : (isDraggingOver ? 'Drop file di sini!' : 'Pilih atau seret file video ke sini')}
                     </span>
                     {selectedFile && uploadDuration && (
                       <span className="text-[10px] text-[#006e1c] font-bold block mt-1">
@@ -884,10 +910,28 @@ export default function EcoCreationView({ searchQuery }: EcoCreationViewProps) {
                   // File is deleted, allow uploading a new one while staying in edit view
                   <div>
                     {editProgress === -1 ? (
-                      <label className="border-2 border-dashed border-gray-200 hover:border-[#154212] p-5 text-center rounded-2xl cursor-pointer block transition-colors bg-amber-50/50">
-                        <FileVideo className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-                        <span className="text-xs text-[#006e1c] font-bold block">
-                          {newFileToUpload ? newFileToUpload.name : 'Pilih file video baru'}
+                      <label 
+                        onDragOver={(e) => {
+                          e.preventDefault();
+                          setIsEditDraggingOver(true);
+                        }}
+                        onDragLeave={() => setIsEditDraggingOver(false)}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          setIsEditDraggingOver(false);
+                          if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                            handleEditFileSelection(e.dataTransfer.files[0]);
+                          }
+                        }}
+                        className={`border-2 border-dashed p-5 text-center rounded-2xl cursor-pointer block transition-colors ${
+                          isEditDraggingOver 
+                            ? 'border-[#154212] bg-emerald-50/50' 
+                            : 'border-gray-200 hover:border-[#154212] bg-amber-50/50'
+                        }`}
+                      >
+                        <FileVideo className={`w-8 h-8 mx-auto mb-2 transition-colors ${isEditDraggingOver ? 'text-[#154212]' : 'text-gray-300'}`} />
+                        <span className="text-xs text-[#006e1c] font-bold block truncate max-w-full px-2">
+                          {newFileToUpload ? newFileToUpload.name : (isEditDraggingOver ? 'Drop file baru di sini!' : 'Pilih atau seret file video baru')}
                         </span>
                         {newFileToUpload && editDuration && (
                           <span className="text-[10px] text-[#006e1c] font-bold block mt-1">
