@@ -1,23 +1,19 @@
-FROM php:8.2-apache
+FROM php:8.2-cli
 
-# Install pdo_mysql - hanya yang dibutuhkan untuk koneksi database
+# Install pdo_mysql untuk koneksi database
 RUN apt-get update -y && \
     apt-get install -y libmariadb-dev && \
     docker-php-ext-install pdo_mysql && \
     rm -rf /var/lib/apt/lists/*
 
-# Aktifkan mod_rewrite
-RUN a2enmod rewrite
+# Set working directory
+WORKDIR /app
 
-# Izinkan .htaccess override
-RUN sed -i 's/AllowOverride None/AllowOverride All/g' /etc/apache2/apache2.conf
-
-# Copy file project
-COPY . /var/www/html/
+# Copy semua file project
+COPY . /app/
 
 # Buat folder uploads
-RUN mkdir -p /var/www/html/uploads && \
-    chown -R www-data:www-data /var/www/html && \
-    chmod -R 755 /var/www/html
+RUN mkdir -p /app/uploads && chmod -R 755 /app/uploads
 
-EXPOSE 80
+# Jalankan PHP built-in server di port yang Railway tentukan
+CMD php -S 0.0.0.0:${PORT:-80} -t /app
