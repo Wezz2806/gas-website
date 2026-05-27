@@ -544,7 +544,7 @@ export default function EcoCreationView({ searchQuery }: EcoCreationViewProps) {
 
                   {/* Edit/Delete Overlays for Owners */}
                   {isOwner && (
-                    <div className="absolute top-3 right-3 flex items-center gap-1.5 z-10">
+                    <div className="absolute top-3 right-3 flex items-center gap-1.5 z-20">
                       <button 
                         onClick={(e) => handleEditClick(e, video)}
                         className="bg-white/95 hover:bg-white text-gray-700 p-1.5 rounded-lg shadow-sm hover:scale-105 transition-all cursor-pointer border border-gray-100"
