@@ -22,6 +22,9 @@ import {
 import { videoService, VideoItem, VideoComment } from '@/services/videoService';
 import { useAuth } from '../context/AuthContext';
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
+const BACKEND_URL = API_BASE.replace(/\/api$/, '') || '';
+
 interface EcoCreationViewProps {
   searchQuery: string;
 }
@@ -515,7 +518,7 @@ export default function EcoCreationView({ searchQuery }: EcoCreationViewProps) {
                 {/* Cover Preview */}
                 <div className="relative h-44 bg-gray-950 flex items-center justify-center overflow-hidden">
                   <video 
-                    src={`/uploads/videos/${video.filename}`}
+                    src={`${BACKEND_URL}/uploads/videos/${video.filename}`}
                     preload="metadata"
                     muted
                     playsInline
@@ -960,7 +963,7 @@ export default function EcoCreationView({ searchQuery }: EcoCreationViewProps) {
             {/* Video Player Component */}
             <div className="bg-black aspect-video flex items-center justify-center relative group">
               <video 
-                src={`/uploads/videos/${activeVideo.filename}`} 
+                src={`${BACKEND_URL}/uploads/videos/${activeVideo.filename}`} 
                 controls 
                 autoPlay
                 className="w-full h-full object-contain max-h-[70vh]"

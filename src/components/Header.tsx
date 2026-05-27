@@ -11,6 +11,14 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
+const getImageUrl = (path: string | null) => {
+  if (!path) return '';
+  if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('blob:')) return path;
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
+  const BACKEND_URL = API_BASE.replace(/\/api$/, '') || '';
+  return `${BACKEND_URL}${path}`;
+};
+
 
 interface HeaderProps {
   activeTab: Tab;
@@ -36,7 +44,7 @@ export default function Header({
   const [editNewPassword, setEditNewPassword] = useState('');
   const [editConfirmPassword, setEditConfirmPassword] = useState('');
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
-  const [avatarPreview, setAvatarPreview] = useState(user && user.avatar_url ? user.avatar_url : '');
+  const [avatarPreview, setAvatarPreview] = useState(user && user.avatar_url ? getImageUrl(user.avatar_url) : '');
   const [deleteAvatar, setDeleteAvatar] = useState(false);
   const [updateError, setUpdateError] = useState('');
   const [updateSuccess, setUpdateSuccess] = useState(false);
@@ -70,7 +78,7 @@ export default function Header({
       setEditNewPassword('');
       setEditConfirmPassword('');
       setAvatarFile(null);
-      setAvatarPreview(user.avatar_url || '');
+      setAvatarPreview(user.avatar_url ? getImageUrl(user.avatar_url) : '');
       setDeleteAvatar(false);
     }
     setUpdateError('');
@@ -183,7 +191,7 @@ export default function Header({
               {user && user.avatar_url ? (
                 <img 
                   alt="Profil Siswa" 
-                  src={user.avatar_url}
+                  src={getImageUrl(user.avatar_url)}
                   referrerPolicy="no-referrer"
                   className="w-full h-full object-cover"
                 />

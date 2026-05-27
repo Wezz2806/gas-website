@@ -14,6 +14,14 @@ import {
   GraduationCap
 } from 'lucide-react';
 
+const getImageUrl = (path: string | null) => {
+  if (!path) return '';
+  if (path.startsWith('http://') || path.startsWith('https://')) return path;
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
+  const BACKEND_URL = API_BASE.replace(/\/api$/, '') || '';
+  return `${BACKEND_URL}${path}`;
+};
+
 interface StudentProgress {
   id: number;
   full_name: string;
@@ -283,7 +291,7 @@ export default function TeacherProgressView() {
                       <td className="py-4.5 px-6">
                         <div className="flex items-center gap-3">
                           {student.avatar_url ? (
-                            <img src={student.avatar_url} alt={student.full_name} className="w-8 h-8 rounded-full object-cover" />
+                            <img src={getImageUrl(student.avatar_url)} alt={student.full_name} className="w-8 h-8 rounded-full object-cover" />
                           ) : (
                             <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold font-sans">
                               {student.full_name.charAt(0).toUpperCase()}

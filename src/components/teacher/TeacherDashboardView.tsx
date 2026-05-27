@@ -13,6 +13,14 @@ import {
 } from 'lucide-react';
 import { TeacherTab } from '../../types';
 
+const getImageUrl = (path: string | null) => {
+  if (!path) return '';
+  if (path.startsWith('http://') || path.startsWith('https://')) return path;
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
+  const BACKEND_URL = API_BASE.replace(/\/api$/, '') || '';
+  return `${BACKEND_URL}${path}`;
+};
+
 interface DashboardStats {
   total_students: number;
   total_pending_submissions: number;
@@ -215,7 +223,7 @@ export default function TeacherDashboardView({ setActiveTab }: TeacherDashboardV
                       </span>
                       {student.avatar_url ? (
                         <img 
-                          src={student.avatar_url} 
+                          src={getImageUrl(student.avatar_url)} 
                           alt={student.full_name} 
                           className="w-10 h-10 rounded-full object-cover border border-gray-200"
                         />

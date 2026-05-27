@@ -54,8 +54,7 @@ try {
         ], 401);
     }
 
-    // Regenerasi session ID untuk keamanan (Session Fixation Protection)
-    session_regenerate_id(true);
+    // session_regenerate_id(true); // dinonaktifkan di cross-origin production untuk mencegah hilangnya SameSite cookie params
 
     // Simpan data user ke PHP Session
     $session_user = [

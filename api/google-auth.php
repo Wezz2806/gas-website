@@ -147,8 +147,7 @@ try {
  * @param array $user
  */
 function loginUserSession($user) {
-    // Regenerasi session ID untuk keamanan
-    session_regenerate_id(true);
+    // session_regenerate_id(true); // dinonaktifkan di cross-origin production untuk mencegah hilangnya SameSite cookie params
 
     $session_user = [
         'id' => (int)$user['id'],
