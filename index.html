@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GAS Website — Green Action Students</title>
+    <meta name="description" content="Platform edukasi keberlanjutan lingkungan untuk siswa dan guru. Belajar, berkolaborasi, dan berkontribusi bersama GAS." />
+
+    <!--
+      PERFORMANCE: Preconnect establishes TCP/TLS handshake early.
+      This eliminates latency for the first request to these origins.
+    -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://lh3.googleusercontent.com" crossorigin />
+    <link rel="dns-prefetch" href="https://lh3.googleusercontent.com" />
+
+    <!--
+      PERFORMANCE: Load Google Fonts with display=swap so text is visible
+      immediately using fallback font, then swapped when webfont loads.
+      Using a single request for all 3 font families is more efficient
+      than 3 separate @import statements in CSS.
+    -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!--
+      PERFORMANCE: Inline critical CSS to avoid render-blocking.
+      Prevents the white flash while the main CSS bundle loads.
+    -->
+    <style>
+      body {
+        margin: 0;
+        background-color: #F5F5DC;
+        font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+      }
+      #root {
+        min-height: 100vh;
+      }
+      /* Prevents layout shift during font load */
+      .font-display { font-family: 'Montserrat', sans-serif; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

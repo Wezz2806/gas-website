@@ -1,0 +1,6 @@
+{
+  "name": "GAS - Green Action for Sustainable",
+  "description": "Eco-Learning Platform with modules like EcoPedia, EcoLab, EcoUpdate, EcoCreation, and EcoChallenge to drive sustainable action.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

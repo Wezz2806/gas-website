@@ -1,0 +1,42 @@
+<?php
+// api/delete-video-comment.php
+require_once 'config.php';
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    sendJson(['success' => false, 'message' => 'Metode request tidak diizinkan.'], 405);
+}
+
+$user_id = getAuthUserId();
+if ($user_id === null) {
+    sendJson(['success' => false, 'message' => 'Sesi tidak aktif. Silakan login terlebih dahulu.'], 401);
+}
+
+$data = getRequestBody();
+$comment_id = (int)($data['comment_id'] ?? 0);
+
+if ($comment_id <= 0) {
+    sendJson(['success' => false, 'message' => 'ID Komentar tidak valid.'], 400);
+}
+
+try {
+    // Check if the comment belongs to this user or if they are admin/teacher
+    $stmt = $pdo->prepare("SELECT student_id FROM eco_creation_video_comments WHERE id = :id LIMIT 1");
+    $stmt->execute(['id' => $comment_id]);
+    $comment = $stmt->fetch();
+    
+    if (!$comment) {
+        sendJson(['success' => false, 'message' => 'Komentar tidak ditemukan.'], 404);
+    }
+
+    if ($comment['student_id'] !== $user_id && $_SESSION['user']['role'] === 'student') {
+        sendJson(['success' => false, 'message' => 'Anda tidak memiliki hak akses untuk menghapus komentar ini.'], 403);
+    }
+
+    $stmt_del = $pdo->prepare("DELETE FROM eco_creation_video_comments WHERE id = :id");
+    $stmt_del->execute(['id' => $comment_id]);
+
+    sendJson(['success' => true, 'message' => 'Komentar berhasil dihapus.']);
+} catch (PDOException $e) {
+    error_log('delete-video-comment.php error: ' . $e->getMessage());
+    sendJson(['success' => false, 'message' => 'Kesalahan database saat menghapus komentar video.'], 500);
+}

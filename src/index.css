@@ -1,0 +1,67 @@
+/*
+ * index.css — GAS Website Global Styles
+ *
+ * PERFORMANCE NOTE:
+ * Google Fonts are now loaded via <link> in index.html (single request)
+ * instead of @import here. @import in CSS is render-blocking and
+ * causes an extra round-trip before the browser can parse fonts.
+ */
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Montserrat", sans-serif;
+  --font-mono: ui-monospace, "Cascadia Code", "Courier New", monospace;
+}
+
+/* Critical base styles */
+body {
+  background-color: #FFF7ED;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar utilities */
+.scrollbar-none {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+/* Glassmorphism utilities */
+.glass-card {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(21, 66, 18, 0.1);
+}
+
+.eco-glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Badge glow animation — only runs on hover, no idle animation cost */
+@keyframes pulseGlow {
+  0%, 100% { filter: drop-shadow(0 0 5px rgba(145, 247, 142, 0.4)); }
+  50%       { filter: drop-shadow(0 0 15px rgba(145, 247, 142, 0.8)); }
+}
+
+.badge-glow:hover {
+  animation: pulseGlow 1.5s infinite ease-in-out;
+}
+
+/*
+ * PERFORMANCE: Reduce motion for users who prefer it.
+ * Disables animations system-wide for accessibility + battery savings.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
