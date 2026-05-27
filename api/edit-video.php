@@ -17,6 +17,8 @@ $title = trim($_POST['title'] ?? '');
 $category = trim($_POST['category'] ?? '');
 $duration = trim($_POST['duration'] ?? '');
 
+error_log("edit-video.php debug: user_id=" . var_export($user_id, true) . ", video_id=" . var_export($video_id, true) . ", title=" . var_export($title, true) . ", category=" . var_export($category, true));
+
 if ($video_id <= 0) {
     $data = getRequestBody();
     $video_id = (int)($data['video_id'] ?? 0);
@@ -119,5 +121,5 @@ try {
     ]);
 } catch (PDOException $e) {
     error_log('edit-video.php error: ' . $e->getMessage());
-    sendJson(['success' => false, 'message' => 'Kesalahan database saat memperbarui video.'], 500);
+    sendJson(['success' => false, 'message' => 'Kesalahan database saat memperbarui video: ' . $e->getMessage()], 500);
 }
