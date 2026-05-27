@@ -518,7 +518,7 @@ export default function EcoCreationView({ searchQuery }: EcoCreationViewProps) {
                 {/* Cover Preview */}
                 <div className="relative h-44 bg-gray-950 flex items-center justify-center overflow-hidden">
                   <video 
-                    src={`${BACKEND_URL}/uploads/videos/${video.filename}`}
+                    src={`${API_BASE}/stream-video.php?filename=${video.filename}`}
                     preload="metadata"
                     muted
                     playsInline
@@ -963,7 +963,7 @@ export default function EcoCreationView({ searchQuery }: EcoCreationViewProps) {
             {/* Video Player Component */}
             <div className="bg-black aspect-video flex items-center justify-center relative group">
               <video 
-                src={`${BACKEND_URL}/uploads/videos/${activeVideo.filename}`} 
+                src={`${API_BASE}/stream-video.php?filename=${activeVideo.filename}`} 
                 controls 
                 autoPlay
                 className="w-full h-full object-contain max-h-[70vh]"
