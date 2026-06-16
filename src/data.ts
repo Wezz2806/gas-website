@@ -3,25 +3,25 @@ import { Book, Meeting, VideoItem, NewsArticle, VideoCreation, QuizQuestion } fr
 export const initialBooks: Book[] = [
   {
     id: 'green-chemistry',
-    title: 'Kimia Hijau & Keberlanjutan',
-    category: 'INTI LANJUTAN',
+    title: 'Solusi Sat-Set untuk Penyelamatan Bumi: Green Chemistry dan Keberlanjutan Lingkungan',
+    category: '',
     tagClass: 'bg-primary-container text-on-primary-fixed',
     icon: 'science',
-    description: 'Jelajahi prinsip-prinsip dasar desain molekuler berkelanjutan dan proses kimia tanpa limbah untuk masa depan yang lebih bersih.',
+    description: '',
     content: 'Buku ini menyajikan 12 prinsip pokok Kimia Hijau (Green Chemistry) untuk mengurangi atau menonaktifkan penggunaan zat kimia berbahaya. Buku ini mengajarkan bagaimana rancangan molekul organik dapat disintesis menggunakan biokatalis alamiah dengan memaksimalkan atom economy, meminimalkan limbah pencemaran air, dan mengoptimalkan sirkulasi bahan ramah lingkungan untuk masa depan industri global.',
-    coverUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDNn4f7ISvnPOHnz8i1tdGLx-82l9Kk2nRYRlmW2pbgTornkVcaYndvt4rkfyZjpjZCbcm_7TbrkghnrDidWUa4NLxlvney1JvHeBGstK3eYIlx6kmI5e-9wicgQOqwC-I3rL-yajILYDfNhMEfCqVNddRMGqwhXks1LDwpKxoOYeCMtxd6GP3_UpB_SajKAKOgheKDw2TkKUStB9wi0Lsvz2aEqXQLg_HXFS5OyT0jxyCYtGtGxa3ppqpJ0XQXvGRh5vIjtuty_dQI',
+    coverUrl: '/Cover Buku 1.png',
     pdfUrl: '#',
     flipUrl: 'https://online.fliphtml5.com/azzanuriahw/Buku-Ajar-1---Green-Chemistry/'
   },
   {
     id: 'ecoenzyme',
-    title: 'Ekoenzim: Limbah Jadi Sumber Daya',
-    category: 'PANDUAN PRAKTIS',
+    title: 'Bukan Sihir, Cuma Sains: Keajaiban Eco Enzyme yang Bikin Geleng Kepala',
+    category: '',
     tagClass: 'bg-secondary-container text-on-secondary-container',
     icon: 'compost',
-    description: 'Temukan kekuatan transformatif ekoenzim dalam pengelolaan limbah dan aplikasi serbagunanya dalam pertanian berkelanjutan dan kebersihan.',
+    description: '',
     content: 'Panduan luar biasa ini menjelaskan langkah demi langkah untuk memfermentasi sisa kulit buah segar dan sayuran bersama gula merah/molase di air bersih dengan rasio emas 1:3:10. Selama 3 bulan berjalan, mikroba pengurai menghasilkan cairan multi-manfaat yang kaya akan asam asetat, amilase, lipase, dan enzim aktif lainnya yang berguna sebagai pembersih alami, disinfektan bebas toksin, serta pupuk organik penyubur tanah.',
-    coverUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDUrbRIx28PRmIdiaug7nQlYdkcpkX9ny06WcvHnC0gyA3RlU_E7Hs0cDE5qEks9uWcT6XrQPwtmKzem_jDL3NqvsLXlPyHR-WEhHzfpbG-7Btpji4TdlFjGwj1nZewAb0iaiTz_KQcFPBNNTRa6qg7h5M19_m1ajr57moEMLyYYBYGGKc813S2p8Lq6R4PfFLVKrvPKe2qnyZgQyqDCrQwQD9F_xfzJlZYLqzDRcIjPwXt3vqcWUIfPGCo77Gmv3Nzskg-IJZWNvD',
+    coverUrl: '/Cover Buku 2.png',
     pdfUrl: '#',
     flipUrl: 'https://online.fliphtml5.com/azzanuriahw/Buku-Ajar-2---Ecoenzyme/'
   }
@@ -31,32 +31,32 @@ export const initialMeetings: Meeting[] = [
   {
     id: 'm1',
     number: 1,
-    title: 'Kickoff & Pengadaan',
-    description: 'Menentukan tujuan dan mencari bahan organik mentah untuk fermentasi.',
+    title: 'Mengapa green chemistry penting?',
+    description: 'Lembar Kerja Mahasiswa 1: Menganalisis urgensi dan prinsip dasar Green Chemistry.',
     icon: 'groups',
     status: 'completed'
   },
   {
     id: 'm2',
     number: 2,
-    title: 'Kontrol Proses',
-    description: 'Memantau tingkat pH dan menetapkan protokol pengenceran harian.',
+    title: 'Integrasi Prinsip Green Chemistry dalam Masalah Lingkungan',
+    description: 'Lembar Kerja Mahasiswa 2: Memahami integrasi Green Chemistry dalam penyelesaian isu lingkungan.',
     icon: 'science',
     status: 'ongoing'
   },
   {
     id: 'm3',
     number: 3,
-    title: 'Persiapan Enzim Aktif',
-    description: 'Memanen konsentrat yang telah terfermentasi dan pengenceran untuk pembuatan sabun.',
+    title: 'Aksi Nyata Berkelanjutan Berbasis Prinsip Green Chemistry',
+    description: 'Lembar Kerja Mahasiswa 3: Merancang dan melaksanakan aksi nyata berkelanjutan berbasis kimia hijau.',
     icon: 'biotech',
     status: 'scheduled'
   },
   {
     id: 'm4',
     number: 4,
-    title: 'Pengemasan Produk',
-    description: 'Desain kemasan ramah lingkungan dan pengujian kontrol kualitas akhir.',
+    title: 'Agents of Change: Sampah Organik menjadi Solusi Organik',
+    description: 'Lembar Kerja Mahasiswa 4: Mengembangkan solusi organik dari pengolahan limbah sampah organik sekitar.',
     icon: 'inventory',
     status: 'scheduled'
   }

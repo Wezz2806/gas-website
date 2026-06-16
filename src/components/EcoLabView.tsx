@@ -12,8 +12,10 @@ import {
   CheckCircle, 
   X, 
   FileText,
+  Eye
 } from 'lucide-react';
 import { submissionService } from '../services/submissionService';
+import LkmReaderModal from './LkmReaderModal';
 
 interface EcoLabViewProps {
   setActiveTab: (tab: any) => void;
@@ -51,6 +53,9 @@ export default function EcoLabView({ setActiveTab, onSelectBook }: EcoLabViewPro
   const [uploadedFile, setUploadedFile] = useState<string | null>(null);
   const [deletingMeetingId, setDeletingMeetingId] = useState<string | null>(null);
   const [isDeletingDocument, setIsDeletingDocument] = useState(false);
+  
+  // Document reader state
+  const [activeReadingMeeting, setActiveReadingMeeting] = useState<Meeting | null>(null);
 
   const getMeetingIcon = (iconName: string) => {
     switch (iconName) {
@@ -147,6 +152,29 @@ export default function EcoLabView({ setActiveTab, onSelectBook }: EcoLabViewPro
     setUploadedFile(null);
   };
 
+  const getLkmEmbedUrl = (meetingNumber: number) => {
+    const links: Record<number, string> = {
+      1: 'https://drive.google.com/file/d/11an9PvFIlJnrJniqR2Z_k8W4hudX2yM_/preview',
+      2: 'https://drive.google.com/file/d/1leOTPkIbRbEH8Lsy28B1yCnoeykc9RaQ/preview',
+      3: 'https://drive.google.com/file/d/18Y8klb4fEvTAy5AZL8--ihxX2df1rffg/preview',
+      4: 'https://drive.google.com/file/d/14bqlkq9CD9DXx7N2VmzjdDxluy0RFgO5/preview'
+    };
+    return links[meetingNumber] || '';
+  };
+
+  const handleDownloadLkm = (meetingNumber: number) => {
+    const downloadUrls: Record<number, string> = {
+      1: 'https://drive.google.com/file/d/11an9PvFIlJnrJniqR2Z_k8W4hudX2yM_/view?usp=sharing',
+      2: 'https://drive.google.com/file/d/1leOTPkIbRbEH8Lsy28B1yCnoeykc9RaQ/view?usp=sharing',
+      3: 'https://drive.google.com/file/d/18Y8klb4fEvTAy5AZL8--ihxX2df1rffg/view?usp=sharing',
+      4: 'https://drive.google.com/file/d/14bqlkq9CD9DXx7N2VmzjdDxluy0RFgO5/view?usp=sharing'
+    };
+    const link = downloadUrls[meetingNumber];
+    if (link) {
+      window.open(link, '_blank');
+    }
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-3 duration-300">
 
@@ -191,10 +219,10 @@ export default function EcoLabView({ setActiveTab, onSelectBook }: EcoLabViewPro
                 </div>
               </div>
 
-              <h4 className="font-semibold text-sm text-[#154212] mb-1">
+              <h4 className="font-semibold text-sm text-[#154212] mb-2 min-h-[40px] line-clamp-2 leading-snug">
                 {meeting.title}
               </h4>
-              <p className="text-xs text-gray-500 leading-normal mb-6 flex-grow">
+              <p className="text-[11px] text-gray-500 leading-relaxed mb-6 flex-grow">
                 {meeting.description}
               </p>
 
@@ -234,26 +262,23 @@ export default function EcoLabView({ setActiveTab, onSelectBook }: EcoLabViewPro
                   <BookOpen className="w-4 h-4 text-[#006e1c]" />
                 </button>
 
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-3 gap-1.5">
                   <button 
-                    onClick={() => { 
-                      const lkmLinks: Record<number, string> = {
-                        1: 'https://drive.google.com/file/d/1Z-Chwff8-sdNg95u9GIxV4yNhwtTk7QK/view?usp=drive_link',
-                        2: 'https://drive.google.com/file/d/105lJBYZ3gc1-iO_Yl3oOFs3cv0ruT4dW/view?usp=drive_link',
-                        3: 'https://drive.google.com/file/d/1YT0AGogkVCVARHqsKuC3yv4D0SFopHWP/view?usp=drive_link',
-                        4: 'https://drive.google.com/file/d/1yYxeqD2IClegY1Tj0HvSKclxVLe-WQgk/view?usp=drive_link',
-                      };
-                      const link = lkmLinks[meeting.number];
-                      if (link) {
-                        window.open(link, '_blank');
-                      } else {
-                        alert(`Mengunduh Panduan LKM Meeting ${meeting.number}...`);
-                      }
-                    }}
-                    className="flex flex-col items-center justify-center p-2 rounded-xl border border-gray-200 hover:border-emerald-700 text-gray-600 hover:text-emerald-800 text-[9px] font-bold uppercase transition-all cursor-pointer"
+                    onClick={() => setActiveReadingMeeting(meeting)}
+                    className="flex flex-col items-center justify-center p-2 rounded-xl border border-gray-200 hover:border-emerald-700 text-gray-600 hover:text-emerald-800 text-[9px] font-bold uppercase transition-all cursor-pointer bg-white"
+                    title="Baca LKM"
                   >
-                    <Download className="w-4 h-4" />
-                    <span className="mt-1">Unduh LKM</span>
+                    <Eye className="w-4 h-4 text-[#006e1c]" />
+                    <span className="mt-1">Baca</span>
+                  </button>
+
+                  <button 
+                    onClick={() => handleDownloadLkm(meeting.number)}
+                    className="flex flex-col items-center justify-center p-2 rounded-xl border border-gray-200 hover:border-emerald-700 text-gray-600 hover:text-emerald-800 text-[9px] font-bold uppercase transition-all cursor-pointer bg-white"
+                    title="Unduh LKM"
+                  >
+                    <Download className="w-4 h-4 text-blue-600" />
+                    <span className="mt-1">Unduh</span>
                   </button>
 
                   <button 
@@ -263,12 +288,13 @@ export default function EcoLabView({ setActiveTab, onSelectBook }: EcoLabViewPro
                     }}
                     className={`flex flex-col items-center justify-center p-2 rounded-xl border text-[9px] font-bold uppercase transition-all cursor-pointer ${
                       hasUploaded 
-                        ? 'border-gray-200 text-[#006e1c] hover:bg-emerald-50' 
+                        ? 'border-gray-200 text-[#006e1c] hover:bg-emerald-50 bg-emerald-50/25' 
                         : 'border-amber-250 text-amber-700 bg-amber-50/50 hover:bg-amber-50'
                     }`}
+                    title="Unggah LKM"
                   >
                     <Upload className="w-4 h-4" />
-                    <span className="mt-1">{hasUploaded ? 'Unggah Ulang' : 'Unggah'}</span>
+                    <span className="mt-1">{hasUploaded ? 'Re-Up' : 'Unggah'}</span>
                   </button>
                 </div>
               </div>
@@ -352,6 +378,7 @@ export default function EcoLabView({ setActiveTab, onSelectBook }: EcoLabViewPro
           </div>
         </div>
       )}
+
       {/* Custom Delete Document Confirmation Modal */}
       {deletingMeetingId !== null && (
         <div className="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-300">
@@ -369,7 +396,7 @@ export default function EcoLabView({ setActiveTab, onSelectBook }: EcoLabViewPro
 
             <div className="flex gap-2">
               <button 
-                type="button" 
+                type="button"
                 onClick={() => setDeletingMeetingId(null)}
                 disabled={isDeletingDocument}
                 className="flex-1 px-4 py-2.5 text-xs font-bold text-gray-500 hover:bg-gray-100 rounded-xl cursor-pointer transition-colors disabled:opacity-50"
@@ -394,6 +421,15 @@ export default function EcoLabView({ setActiveTab, onSelectBook }: EcoLabViewPro
             </div>
           </div>
         </div>
+      )}
+
+      {/* LKM Document Reader Modal */}
+      {activeReadingMeeting && (
+        <LkmReaderModal 
+          meeting={activeReadingMeeting} 
+          embedUrl={getLkmEmbedUrl(activeReadingMeeting.number)} 
+          onClose={() => setActiveReadingMeeting(null)} 
+        />
       )}
     </div>
   );
