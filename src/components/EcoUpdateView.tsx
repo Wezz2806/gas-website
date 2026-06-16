@@ -2,11 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { initialNews } from '../data';
 import { NewsArticle } from '../types';
 import { 
-  Heart, 
-  BookMarked, 
-  Clock, 
   X,
-  MessageSquare,
   ExternalLink
 } from 'lucide-react';
 
@@ -77,24 +73,7 @@ export default function EcoUpdateView({ searchQuery }: EcoUpdateProps) {
 
   const categories = ['Unggulan', 'Berita Lokal', 'Berita Global'];
 
-  const handleLike = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setNews(news.map(art => {
-      if (art.id === id) {
-        const isLiked = !art.isLiked;
-        return { ...art, likes: isLiked ? art.likes + 1 : art.likes - 1, isLiked };
-      }
-      return art;
-    }));
-  };
 
-  const handleSave = (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setNews(news.map(art => {
-      if (art.id === id) return { ...art, isSaved: !art.isSaved };
-      return art;
-    }));
-  };
 
   const filteredNews = news.filter(art => {
     const matchesTab = activeCategory === 'Unggulan' || art.category === activeCategory;
@@ -150,10 +129,6 @@ export default function EcoUpdateView({ searchQuery }: EcoUpdateProps) {
               <span className="px-3 py-0.5 bg-emerald-100 text-[#006e1c] font-bold rounded-full">
                 {readingArticle.category}
               </span>
-              <span className="text-gray-400 font-semibold flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5" /> {readingArticle.readTime}
-              </span>
-              <span className="text-gray-300">•</span>
               <span className="text-gray-500 font-medium">{readingArticle.date}</span>
             </div>
             <h3 className="font-display font-black text-xl md:text-2xl lg:text-3xl text-[#154212] leading-tight">
@@ -169,33 +144,10 @@ export default function EcoUpdateView({ searchQuery }: EcoUpdateProps) {
             </p>
           </main>
 
-          <footer className="pt-4 border-t border-gray-150 flex justify-between items-center text-gray-500 flex-wrap gap-4">
-            <div className="flex gap-4">
-              <button 
-                onClick={(e) => {
-                  setNews(news.map(art => {
-                    if (art.id === readingArticle.id) {
-                      const l = !art.isLiked;
-                      const res = { ...art, likes: l ? art.likes + 1 : art.likes - 1, isLiked: l };
-                      setReadingArticle(res);
-                      return res;
-                    }
-                    return art;
-                  }));
-                }}
-                className={`flex items-center gap-1 text-xs font-bold ${readingArticle.isLiked ? 'text-red-500' : 'text-gray-500'}`}
-              >
-                <Heart className={`w-4 h-4 ${readingArticle.isLiked ? 'fill-current' : ''}`} />
-                <span>Suka ({readingArticle.likes})</span>
-              </button>
-              <span className="text-xs flex items-center gap-1 font-semibold">
-                <MessageSquare className="w-4 h-4" />
-                <span>Komentar ({readingArticle.commentsCount})</span>
-              </span>
-            </div>
+          <footer className="pt-4 border-t border-gray-150 flex justify-end items-center text-gray-500 flex-wrap gap-4">
             <button 
               onClick={() => setReadingArticle(null)}
-              className="px-4 py-2 bg-[#154212] hover:bg-emerald-900 text-white font-bold text-xs rounded-xl"
+              className="px-4 py-2 bg-[#154212] hover:bg-emerald-900 text-white font-bold text-xs rounded-xl shadow-sm hover:scale-[1.01] active:scale-95 transition-all"
             >
               Selesai Membaca & Tutup
             </button>
@@ -219,9 +171,6 @@ export default function EcoUpdateView({ searchQuery }: EcoUpdateProps) {
                 <div className="flex gap-3 mb-2 flex-wrap">
                   <span className="px-3.5 py-1 bg-[#94f990] text-[#002204] text-[10px] font-bold rounded-full uppercase tracking-wider">
                     Berita Utama
-                  </span>
-                  <span className="text-white/80 text-xs font-semibold flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5" /> {filteredNews[0].readTime}
                   </span>
                 </div>
                 <h2 className="font-display font-black text-base md:text-lg lg:text-2xl text-white max-w-3xl leading-tight mb-2">
@@ -283,7 +232,7 @@ export default function EcoUpdateView({ searchQuery }: EcoUpdateProps) {
                   </div>
 
                   <div className="p-5 flex flex-col flex-grow">
-                    <p className="text-[10px] text-gray-400 mb-2 font-medium">{art.date} • {art.readTime}</p>
+                    <p className="text-[10px] text-gray-400 mb-2 font-medium">{art.date} • Oleh: {art.author}</p>
                     <h4 className="font-semibold text-sm text-[#154212] mb-2 leading-snug group-hover:text-[#006e1c] transition-colors line-clamp-2">
                       {art.title}
                     </h4>
@@ -291,34 +240,26 @@ export default function EcoUpdateView({ searchQuery }: EcoUpdateProps) {
                       {art.description}
                     </p>
 
-                    <div className="mt-auto pt-3 border-t border-gray-50 flex items-center justify-between text-xs text-gray-500">
-                      <span className="font-semibold text-[10px] text-[#154212]">Oleh: {art.author}</span>
-                      <div className="flex gap-2">
-                        <button 
-                          onClick={(e) => handleLike(art.id, e)}
-                          className={`p-1.5 hover:bg-gray-100 rounded-full transition-colors ${art.isLiked ? 'text-red-500' : ''}`}
-                          title="Sukai Artikel"
-                        >
-                          <Heart className={`w-4 h-4 ${art.isLiked ? 'fill-current' : ''}`} />
-                        </button>
-                        <button 
-                          onClick={(e) => handleSave(art.id, e)}
-                          className={`p-1.5 hover:bg-gray-100 rounded-full transition-colors ${art.isSaved ? 'text-emerald-700' : ''}`}
-                          title="Simpan Bacaan"
-                        >
-                          <BookMarked className="w-4 h-4" />
-                        </button>
-                        <a 
-                          href={art.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="p-1.5 hover:bg-gray-100 rounded-full transition-colors text-gray-500 hover:text-[#154212]"
-                          title="Buka Artikel Asli"
-                        >
-                          <ExternalLink className="w-4 h-4" />
-                        </a>
-                      </div>
+                    <div className="mt-auto pt-4 border-t border-gray-150 flex flex-col sm:flex-row gap-2">
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setReadingArticle(art);
+                        }}
+                        className="flex-1 py-2 bg-[#154212] hover:bg-emerald-800 text-white text-[11px] font-bold rounded-xl transition-all shadow-sm active:scale-95 text-center cursor-pointer"
+                      >
+                        Baca Ringkasan
+                      </button>
+                      <a 
+                        href={art.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="flex-1 py-2 bg-gray-100 hover:bg-gray-200 text-[#154212] text-[11px] font-bold rounded-xl transition-all flex items-center justify-center gap-1 active:scale-95 text-center border border-gray-200"
+                      >
+                        <span>Artikel Asli</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
                     </div>
                   </div>
                 </article>
