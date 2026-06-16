@@ -129,16 +129,16 @@ export default function EcoContactView({}: EcoContactViewProps) {
               onError={(e) => {
                 (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&w=400&q=80';
               }}
-              className="w-20 aspect-[3/4] sm:w-24 rounded-2xl object-cover border-2 border-amber-400 shadow-sm shrink-0"
+              className="w-20 h-[106px] sm:w-24 sm:h-[128px] rounded-2xl object-contain bg-white border-2 border-amber-400 shadow-sm shrink-0"
             />
             <div className="space-y-1">
-              <span className="inline-block px-2.5 py-0.5 bg-amber-50 text-amber-800 text-[9px] font-bold uppercase tracking-wider rounded-full">
+              <span className="inline-block text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-600 border border-amber-200">
                 {promotorInfo.role}
               </span>
-              <h4 className="font-display font-bold text-xs sm:text-sm text-[#154212] leading-tight">
+              <h4 className="font-display font-bold text-sm text-[#154212] leading-tight">
                 {promotorInfo.name}
               </h4>
-              <p className="text-[10px] text-gray-500 font-medium">{promotorInfo.instansi}</p>
+              <p className="text-xs text-[#42493e]">{promotorInfo.instansi}</p>
             </div>
           </div>
 
@@ -149,9 +149,9 @@ export default function EcoContactView({}: EcoContactViewProps) {
               alt={coPromotorInfo.name}
               referrerPolicy="no-referrer"
               onError={(e) => {
-                (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1580894732444-8fecef2271ff?auto=format&fit=crop&w=400&q=80';
+                (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&w=400&q=80';
               }}
-              className="w-20 aspect-[3/4] sm:w-24 rounded-2xl object-cover border-2 border-emerald-400 shadow-sm shrink-0"
+              className="w-20 h-[106px] sm:w-24 sm:h-[128px] rounded-2xl object-contain bg-white border-2 border-emerald-400 shadow-sm shrink-0"
             />
             <div className="space-y-1">
               <span className="inline-block px-2.5 py-0.5 bg-emerald-50 text-emerald-800 text-[9px] font-bold uppercase tracking-wider rounded-full">

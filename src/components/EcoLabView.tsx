@@ -235,7 +235,7 @@ export default function EcoLabView({ setActiveTab, onSelectBook }: EcoLabViewPro
               <div className="w-full h-36 rounded-xl overflow-hidden mb-4 relative select-none border border-gray-150/50 bg-gray-50">
                 <img 
                   alt={`Cover LKM ${meeting.number}`}
-                  src={`/Cover LKM ${meeting.number}.png`}
+                  src={`./Cover LKM ${meeting.number}.png`}
                   className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                 />
               </div>
