@@ -7,8 +7,8 @@ import {
   CheckCircle
 } from 'lucide-react';
 
-const POSTTEST_LINK: string = 'https://docs.google.com/forms/d/e/1FAIpQLSf6uF2yKz8Z1gD2Wv5B_QzM79U7z_4eR6s7t8_2wY_9cWqG-Q/viewform?usp=sf_link';
-const ANGKET_LINK: string = 'https://docs.google.com/forms/d/e/1FAIpQLSf6uF2yKz8Z1gD2Wv5B_QzM79U7z_4eR6s7t8_2wY_9cWqG-Q/viewform?usp=sf_link'; // Silakan sesuaikan link angket respon peserta didik di sini
+const POSTTEST_LINK: string = 'https://docs.google.com/forms/d/e/1FAIpQLSdMiMC1sQ2XFtNg5o0G5X2tKrws9fk7bYYOGWoFkYYOCg-qGA/viewform?usp=sharing&ouid=106816049409171028991';
+const ANGKET_LINK: string = 'https://docs.google.com/forms/d/e/1FAIpQLSdrpNfUsRLWqBz0jQJIxogVWzXwfDSX_sFS0_K0t3CS_F3n0A/viewform?usp=publish-editor';
 
 interface EcoChallengeViewProps {}
 
