@@ -225,42 +225,7 @@ export default function DashboardView({
         </div>
       </div>
 
-      {/* Gamified Achievements Box */}
-      <section className="bg-white rounded-3xl p-6 border border-gray-100 text-left">
-        <h4 className="font-display font-bold text-base text-[#154212] mb-1">Misi Mingguan Berjalan</h4>
-        <p className="text-xs text-gray-500 mb-4">Selesaikan misi berikut untuk menyelesaikan pembelajaran sirkular Anda.</p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="p-4 bg-[#f3f3f4] rounded-2xl flex items-center justify-between border border-gray-200/50">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-teal-100 text-teal-800 flex items-center justify-center font-bold">
-                1
-              </div>
-              <div>
-                <p className="text-xs font-bold text-gray-800">Selesaikan Evaluasi EcoChallenge</p>
-                <p className="text-[10px] text-gray-500">Mencapai &gt;=80% pada Posttest</p>
-              </div>
-            </div>
-            <span className="text-[10px] font-bold text-[#006e1c] bg-emerald-50 px-2.5 py-1 rounded-full flex items-center gap-1">
-              Wajib
-            </span>
-          </div>
 
-          <div className="p-4 bg-[#f3f3f4] rounded-2xl flex items-center justify-between border border-gray-200/50">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-orange-100 text-orange-800 flex items-center justify-center font-bold">
-                2
-              </div>
-              <div>
-                <p className="text-xs font-bold text-gray-800">Unggah LKM di EcoLab</p>
-                <p className="text-[10px] text-gray-500">Kirim laporan observasi biologis</p>
-              </div>
-            </div>
-            <span className="text-[10px] font-bold text-[#006e1c] bg-emerald-50 px-2.5 py-1 rounded-full flex items-center gap-1">
-              Wajib
-            </span>
-          </div>
-        </div>
-      </section>
 
     </div>
   );

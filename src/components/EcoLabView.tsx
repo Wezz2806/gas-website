@@ -191,17 +191,14 @@ export default function EcoLabView({ setActiveTab, onSelectBook }: EcoLabViewPro
 
       {/* Jurnal Monitoring Keberlanjutan Banner */}
       <div className="bg-gradient-to-r from-[#154212] to-[#006e1c] text-white rounded-3xl p-6 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 text-left border border-emerald-800">
-        <div className="flex items-start gap-4">
-          <div className="p-3 bg-white/10 rounded-2xl shrink-0 mt-1">
+        <div className="flex items-center gap-4">
+          <div className="p-3 bg-white/10 rounded-2xl shrink-0">
             <ClipboardList className="w-6 h-6 text-[#91f78e]" />
           </div>
-          <div className="space-y-1">
+          <div>
             <h3 className="font-display font-black text-lg text-white">
               Jurnal Monitoring Keberlanjutan
             </h3>
-            <p className="text-xs text-[#d1f9cc] leading-relaxed max-w-2xl">
-              Gunakan jurnal ini untuk memantau kemajuan proyek aksi nyata kimia hijau (green chemistry) dan ekoenzim secara berkala demi tercapainya keberlanjutan lingkungan.
-            </p>
           </div>
         </div>
         <a 
