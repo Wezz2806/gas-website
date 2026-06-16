@@ -12,7 +12,8 @@ import {
   CheckCircle, 
   X, 
   FileText,
-  Eye
+  Eye,
+  ClipboardList
 } from 'lucide-react';
 import { submissionService } from '../services/submissionService';
 import LkmReaderModal from './LkmReaderModal';
@@ -187,6 +188,32 @@ export default function EcoLabView({ setActiveTab, onSelectBook }: EcoLabViewPro
           Mari unduh, lalu kerjakan LKM dari guru, dan unggah scan LKM untuk diunggah pada setiap pertemuan untuk mendapatkan pengalaman belajar yang baru!
         </p>
       </header>
+
+      {/* Jurnal Monitoring Keberlanjutan Banner */}
+      <div className="bg-gradient-to-r from-[#154212] to-[#006e1c] text-white rounded-3xl p-6 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6 text-left border border-emerald-800">
+        <div className="flex items-start gap-4">
+          <div className="p-3 bg-white/10 rounded-2xl shrink-0 mt-1">
+            <ClipboardList className="w-6 h-6 text-[#91f78e]" />
+          </div>
+          <div className="space-y-1">
+            <h3 className="font-display font-black text-lg text-white">
+              Jurnal Monitoring Keberlanjutan
+            </h3>
+            <p className="text-xs text-[#d1f9cc] leading-relaxed max-w-2xl">
+              Gunakan jurnal ini untuk memantau kemajuan proyek aksi nyata kimia hijau (green chemistry) dan ekoenzim secara berkala demi tercapainya keberlanjutan lingkungan.
+            </p>
+          </div>
+        </div>
+        <a 
+          href="https://docs.google.com/forms/d/e/1FAIpQLSeA-5RY50WN6-CWtXuCpvHu1WrCPfp15DaipRzr7q7SqPOrRg/viewform?usp=publish-editor"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-full md:w-auto px-5 py-3 bg-white text-[#154212] font-black text-xs rounded-xl shadow-md hover:bg-emerald-50 active:scale-95 transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer"
+        >
+          <span>Isi Jurnal Sekarang</span>
+          <Eye className="w-4 h-4 text-[#154212]" />
+        </a>
+      </div>
 
       {/* Meeting Timeline Card Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-left">

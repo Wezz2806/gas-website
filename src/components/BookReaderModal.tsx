@@ -21,9 +21,6 @@ export default function BookReaderModal({ book, onClose }: BookReaderModalProps)
         {/* Header */}
         <header className="bg-[#154212] px-6 py-4 text-white flex justify-between items-center text-left shrink-0">
           <div className="space-y-1">
-            <span className="inline-block px-2.5 py-0.5 bg-emerald-100/20 text-[#91f78e] text-[9px] font-bold uppercase tracking-wider rounded-full">
-              {book.category}
-            </span>
             <h3 className="font-display font-bold text-sm sm:text-base leading-tight">
               {book.title}
             </h3>

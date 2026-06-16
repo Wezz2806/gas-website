@@ -92,18 +92,9 @@ export default function EcoPediaView({
 
             <div className="md:w-3/5 p-6 flex flex-col justify-between">
               <div>
-                <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full mb-3.5 text-[10px] font-bold tracking-wider uppercase ${book.tagClass}`}>
-                  <BookOpen className="w-3.5 h-3.5 text-current" />
-                  <span>{book.category}</span>
-                </div>
-
-                <h3 className="font-display font-bold text-base md:text-lg text-[#154212] mb-2 leading-snug group-hover:text-[#006e1c] transition-colors">
+                <h3 className="font-display font-bold text-base md:text-lg text-[#154212] mb-6 leading-snug group-hover:text-[#006e1c] transition-colors">
                   {book.title}
                 </h3>
-                
-                <p className="font-sans text-xs text-[#42493e] leading-relaxed mb-6 line-clamp-3">
-                  {book.description}
-                </p>
               </div>
 
               <div className="flex items-center gap-2 mt-auto">

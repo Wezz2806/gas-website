@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { initialNews } from '../data';
 import { NewsArticle } from '../types';
 import { 
@@ -10,6 +10,79 @@ import {
   ExternalLink
 } from 'lucide-react';
 
+interface NewsCoverImageProps {
+  articleUrl: string;
+  fallbackUrl: string;
+  alt: string;
+  className?: string;
+}
+
+function NewsCoverImage({ articleUrl, fallbackUrl, alt, className }: NewsCoverImageProps) {
+  const [imgSrc, setImgSrc] = useState<string>(fallbackUrl);
+
+  useEffect(() => {
+    if (!articleUrl) return;
+
+    // Simple session cache to avoid duplicate fetches
+    const cacheKey = `news_cover_${articleUrl}`;
+    const cached = sessionStorage.getItem(cacheKey);
+    if (cached) {
+      setImgSrc(cached);
+      return;
+    }
+
+    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(articleUrl)}`;
+    
+    fetch(proxyUrl)
+      .then(res => {
+        if (!res.ok) throw new Error('Proxy error');
+        return res.json();
+      })
+      .then(data => {
+        const html = data.contents;
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        
+        let foundUrl = '';
+        const ogImage = doc.querySelector('meta[property="og:image"]');
+        if (ogImage) {
+          foundUrl = ogImage.getAttribute('content') || '';
+        } else {
+          const twitterImage = doc.querySelector('meta[name="twitter:image"]');
+          if (twitterImage) {
+            foundUrl = twitterImage.getAttribute('content') || '';
+          }
+        }
+        
+        if (foundUrl) {
+          if (foundUrl.startsWith('/')) {
+            const urlObj = new URL(articleUrl);
+            foundUrl = `${urlObj.origin}${foundUrl}`;
+          }
+          setImgSrc(foundUrl);
+          sessionStorage.setItem(cacheKey, foundUrl);
+        }
+      })
+      .catch(() => {
+        // Fallback is already set
+      });
+  }, [articleUrl, fallbackUrl]);
+
+  return (
+    <img 
+      alt={alt} 
+      src={imgSrc} 
+      referrerPolicy="no-referrer"
+      className={className}
+      onError={() => {
+        if (imgSrc !== fallbackUrl) {
+          setImgSrc(fallbackUrl);
+        }
+      }}
+    />
+  );
+}
+
 interface EcoUpdateProps {
   searchQuery: string;
 }
@@ -19,7 +92,7 @@ export default function EcoUpdateView({ searchQuery }: EcoUpdateProps) {
   const [news, setNews] = useState<NewsArticle[]>(initialNews);
   const [readingArticle, setReadingArticle] = useState<NewsArticle | null>(null);
 
-  const categories = ['Unggulan', 'Iklim Lokal', 'Berita Global', 'Teknologi Berkelanjutan', 'Kebijakan & Aksi'];
+  const categories = ['Unggulan', 'Berita Lokal', 'Berita Global'];
 
   const handleLike = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -153,10 +226,10 @@ export default function EcoUpdateView({ searchQuery }: EcoUpdateProps) {
               onClick={() => setReadingArticle(filteredNews[0])}
               className="relative w-full aspect-[21/9] rounded-3xl overflow-hidden shadow-md group cursor-pointer bg-inverse-surface border border-gray-150"
             >
-              <img 
+              <NewsCoverImage 
+                articleUrl={filteredNews[0].url} 
+                fallbackUrl={filteredNews[0].coverUrl} 
                 alt={filteredNews[0].title} 
-                src={filteredNews[0].coverUrl} 
-                referrerPolicy="no-referrer"
                 className="w-full h-full object-cover opacity-80 group-hover:scale-[1.02] transition-transform duration-700"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent flex flex-col justify-end p-6 md:p-8 text-left">
@@ -215,10 +288,10 @@ export default function EcoUpdateView({ searchQuery }: EcoUpdateProps) {
                   className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all group flex flex-col border border-gray-150 cursor-pointer"
                 >
                   <div className="relative h-44 overflow-hidden select-none">
-                    <img 
+                    <NewsCoverImage 
+                      articleUrl={art.url} 
+                      fallbackUrl={art.coverUrl} 
                       alt={art.title} 
-                      src={art.coverUrl} 
-                      referrerPolicy="no-referrer"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                     />
                     <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-[9px] font-bold text-[#154212] border border-gray-100 uppercase tracking-wider">

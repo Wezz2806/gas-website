@@ -85,11 +85,11 @@ export const initialNews: NewsArticle[] = [
   {
     id: 'news-1',
     title: 'Ratusan Perempuan Surabaya Deklarasikan “She Heroes” di CFD Tunjungan',
-    category: 'Kampanye Lingkungan',
+    category: 'Berita Lokal',
     date: '26 April 2026',
     readTime: '5 menit baca',
     description: 'Sekitar 500 perempuan memadati kawasan Car Free Day Jalan Tunjungan untuk mengikuti Deklarasi Gerakan “She Heroes” sebagai upaya menekan timbulan sampah plastik sekali pakai.',
-    content: 'Sekitar 500 perempuan memadati kawasan Car Free Day Jalan Tunjungan untuk mengikuti Deklarasi Gerakan “She Heroes”. Gerakan ini mengajak perempuan mulai beralih dari pembalut sekali pakai menuju produk ramah lingkungan sebagai upaya menekan timbulan sampah plastik yang sulit terurai. Asisten Pemerintahan dan Kesejahteraan Rakyat Kota Surabaya, M. Fikser, menegaskan bahwa sampah pembalut sekali pakai menjadi ancaman nyata bagi sungai dan lingkungan karena butuh waktu hingga 500 tahun untuk terurai. Bumbi bersama Tunas Hijau menghadirkan alternatif ramah lingkungan sebagai solusi nyata bagi satu juta perempuan usia produktif di Surabaya demi masa depan ekologis kota yang berkelanjutan.',
+    content: 'Sekitar 500 perempuan memadati kawasan Car Free Day Jalan Tunjungan untuk mengikuti Deklarasi Gerakan “She Heroes”. Gerakan ini mengajak perempuan mulai beralih dari pembalut sekali pakai menuju produk ramah lingkungan sebagai upaya menekan timbulan sampah plastik yang sulit terurai. Asisten Pemerintahan dan Kesejahteraan Rakyat Kota Surabaya, M. Fikser, menegaskan bahwa sampah pembalut sekali pakai menjadi ancaman nyata bagi sungai and lingkungan karena butuh waktu hingga 500 tahun untuk terurai. Bumbi bersama Tunas Hijau menghadirkan alternatif ramah lingkungan sebagai solusi nyata bagi satu juta perempuan usia produktif di Surabaya demi masa depan ekologis kota yang berkelanjutan.',
     coverUrl: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=800&q=80',
     author: 'Tunas Hijau ID',
     likes: 412,
@@ -99,7 +99,7 @@ export const initialNews: NewsArticle[] = [
   {
     id: 'news-2',
     title: 'Penjualan Mobil Listrik di Surabaya Naik 4 Kali Lipat pada Awal 2026',
-    category: 'Transportasi Hijau',
+    category: 'Berita Lokal',
     date: '19 Mei 2026',
     readTime: '4 menit baca',
     description: 'Penjualan kendaraan listrik (EV) di Kota Surabaya mengalami kenaikan drastis hingga lebih dari empat kali lipat pada kuartal pertama 2026 berkat efisiensi biaya dan kemudahan perawatan.',
@@ -113,7 +113,7 @@ export const initialNews: NewsArticle[] = [
   {
     id: 'news-3',
     title: 'Resolusi 2026 Namira Eco Print Surabaya: Gaungkan “Back to Nature”, Ajak Anak Muda Lebih Peduli Lingkungan',
-    category: 'Fesyen Berkelanjutan',
+    category: 'Berita Lokal',
     date: '23 Januari 2026',
     readTime: '5 menit baca',
     description: 'Menyambut tahun 2026, Namira Eco Print Surabaya mengusung tema "Back to Nature" dengan meluncurkan koleksi warna-warna alami dan mengajak generasi muda lebih peduli terhadap kelestarian alam.',
@@ -127,7 +127,7 @@ export const initialNews: NewsArticle[] = [
   {
     id: 'news-4',
     title: 'Air Hujan Kota Surabaya Terkontaminasi Mikroplastik: Ecoton Himbau Warga Tidak Telan Air Hujan Secara Langsung',
-    category: 'Kesehatan Lingkungan',
+    category: 'Berita Lokal',
     date: '23 November 2025',
     readTime: '5 menit baca',
     description: 'Penelitian terbaru dari Ecoton bersama jejaring GrowGreen, Jejak, dan River Warrior mengungkap air hujan di Surabaya terkontaminasi mikroplastik, dengan konsentrasi tertinggi di daerah Pakis Gelora dan Tanjung Perak.',
@@ -141,7 +141,7 @@ export const initialNews: NewsArticle[] = [
   {
     id: 'news-5',
     title: '5 Things to Watch in Climate and Environment in 2026',
-    category: 'Perubahan Iklim',
+    category: 'Berita Global',
     date: '21 Januari 2026',
     readTime: '6 menit baca',
     description: 'Tahun 2026 menjadi momen krusial bagi aksi iklim global, kerja sama internasional, perkotaan berkelanjutan, dan keberpihakan pada sains.',
