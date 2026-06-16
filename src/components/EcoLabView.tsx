@@ -207,9 +207,18 @@ export default function EcoLabView({ setActiveTab, onSelectBook }: EcoLabViewPro
                   : 'border-amber-400 shadow-sm'
               }`}
             >
-              <div className="flex justify-between items-start mb-4">
-                <div className={`p-2.5 rounded-xl ${isCompleted ? 'bg-emerald-50 text-[#006e1c]' : 'bg-amber-50 text-amber-700'}`}>
-                  <IconComponent className="w-5 h-5" />
+              {/* LKM Cover Image */}
+              <div className="w-full h-36 rounded-xl overflow-hidden mb-4 relative select-none border border-gray-150/50 bg-gray-50">
+                <img 
+                  alt={`Cover LKM ${meeting.number}`}
+                  src={`/Cover LKM ${meeting.number}.png`}
+                  className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                />
+              </div>
+
+              <div className="flex justify-between items-start mb-3">
+                <div className={`p-1.5 rounded-lg ${isCompleted ? 'bg-emerald-50 text-[#006e1c]' : 'bg-amber-50 text-amber-700'}`}>
+                  <IconComponent className="w-4 h-4" />
                 </div>
                 <div className="flex items-center gap-1">
                   {isCompleted && <CheckCircle className="w-3.5 h-3.5 text-[#006e1c]" />}
