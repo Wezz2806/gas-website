@@ -104,7 +104,7 @@ function AppContent() {
         }} 
       />
 
-      <div id="main-container-viewport" className="flex-1 ml-70 transition-all duration-300">
+      <div id="main-container-viewport" className="flex-1 lg:ml-64 transition-all duration-300 min-w-0">
         
         <Header 
           activeTab={activeTab}
@@ -112,7 +112,7 @@ function AppContent() {
           setSearchQuery={setSearchQuery}
         />
 
-        <main className="pt-24 pb-12 px-8 max-w-7xl mx-auto min-h-[calc(100vh-64px)]">
+        <main className="pt-20 pb-12 px-4 md:px-6 lg:px-8 max-w-7xl mx-auto min-h-[calc(100vh-64px)]">
           <Suspense fallback={<TabFallback />}>
             {activeTab === 'dashboard' && (
               <DashboardView 

@@ -150,17 +150,17 @@ export default function Header({
   };
 
   return (
-    <header className="fixed top-0 right-0 w-[calc(100%-280px)] h-16 bg-[#ffffff] border-b border-[#c2c9bb] flex justify-between items-center px-6 z-40 shadow-sm">
+    <header className="fixed top-0 right-0 left-0 lg:left-64 h-16 bg-[#ffffff] border-b border-[#c2c9bb] flex justify-between items-center pl-16 pr-4 lg:px-6 z-40 shadow-sm">
       {/* Page Title Label */}
       <div className="flex items-center gap-3">
-        <h2 className="font-display font-bold text-lg md:text-xl text-[#154212] tracking-tight">
+        <h2 className="font-display font-bold text-sm md:text-base lg:text-xl text-[#154212] tracking-tight line-clamp-1">
           {getPageTitle()}
         </h2>
       </div>
 
-      {/* Center Title */}
-      <div className="flex-grow flex justify-center items-center mx-4">
-        <span className="font-display font-bold text-sm md:text-base lg:text-lg text-[#154212] tracking-wide text-center">
+      {/* Center Title — hidden on small screens */}
+      <div className="flex-grow justify-center items-center mx-4 hidden md:flex">
+        <span className="font-display font-bold text-xs lg:text-base text-[#154212] tracking-wide text-center">
           Green Action for Sustainable
         </span>
       </div>
