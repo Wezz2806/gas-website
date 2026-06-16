@@ -12,6 +12,13 @@ import {
 interface EcoContactViewProps {}
 
 export default function EcoContactView({}: EcoContactViewProps) {
+  const getAssetUrl = (path: string) => {
+    const base = import.meta.env.BASE_URL || '/';
+    const cleanBase = base.endsWith('/') ? base : `${base}/`;
+    const cleanPath = path.startsWith('/') ? path.substring(1) : path;
+    return `${cleanBase}${cleanPath}`;
+  };
+
   const guruInfo = {
     name: 'Azza Nuriah Widowati, M.Pd.',
     role: 'Guru & Peneliti',
@@ -20,21 +27,21 @@ export default function EcoContactView({}: EcoContactViewProps) {
     email: 'azzanuriahw@gmail.com',
     phone: '081554319722',
     officeHours: '08.00 - 15.00 WIB',
-    avatar: '/azza.jpg'
+    avatar: getAssetUrl('azza.jpg')
   };
 
   const promotorInfo = {
     name: 'Prof. Dr. Endang Susantini, M.Pd.',
     role: 'Promotor',
     instansi: 'Universitas Negeri Surabaya',
-    avatar: '/prof endang.jpg'
+    avatar: getAssetUrl('prof endang.jpg')
   };
 
   const coPromotorInfo = {
     name: 'Prof. Dr. Utiya Azizah, M.Pd.',
     role: 'Co-Promotor',
     instansi: 'Universitas Negeri Surabaya',
-    avatar: '/prof utiya.jpg'
+    avatar: getAssetUrl('prof utiya.jpg')
   };
 
   return (
