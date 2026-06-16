@@ -28,7 +28,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
               <Sprout className="w-7 h-7 text-[#91f78e] fill-current animate-bounce" />
             </div>
             <div>
-              <h1 className="font-display font-extrabold text-2xl tracking-wide">GAS Platform</h1>
+              <h1 className="font-display font-extrabold text-2xl tracking-wide">GAS Website</h1>
               <p className="text-[10px] text-[#91f78e] font-semibold tracking-widest uppercase">Edukasi Keberlanjutan</p>
             </div>
           </div>
@@ -43,7 +43,7 @@ export default function AuthLayout({ children }: AuthLayoutProps) {
               Langkah Kecil untuk <span className="text-[#91f78e]">Bumi</span> yang Lebih <span className="text-[#91f78e]">Hijau</span>.
             </h2>
             <p className="text-xs text-gray-300 leading-relaxed max-w-sm">
-              Bergabunglah dengan ribuan siswa dan guru dalam menjelajahi modul laboratorium virtual interaktif, kuis keberlanjutan, dan aksi nyata rewilding hutan kota.
+              Bergabunglah untuk melihat berbagai kasus lingkungan di sekitar kita serta melakukan aksi nyata berkelanjutan bagi lingkungan
             </p>
           </div>
           

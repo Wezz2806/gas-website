@@ -32,6 +32,7 @@ export interface Book {
   description: string;
   content: string;
   pdfUrl: string;
+  flipUrl?: string;
 }
 
 export interface Meeting {

@@ -89,12 +89,25 @@ export default function DashboardView({
             Status Siswa Aktif
           </span>
         </div>
-        <h2 className="font-display font-black text-2xl md:text-3xl text-[#154212] mt-2 mb-1">
-          Selamat datang kembali, Siswa!
-        </h2>
-        <p className="font-sans text-sm text-[#42493e] leading-relaxed">
-          Kontribusi harian Anda untuk keberlanjutan dimulai di sini. Siap melangkah dan belajar hari ini?
-        </p>
+        {hasCheckedInToday ? (
+          <>
+            <h2 className="font-display font-black text-2xl md:text-3xl text-[#154212] mt-2 mb-1">
+              Halo, Sahabat GAS!
+            </h2>
+            <p className="font-sans text-sm text-[#42493e] leading-relaxed">
+              Selamat datang di ruang belajar kita hari ini. Semoga kamu dalam keadaan sehat, semangat, dan siap menemukan pengetahuan baru yang bermanfaat untuk diri sendiri, masyarakat, dan lingkungan. Yuk, mulai perjalanan belajarmu hari ini!
+            </p>
+          </>
+        ) : (
+          <>
+            <h2 className="font-display font-black text-2xl md:text-3xl text-[#154212] mt-2 mb-1">
+              Siap belajar? Awali dengan mengisi absensi terlebih dahulu.
+            </h2>
+            <p className="font-sans text-sm text-[#42493e] leading-relaxed">
+              Guru ingin memastikan semua murid hebat sudah bergabung. Yuk, klik menu absensi sekarang!
+            </p>
+          </>
+        )}
       </section>
 
       {/* Bento Grid Layout */}
@@ -157,9 +170,11 @@ export default function DashboardView({
 
           <div className="my-4 text-left">
             <h4 className="font-display font-bold text-base md:text-lg text-[#154212] mb-1">
-              Analisis Jejak Karbon
+              Petualangan belajar hari ini dimulai dari LKM!
             </h4>
-            <p className="text-xs text-[#42493e]">Siklus Fermentasi Air Hidro dan Penguraian</p>
+            <p className="text-xs text-[#42493e]">
+              Di dalam LKM, kamu akan menemukan kasus menarik, aktivitas seru, dan tantangan yang akan membantumu memahami materi sekaligus melatih kemampuan memecahkan masalah. Yuk, buka LKM sekarang!
+            </p>
           </div>
 
           <div className="mt-auto">
@@ -191,10 +206,10 @@ export default function DashboardView({
           <div className="space-y-4 md:max-w-2xl z-10 text-left">
             <span className="text-[10px] uppercase font-bold text-[#bcf0ae] tracking-widest bg-white/10 px-2.5 py-1 rounded-full w-fit">Bacaan Hari Ini</span>
             <h4 className="font-display font-bold text-lg md:text-xl tracking-tight">
-              Masa Depan Tenaga Hidrogen
+              Ingin tahu lebih banyak? Jelajahi Referensi Belajar!
             </h4>
             <p className="text-xs text-[#bcf0ae] opacity-90 leading-relaxed">
-              Jelajahi bagaimana energi hidrogen hijau dan elektrolisis berbasis mikro canopy mengubah secara mendasar sirkulasi emisi di lanskap pabrik berat sirkuler.
+              Bacaan yang tersedia akan membantumu memahami materi lebih mendalam serta memberikan inspirasi untuk melakukan aksi nyata yang bermanfaat bagi lingkungan. Selamat membaca!
             </p>
           </div>
 

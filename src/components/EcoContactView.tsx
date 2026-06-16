@@ -44,7 +44,7 @@ export default function EcoContactView({}: EcoContactViewProps) {
           EcoContact — Informasi Kontak & Tim Pengembang
         </h2>
         <p className="font-sans text-sm text-[#42493e] max-w-2xl leading-relaxed">
-          Hubungi guru pengajar untuk konsultasi LKM dan proyek GAS, serta kenali tim promotor akademik di balik penelitian platform ini.
+          Hubungi tim peneliti jika ada yang ditanyakan tentang green chemistry, eco enzyme, aksi nyata, dan kegiatan berkelanjutan lainnya untuk lingkungan.
         </p>
       </header>
 
@@ -166,7 +166,7 @@ export default function EcoContactView({}: EcoContactViewProps) {
           {/* Note/Guidance */}
           <div className="bg-[#F5F5DC] border border-[#c2c9bb]/50 rounded-2xl p-4 text-left">
             <p className="text-[11px] text-[#42493e] leading-relaxed font-medium">
-              💡 <strong>Informasi Penelitian:</strong> Platform GAS (Green Action Students) ini dikembangkan sebagai bagian dari penelitian disertasi doktoral untuk mendukung implementasi pembelajaran kimia hijau dan ekoenzim secara kolaboratif.
+              💡 <strong>Informasi Penelitian:</strong> GAS website ini dikembangkan sebagai bagian pendukung dari penelitian disertasi doktor tentang pengembangan model CASUAL (Case-based Active study for Sustainable Understanding and Action in Learning) yang diimplementasikan di sekolah dalam meningkatkan ecoliteracy dan keterampilan pemecahan masalah.
             </p>
           </div>
         </aside>

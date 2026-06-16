@@ -156,7 +156,7 @@ export default function EcoLabView({ setActiveTab, onSelectBook }: EcoLabViewPro
           EcoLab — Lembar Kerja Mahasiswa (LKM)
         </h2>
         <p className="font-sans text-sm text-[#42493e] max-w-2xl leading-relaxed">
-          Unduh, kerjakan, dan unggah LKM untuk setiap pertemuan proyek ekoenzim Anda. Setiap pengiriman dinilai oleh pengajar.
+          Mari unduh, lalu kerjakan LKM dari guru, dan unggah scan LKM untuk diunggah pada setiap pertemuan untuk mendapatkan pengalaman belajar yang baru!
         </p>
       </header>
 
@@ -351,6 +351,7 @@ export default function EcoLabView({ setActiveTab, onSelectBook }: EcoLabViewPro
             </div>
           </div>
         </div>
+      )}
       {/* Custom Delete Document Confirmation Modal */}
       {deletingMeetingId !== null && (
         <div className="fixed inset-0 bg-black/70 z-[60] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-300">
