@@ -10,6 +10,8 @@ import {
   ExternalLink
 } from 'lucide-react';
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
+
 interface NewsCoverImageProps {
   articleUrl: string;
   fallbackUrl: string;
@@ -31,36 +33,17 @@ function NewsCoverImage({ articleUrl, fallbackUrl, alt, className }: NewsCoverIm
       return;
     }
 
-    const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(articleUrl)}`;
+    const scraperUrl = `${API_BASE}/get-news-cover.php?url=${encodeURIComponent(articleUrl)}`;
     
-    fetch(proxyUrl)
+    fetch(scraperUrl)
       .then(res => {
-        if (!res.ok) throw new Error('Proxy error');
+        if (!res.ok) throw new Error('API error');
         return res.json();
       })
       .then(data => {
-        const html = data.contents;
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
-        
-        let foundUrl = '';
-        const ogImage = doc.querySelector('meta[property="og:image"]');
-        if (ogImage) {
-          foundUrl = ogImage.getAttribute('content') || '';
-        } else {
-          const twitterImage = doc.querySelector('meta[name="twitter:image"]');
-          if (twitterImage) {
-            foundUrl = twitterImage.getAttribute('content') || '';
-          }
-        }
-        
-        if (foundUrl) {
-          if (foundUrl.startsWith('/')) {
-            const urlObj = new URL(articleUrl);
-            foundUrl = `${urlObj.origin}${foundUrl}`;
-          }
-          setImgSrc(foundUrl);
-          sessionStorage.setItem(cacheKey, foundUrl);
+        if (data && data.image) {
+          setImgSrc(data.image);
+          sessionStorage.setItem(cacheKey, data.image);
         }
       })
       .catch(() => {
