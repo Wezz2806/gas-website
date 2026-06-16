@@ -687,8 +687,6 @@ export default function EcoCreationView({ searchQuery }: EcoCreationViewProps) {
         </div>
         <ul className="space-y-2">
           {[
-            'Video harus berkaitan dengan pembelajaran lingkungan, inovasi ramah lingkungan, atau proses pembuatan ekoenzim.',
-            'Durasi video dideteksi otomatis saat memilih berkas video (tidak diinput manual).',
             'Format video yang didukung: MP4, MOV, AVI, WEBM, MKV (Maks. 50MB).',
             'Unggahan bersifat instan dan langsung tampil di galeri utama tanpa memerlukan peninjauan guru.',
             'Anda dapat mengedit judul, mengganti berkas video, atau menghapus konten Anda sendiri melalui opsi edit di kartu video.',
