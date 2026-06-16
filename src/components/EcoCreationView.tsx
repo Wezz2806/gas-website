@@ -220,8 +220,8 @@ export default function EcoCreationView({ searchQuery }: EcoCreationViewProps) {
       setSelectedFile(null);
       return;
     }
-    if (file.size > 100 * 1024 * 1024) {
-      setUploadError('Ukuran file maksimal adalah 100MB.');
+    if (file.size > 50 * 1024 * 1024) {
+      setUploadError('Ukuran file maksimal adalah 50MB.');
       setSelectedFile(null);
       return;
     }
@@ -247,8 +247,8 @@ export default function EcoCreationView({ searchQuery }: EcoCreationViewProps) {
       setNewFileToUpload(null);
       return;
     }
-    if (file.size > 100 * 1024 * 1024) {
-      setEditError('Ukuran file maksimal adalah 100MB.');
+    if (file.size > 50 * 1024 * 1024) {
+      setEditError('Ukuran file maksimal adalah 50MB.');
       setNewFileToUpload(null);
       return;
     }
@@ -689,7 +689,7 @@ export default function EcoCreationView({ searchQuery }: EcoCreationViewProps) {
           {[
             'Video harus berkaitan dengan pembelajaran lingkungan, inovasi ramah lingkungan, atau proses pembuatan ekoenzim.',
             'Durasi video dideteksi otomatis saat memilih berkas video (tidak diinput manual).',
-            'Format video yang didukung: MP4, MOV, AVI, WEBM, MKV (Maks. 100MB).',
+            'Format video yang didukung: MP4, MOV, AVI, WEBM, MKV (Maks. 50MB).',
             'Unggahan bersifat instan dan langsung tampil di galeri utama tanpa memerlukan peninjauan guru.',
             'Anda dapat mengedit judul, mengganti berkas video, atau menghapus konten Anda sendiri melalui opsi edit di kartu video.',
           ].map((g, i) => (
@@ -783,7 +783,7 @@ export default function EcoCreationView({ searchQuery }: EcoCreationViewProps) {
                         Durasi dideteksi: {uploadDuration}
                       </span>
                     )}
-                    <span className="block text-[10px] text-gray-400 mt-1">MP4, MOV, AVI, WEBM · Maks 100MB</span>
+                    <span className="block text-[10px] text-gray-400 mt-1">MP4, MOV, AVI, WEBM · Maks 50MB</span>
                     <input 
                       type="file" 
                       ref={uploadFileInputRef}
@@ -938,7 +938,7 @@ export default function EcoCreationView({ searchQuery }: EcoCreationViewProps) {
                             Durasi dideteksi: {editDuration}
                           </span>
                         )}
-                        <span className="block text-[10px] text-gray-400 mt-1">MP4, MOV, AVI, WEBM · Maks 100MB</span>
+                        <span className="block text-[10px] text-gray-400 mt-1">MP4, MOV, AVI, WEBM · Maks 50MB</span>
                         <input 
                           type="file" 
                           ref={editFileInputRef}

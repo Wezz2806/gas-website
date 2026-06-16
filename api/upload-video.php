@@ -35,9 +35,9 @@ if (!in_array($extension, $allowed_extensions)) {
     sendJson(['success' => false, 'message' => 'Format video tidak didukung. Gunakan MP4, MOV, AVI, WEBM, atau MKV.'], 400);
 }
 
-// Batasi ukuran file (maksimal 100MB)
-if ($file_size > 100 * 1024 * 1024) {
-    sendJson(['success' => false, 'message' => 'Ukuran file video maksimal adalah 100MB.'], 400);
+// Batasi ukuran file (maksimal 50MB)
+if ($file_size > 50 * 1024 * 1024) {
+    sendJson(['success' => false, 'message' => 'Ukuran file video maksimal adalah 50MB.'], 400);
 }
 
 $upload_dir = dirname(__DIR__) . '/uploads/videos/';
