@@ -23,13 +23,6 @@ export default function EcoPediaView({
   const [activeReadingBook, setActiveReadingBook] = useState<Book | null>(null);
   const [downloadSuccessMessage, setDownloadSuccessMessage] = useState<string | null>(null);
 
-  const getAssetUrl = (path: string) => {
-    const base = import.meta.env.BASE_URL || '/';
-    const cleanBase = base.endsWith('/') ? base : `${base}/`;
-    const cleanPath = path.startsWith('/') ? path.substring(1) : path;
-    return `${cleanBase}${cleanPath}`;
-  };
-
   useEffect(() => {
     if (initialBookId) {
       const book = books.find(b => b.id === initialBookId);
@@ -90,7 +83,7 @@ export default function EcoPediaView({
             <div className="md:w-2/5 relative overflow-hidden h-56 md:h-auto select-none">
               <img 
                 alt={`${book.title} Cover`} 
-                src={getAssetUrl(book.coverUrl)} 
+                src={book.coverUrl} 
                 referrerPolicy="no-referrer"
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
               />

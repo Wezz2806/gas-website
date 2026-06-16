@@ -9,7 +9,7 @@ export const initialBooks: Book[] = [
     icon: 'science',
     description: '',
     content: 'Buku ini menyajikan 12 prinsip pokok Kimia Hijau (Green Chemistry) untuk mengurangi atau menonaktifkan penggunaan zat kimia berbahaya. Buku ini mengajarkan bagaimana rancangan molekul organik dapat disintesis menggunakan biokatalis alamiah dengan memaksimalkan atom economy, meminimalkan limbah pencemaran air, dan mengoptimalkan sirkulasi bahan ramah lingkungan untuk masa depan industri global.',
-    coverUrl: '/Cover Buku 1.png',
+    coverUrl: './Cover Buku 1.png',
     pdfUrl: '#',
     flipUrl: 'https://online.fliphtml5.com/azzanuriahw/Buku-Ajar-1---Green-Chemistry/'
   },
@@ -21,7 +21,7 @@ export const initialBooks: Book[] = [
     icon: 'compost',
     description: '',
     content: 'Panduan luar biasa ini menjelaskan langkah demi langkah untuk memfermentasi sisa kulit buah segar dan sayuran bersama gula merah/molase di air bersih dengan rasio emas 1:3:10. Selama 3 bulan berjalan, mikroba pengurai menghasilkan cairan multi-manfaat yang kaya akan asam asetat, amilase, lipase, dan enzim aktif lainnya yang berguna sebagai pembersih alami, disinfektan bebas toksin, serta pupuk organik penyubur tanah.',
-    coverUrl: '/Cover Buku 2.png',
+    coverUrl: './Cover Buku 2.png',
     pdfUrl: '#',
     flipUrl: 'https://online.fliphtml5.com/azzanuriahw/Buku-Ajar-2---Ecoenzyme/'
   }
