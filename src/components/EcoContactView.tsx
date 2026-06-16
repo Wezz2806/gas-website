@@ -6,6 +6,7 @@ import {
   Clock, 
   GraduationCap,
   MessageCircle,
+  Award,
 } from 'lucide-react';
 
 interface EcoContactViewProps {}
@@ -167,6 +168,14 @@ export default function EcoContactView({}: EcoContactViewProps) {
           <div className="bg-[#F5F5DC] border border-[#c2c9bb]/50 rounded-2xl p-4 text-left">
             <p className="text-[11px] text-[#42493e] leading-relaxed font-medium">
               💡 <strong>Informasi Penelitian:</strong> GAS website ini dikembangkan sebagai bagian pendukung dari penelitian disertasi doktor tentang pengembangan model CASUAL (Case-based Active study for Sustainable Understanding and Action in Learning) yang diimplementasikan di sekolah dalam meningkatkan ecoliteracy dan keterampilan pemecahan masalah.
+            </p>
+          </div>
+
+          {/* Acknowledgement Box */}
+          <div className="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-4 text-left flex gap-3 items-start">
+            <Award className="w-5 h-5 text-emerald-700 shrink-0 mt-0.5" />
+            <p className="text-[11px] text-emerald-950 leading-relaxed font-medium">
+              <strong>Ucapan Terima Kasih:</strong> GAS website ini adalah salah satu luaran penelitian. Tim peneliti ingin menyampaikan rasa terima kasih yang tulus kepada Direktorat Penelitian dan Pengabdian Masyarakat (DPPM) atas pendanaan penelitian ini melalui Skema Penelitian Disertasi Doktor Kementerian Pendidikan Tinggi, Sains, dan Teknologi, Republik Indonesia, di bawah Nomor Kontrak B/74008/UN38.III.1/LK.04.00/2025, tanggal: 28 Mei 2025.
             </p>
           </div>
         </aside>
