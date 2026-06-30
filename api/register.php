@@ -43,7 +43,7 @@ if (strlen($password) < 8) {
 }
 
 // Validasi role
-$allowed_roles = ['student', 'teacher', 'admin'];
+$allowed_roles = ['student', 'admin'];
 if (!in_array($role, $allowed_roles)) {
     $role = 'student';
 }

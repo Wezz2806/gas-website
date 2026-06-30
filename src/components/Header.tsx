@@ -145,6 +145,18 @@ export default function Header({
       case 'ecochallenge': return 'Evaluasi EcoChallenge';
       case 'ecocontact': return 'Hubungi Guru — EcoContact';
       case 'support': return 'Dukungan & FAQ';
+      // Teacher Panel tabs
+      case 'teacher-dashboard' as any: return 'Dashboard Guru — Teacher Panel';
+      case 'teacher-meetings' as any: return 'Manajemen Pertemuan';
+      case 'teacher-submissions' as any: return 'Review & Nilai LKM';
+      case 'teacher-quiz' as any: return 'Manajemen Kuis';
+      case 'teacher-progress' as any: return 'Laporan Kemajuan Kelas';
+      // Admin Panel tabs
+      case 'admin-dashboard' as any: return 'Pusat Kontrol Administrator';
+      case 'admin-users' as any: return 'Manajemen Pengguna';
+      case 'admin-ecopedia' as any: return 'Kelola Pustaka EcoPedia';
+      case 'admin-ecoupdate' as any: return 'Kelola Portal EcoUpdate';
+      case 'admin-ecocontact' as any: return 'Kelola Personel EcoContact';
       default: return 'Green Action for Sustainable';
     }
   };

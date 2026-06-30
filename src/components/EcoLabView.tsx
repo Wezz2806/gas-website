@@ -24,13 +24,32 @@ interface EcoLabViewProps {
 }
 
 export default function EcoLabView({ setActiveTab, onSelectBook }: EcoLabViewProps) {
-  const [meetings] = useState<Meeting[]>(initialMeetings);
+  const [meetings, setMeetings] = useState<Meeting[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Track uploaded files per meeting ID
   const [uploadedFiles, setUploadedFiles] = useState<Record<string, string>>({});
 
-  // Load submissions from the database on mount
+  // Load meetings and submissions from the database on mount
   useEffect(() => {
+    // 1. Fetch meetings
+    fetch('/api/ecolab.php')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.meetings) {
+          setMeetings(data.meetings);
+        } else {
+          setMeetings(initialMeetings);
+        }
+      })
+      .catch(() => {
+        setMeetings(initialMeetings);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+
+    // 2. Fetch submissions
     const fetchSubmissions = async () => {
       try {
         const subs = await submissionService.getSubmissions();
@@ -153,25 +172,13 @@ export default function EcoLabView({ setActiveTab, onSelectBook }: EcoLabViewPro
     setUploadedFile(null);
   };
 
-  const getLkmEmbedUrl = (meetingNumber: number) => {
-    const links: Record<number, string> = {
-      1: 'https://drive.google.com/file/d/11an9PvFIlJnrJniqR2Z_k8W4hudX2yM_/preview',
-      2: 'https://drive.google.com/file/d/1leOTPkIbRbEH8Lsy28B1yCnoeykc9RaQ/preview',
-      3: 'https://drive.google.com/file/d/18Y8klb4fEvTAy5AZL8--ihxX2df1rffg/preview',
-      4: 'https://drive.google.com/file/d/14bqlkq9CD9DXx7N2VmzjdDxluy0RFgO5/preview'
-    };
-    return links[meetingNumber] || '';
+  const getLkmEmbedUrl = (meeting: Meeting) => {
+    return (meeting as any).embed_url || '';
   };
 
-  const handleDownloadLkm = (meetingNumber: number) => {
-    const downloadUrls: Record<number, string> = {
-      1: 'https://drive.google.com/file/d/11an9PvFIlJnrJniqR2Z_k8W4hudX2yM_/view?usp=sharing',
-      2: 'https://drive.google.com/file/d/1leOTPkIbRbEH8Lsy28B1yCnoeykc9RaQ/view?usp=sharing',
-      3: 'https://drive.google.com/file/d/18Y8klb4fEvTAy5AZL8--ihxX2df1rffg/view?usp=sharing',
-      4: 'https://drive.google.com/file/d/14bqlkq9CD9DXx7N2VmzjdDxluy0RFgO5/view?usp=sharing'
-    };
-    const link = downloadUrls[meetingNumber];
-    if (link) {
+  const handleDownloadLkm = (meeting: Meeting) => {
+    const link = (meeting as any).download_url || '#';
+    if (link && link !== '#') {
       window.open(link, '_blank');
     }
   };
@@ -306,7 +313,7 @@ export default function EcoLabView({ setActiveTab, onSelectBook }: EcoLabViewPro
                   </button>
 
                   <button 
-                    onClick={() => handleDownloadLkm(meeting.number)}
+                    onClick={() => handleDownloadLkm(meeting)}
                     className="flex flex-col items-center justify-center p-2 rounded-xl border border-gray-200 hover:border-emerald-700 text-gray-600 hover:text-emerald-800 text-[9px] font-bold uppercase transition-all cursor-pointer bg-white"
                     title="Unduh LKM"
                   >
@@ -460,7 +467,7 @@ export default function EcoLabView({ setActiveTab, onSelectBook }: EcoLabViewPro
       {activeReadingMeeting && (
         <LkmReaderModal 
           meeting={activeReadingMeeting} 
-          embedUrl={getLkmEmbedUrl(activeReadingMeeting.number)} 
+          embedUrl={getLkmEmbedUrl(activeReadingMeeting)} 
           onClose={() => setActiveReadingMeeting(null)} 
         />
       )}

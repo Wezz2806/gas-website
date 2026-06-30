@@ -102,9 +102,184 @@ try {
         ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     ");
 
-    // Ensure default teacher and evaluation row exist for eco_challenge_comments foreign key constraint
-    $pdo->exec("INSERT IGNORE INTO users (id, full_name, email, role) VALUES (9999, 'Sistem Guru', 'sistem.guru@gas.website', 'teacher')");
-    $pdo->exec("INSERT IGNORE INTO eco_challenge_evaluations (id, teacher_id, evaluation_text) VALUES (1, 9999, 'Evaluasi Kimia Hijau')");
+    // Seeding default evaluation if an admin exists
+    $adminId = $pdo->query("SELECT id FROM users WHERE role = 'admin' ORDER BY id ASC LIMIT 1")->fetchColumn();
+    if ($adminId) {
+        $pdo->exec("INSERT IGNORE INTO eco_challenge_evaluations (id, teacher_id, evaluation_text) VALUES (1, $adminId, 'Evaluasi Kimia Hijau')");
+    }
+
+    // Auto-migration: ecopedia_books
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS ecopedia_books (
+            id VARCHAR(50) PRIMARY KEY,
+            title VARCHAR(300) NOT NULL,
+            category VARCHAR(100) DEFAULT '',
+            tag_class VARCHAR(100) DEFAULT '',
+            icon VARCHAR(50) DEFAULT 'science',
+            description TEXT,
+            content TEXT,
+            pdf_url VARCHAR(500) DEFAULT '#',
+            flip_url VARCHAR(500) DEFAULT NULL,
+            cover_url VARCHAR(500) DEFAULT ''
+        ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    ");
+
+    // Auto-migration: ecoupdate_news
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS ecoupdate_news (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            title VARCHAR(300) NOT NULL,
+            category VARCHAR(150) NOT NULL,
+            date VARCHAR(100) NOT NULL,
+            read_time VARCHAR(50) NOT NULL,
+            description TEXT NOT NULL,
+            content TEXT NOT NULL,
+            cover_url VARCHAR(500) NOT NULL,
+            author VARCHAR(150) NOT NULL,
+            likes INT NOT NULL DEFAULT 0,
+            comments_count INT NOT NULL DEFAULT 0,
+            url VARCHAR(500) DEFAULT ''
+        ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    ");
+
+    // Auto-migration: ecocontact_members
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS ecocontact_members (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(200) NOT NULL,
+            role VARCHAR(100) NOT NULL,
+            program VARCHAR(150) DEFAULT '',
+            instansi VARCHAR(250) NOT NULL,
+            email VARCHAR(150) DEFAULT '',
+            phone VARCHAR(50) DEFAULT '',
+            office_hours VARCHAR(100) DEFAULT '',
+            avatar VARCHAR(500) DEFAULT '',
+            sort_order INT NOT NULL DEFAULT 0
+        ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    ");
+
+    // Auto-migration: ecolab_meetings
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS ecolab_meetings (
+            id VARCHAR(50) PRIMARY KEY,
+            number INT NOT NULL,
+            title VARCHAR(300) NOT NULL,
+            description TEXT,
+            icon VARCHAR(50) DEFAULT 'science',
+            status VARCHAR(50) DEFAULT 'scheduled',
+            embed_url VARCHAR(500) DEFAULT '',
+            download_url VARCHAR(500) DEFAULT ''
+        ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    ");
+
+    // Ensure student_submissions meeting_id has the correct collation to prevent illegal mix of collations on JOIN
+    try {
+        $pdo->exec("ALTER TABLE student_submissions MODIFY meeting_id VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL");
+    } catch (PDOException $e) {
+        // Table might not exist yet during initial setup
+    }
+
+    // Seeding: ecolab_meetings
+    $checkMeetings = $pdo->query("SELECT COUNT(*) FROM ecolab_meetings")->fetchColumn();
+    if ($checkMeetings == 0) {
+        $pdo->exec("
+            INSERT INTO ecolab_meetings (id, number, title, description, icon, status, embed_url, download_url) VALUES
+            ('m1', 1, 'Mengapa green chemistry penting?', 'Lembar Kerja Mahasiswa 1: Menganalisis urgensi dan prinsip dasar Green Chemistry.', 'groups', 'completed', 'https://drive.google.com/file/d/11an9PvFIlJnrJniqR2Z_k8W4hudX2yM_/preview', 'https://drive.google.com/file/d/11an9PvFIlJnrJniqR2Z_k8W4hudX2yM_/view?usp=sharing'),
+            ('m2', 2, 'Integrasi Prinsip Green Chemistry dalam Masalah Lingkungan', 'Lembar Kerja Mahasiswa 2: Memahami integrasi Green Chemistry dalam penyelesaian isu lingkungan.', 'science', 'ongoing', 'https://drive.google.com/file/d/1leOTPkIbRbEH8Lsy28B1yCnoeykc9RaQ/preview', 'https://drive.google.com/file/d/1leOTPkIbRbEH8Lsy28B1yCnoeykc9RaQ/view?usp=sharing'),
+            ('m3', 3, 'Aksi Nyata Berkelanjutan Berbasis Prinsip Green Chemistry', 'Lembar Kerja Mahasiswa 3: Merancang dan melaksanakan aksi nyata berkelanjutan berbasis kimia hijau.', 'biotech', 'scheduled', 'https://drive.google.com/file/d/18Y8klb4fEvTAy5AZL8--ihxX2df1rffg/preview', 'https://drive.google.com/file/d/18Y8klb4fEvTAy5AZL8--ihxX2df1rffg/view?usp=sharing'),
+            ('m4', 4, 'Agents of Change: Sampah Organik menjadi Solusi Organik', 'Lembar Kerja Mahasiswa 4: Mengembangkan solusi organik dari pengolahan limbah sampah organik sekitar.', 'inventory', 'scheduled', 'https://drive.google.com/file/d/14bqlkq9CD9DXx7N2VmzjdDxluy0RFgO5/preview', 'https://drive.google.com/file/d/14bqlkq9CD9DXx7N2VmzjdDxluy0RFgO5/view?usp=sharing')
+        ");
+    }
+
+
+    // Seeding: ecopedia_books
+    $checkBooks = $pdo->query("SELECT COUNT(*) FROM ecopedia_books")->fetchColumn();
+    if ($checkBooks == 0) {
+        $pdo->exec("
+            INSERT INTO ecopedia_books (id, title, category, tag_class, icon, description, content, pdf_url, flip_url, cover_url) VALUES
+            ('green-chemistry', 'Solusi Sat-Set untuk Penyelamatan Bumi: Green Chemistry dan Keberlanjutan Lingkungan', '', 'bg-primary-container text-on-primary-fixed', 'science', '', 'Buku ini menyajikan 12 prinsip pokok Kimia Hijau (Green Chemistry) untuk mengurangi atau menonaktifkan penggunaan zat kimia berbahaya. Buku ini mengajarkan bagaimana rancangan molekul organik dapat disintesis menggunakan biokatalis alamiah dengan memaksimalkan atom economy, meminimalkan limbah pencemaran air, dan mengoptimalkan sirkulasi bahan ramah lingkungan untuk masa depan industri global.', '#', 'https://online.fliphtml5.com/azzanuriahw/Buku-Ajar-1---Green-Chemistry/', './Cover Buku 1.png'),
+            ('ecoenzyme', 'Bukan Sihir, Cuma Sains: Keajaiban Eco Enzyme yang Bikin Geleng Kepala', '', 'bg-secondary-container text-on-secondary-container', 'compost', '', 'Panduan luar biasa ini menjelaskan langkah demi langkah untuk memfermentasi sisa kulit buah segar dan sayuran bersama gula merah/molase di air bersih dengan rasio emas 1:3:10. Selama 3 bulan berjalan, mikroba pengurai menghasilkan cairan multi-manfaat yang kaya akan asam asetat, amilase, lipase, dan enzim aktif lainnya yang berguna sebagai pembersih alami, disinfektan bebas toksin, serta pupuk organik penyubur tanah.', '#', 'https://online.fliphtml5.com/azzanuriahw/Buku-Ajar-2---Ecoenzyme/', './Cover Buku 2.png')
+        ");
+    }
+
+    // Seeding: ecoupdate_news
+    $checkNews = $pdo->query("SELECT COUNT(*) FROM ecoupdate_news")->fetchColumn();
+    if ($checkNews == 0) {
+        $stmt = $pdo->prepare("
+            INSERT INTO ecoupdate_news (title, category, date, read_time, description, content, cover_url, author, likes, comments_count, url) VALUES
+            (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ");
+        $stmt->execute([
+            'Ratusan Perempuan Surabaya Deklarasikan “She Heroes” di CFD Tunjungan',
+            'Berita Lokal', '26 April 2026', '5 menit baca',
+            'Sekitar 500 perempuan memadati kawasan Car Free Day Jalan Tunjungan untuk mengikuti Deklarasi Gerakan “She Heroes” sebagai upaya menekan timbulan sampah plastik sekali pakai.',
+            'Sekitar 500 perempuan memadati kawasan Car Free Day Jalan Tunjungan untuk mengikuti Deklarasi Gerakan “She Heroes”. Gerakan ini mengajak perempuan mulai beralih dari pembalut sekali pakai menuju produk ramah lingkungan sebagai upaya menekan timbulan sampah plastik yang sulit terurai. Asisten Pemerintahan dan Kesejahteraan Rakyat Kota Surabaya, M. Fikser, menegaskan bahwa sampah pembalut sekali pakai menjadi ancaman nyata bagi sungai and lingkungan karena butuh waktu hingga 500 tahun untuk terurai. Bumbi bersama Tunas Hijau menghadirkan alternatif ramah lingkungan sebagai solusi nyata bagi satu juta perempuan usia produktif di Surabaya demi masa depan ekologis kota yang berkelanjutan.',
+            'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=800&q=80',
+            'Tunas Hijau ID', 412, 18,
+            'https://tunashijau.id/ratusan-perempuan-surabaya-deklarasikan-she-heroes-di-cfd-tunjungan/'
+        ]);
+        
+        $stmt->execute([
+            'Penjualan Mobil Listrik di Surabaya Naik 4 Kali Lipat pada Awal 2026',
+            'Berita Lokal', '19 Mei 2026', '4 menit baca',
+            'Penjualan kendaraan listrik (EV) di Kota Surabaya mengalami kenaikan drastis hingga lebih dari empat kali lipat pada kuartal pertama 2026 berkat efisiensi biaya dan kemudahan perawatan.',
+            'Indomobil Dealers Group terus mendorong percepatan adopsi kendaraan listrik (EV) di Indonesia melalui gelaran pameran otomotif. CEO Indomobil Dealers Group, Santiko Wardoyo, menyatakan bahwa kendaraan listrik sangat ekonomis and efisien dari sisi bahan bakar serta perawatan pasca-penjualan yang jauh lebih murah karena tidak memerlukan oli. Untuk menunjang hal ini, PLN UID Jawa Timur berkomitmen dengan menyediakan sekitar 300 stasiun pengisian daya (SPKLU) yang tersebar luas demi meningkatkan kepercayaan masyarakat menggunakan kendaraan ramah lingkungan.',
+            'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=800&q=80',
+            'Lukman Hakim', 356, 22,
+            'httpsSurabaya.inews.id/read/691788/penjualan-mobil-listrik-di-surabaya-naik-4-kali-lipat-pada-awal-2026'
+        ]);
+        
+        $stmt->execute([
+            'Resolusi 2026 Namira Eco Print Surabaya: Gaungkan “Back to Nature”, Ajak Anak Muda Lebih Peduli Lingkungan',
+            'Berita Lokal', '23 Januari 2026', '5 menit baca',
+            'Menyambut tahun 2026, Namira Eco Print Surabaya mengusung tema "Back to Nature" dengan meluncurkan koleksi warna-warna alami dan mengajak generasi muda lebih peduli terhadap kelestarian alam.',
+            'Menyambut tahun 2026, Namira Eco Print menegaskan komitmennya untuk terus bergerak bersama alam melalui koleksi bernuansa "Back to Nature". Owner Namira Eco Print, Yayuk Eko Agustin, menyampaikan bahwa konsep ini diwujudkan dengan eksplorasi tanaman mangrove dan pewarna alami seperti rebusan bubuk kayu lockwood yang memunculkan warna biru lembut. Namira memegang komitmen teguh: siapa yang memetik daun wajib menanam kembali. Diharapkan produk fesyen ini dapat menjadi sarana edukasi bagi Gen Z dan Gen Alpha untuk mulai menghargai alam di sekitar mereka.',
+            'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=80',
+            'Dimas Mahendra', 289, 14,
+            'https://radarsurabaya.jawapos.com/surabaya/2601230024/resolusi-2026-namira-eco-print-surabaya-gaungkan-back-to-nature-ajak-anak-muda-lebih-peduli-lingkungan'
+        ]);
+        
+        $stmt->execute([
+            'Air Hujan Kota Surabaya Terkontaminasi Mikroplastik: Ecoton Himbau Warga Tidak Telan Air Hujan Secara Langsung',
+            'Berita Lokal', '23 November 2025', '5 menit baca',
+            'Penelitian terbaru dari Ecoton bersama jejaring GrowGreen, Jejak, dan River Warrior mengungkap air hujan di Surabaya terkontaminasi mikroplastik, dengan konsentrasi tertinggi di daerah Pakis Gelora dan Tanjung Perak.',
+            'Penelitian terbaru dari Lembaga Kajian Ekologi dan Konservasi Lahan Basah (Ecoton) bersama komunitas GrowGreen dan Jejak menunjukkan bahwa seluruh sampel air hujan di Kota Surabaya telah terkontaminasi oleh mikroplastik jenis fiber. Konsentrasi tertinggi ditemukan di Pakis Gelora dengan 356 partikel per liter and Tanjung Perak dengan 309 partikel per liter. Kontaminasi ini dipicu oleh pembakaran sampah terbuka, gesekan ban kendaraan dengan aspal, serta evaporasi uap air laut yang tercemar plastik. Ecoton mengimbau masyarakat tidak menelan air hujan secara langsung demi kesehatan.',
+            'https://images.unsplash.com/photo-1534274988757-a28bf1a57c17?auto=format&fit=crop&w=800&q=80',
+            'Ecoton News', 512, 37,
+            'https://ecoton.or.id/air-hujan-kota-surabaya-terkontaminasi-mikroplastik-ecoton-himbau-warga-tidak-telan-air-hujan-secara-langsung/'
+        ]);
+        
+        $stmt->execute([
+            '5 Things to Watch in Climate and Environment in 2026',
+            'Berita Global', '21 Januari 2026', '6 menit baca',
+            'Tahun 2026 menjadi momen krusial bagi aksi iklim global, kerja sama internasional, perkotaan berkelanjutan, dan keberpihakan pada sains.',
+            'United Nations University merilis lima tren lingkungan global utama yang wajib diperhatikan sepanjang tahun 2026: (1) peningkatan suhu bumi global yang mendekati overshoot 1.5 derajat Celcius, (2) negosiasi COP 31 di Turki mengenai kelanjutan target pendanaan iklim developing nations, (3) upaya penyelarasan tiga konvensi Rio Conventions (Iklim, Biodiversitas, dan Lahan Degradasi), (4) peran strategis kepemimpinan perkotaan dalam transisi berkelanjutan yang adil di World Urban Forum Baku, serta (5) pentingnya mempertahankan komitmen kolaborasi ilmiah internasional berbasis data dan sains terpercaya.',
+            'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=800&q=80',
+            'United Nations University', 624, 45,
+            'https://unu.edu/ehs/article/5-things-watch-climate-and-environment-2026'
+        ]);
+    }
+
+    // Seeding: ecocontact_members
+    $checkContacts = $pdo->query("SELECT COUNT(*) FROM ecocontact_members")->fetchColumn();
+    if ($checkContacts == 0) {
+        $stmt = $pdo->prepare("
+            INSERT INTO ecocontact_members (name, role, program, instansi, email, phone, office_hours, avatar, sort_order) VALUES
+            (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ");
+        $stmt->execute([
+            'Azza Nuriah Widowati, M.Pd.', 'Guru & Peneliti', 'S3 Pendidikan Sains', 'Universitas Negeri Surabaya',
+            'azzanuriahw@gmail.com', '081554319722', '08.00 - 15.00 WIB', './azza.jpg', 0
+        ]);
+        $stmt->execute([
+            'Prof. Dr. Endang Susantini, M.Pd.', 'Promotor', '', 'Universitas Negeri Surabaya',
+            '', '', '', './prof endang.jpg', 1
+        ]);
+        $stmt->execute([
+            'Prof. Dr. Utiya Azizah, M.Pd.', 'Co-Promotor', '', 'Universitas Negeri Surabaya',
+            '', '', '', './prof utiya.jpg', 2
+        ]);
+    }
 } catch (PDOException $e) {
     error_log('Failed to auto-migrate/seed database: ' . $e->getMessage());
 }

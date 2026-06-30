@@ -67,16 +67,50 @@ interface EcoUpdateProps {
 }
 
 export default function EcoUpdateView({ searchQuery }: EcoUpdateProps) {
-  const [activeCategory, setActiveCategory] = useState<string>('Unggulan');
-  const [news, setNews] = useState<NewsArticle[]>(initialNews);
+  const [activeCategory, setActiveCategory] = useState<string>('Semua');
+  const [news, setNews] = useState<NewsArticle[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [readingArticle, setReadingArticle] = useState<NewsArticle | null>(null);
 
-  const categories = ['Unggulan', 'Berita Lokal', 'Berita Global'];
+  useEffect(() => {
+    fetch('/api/ecoupdate.php')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.news) {
+          const mappedNews = data.news.map((n: any) => ({
+            id: n.id,
+            title: n.title,
+            category: n.category,
+            date: n.date,
+            readTime: n.read_time,
+            description: n.description,
+            content: n.content,
+            coverUrl: n.cover_url,
+            author: n.author,
+            likes: parseInt(n.likes) || 0,
+            commentsCount: parseInt(n.comments_count) || 0,
+            url: n.url || ''
+          }));
+          setNews(mappedNews);
+        } else {
+          setNews(initialNews);
+        }
+      })
+      .catch(err => {
+        console.error('Error fetching news:', err);
+        setNews(initialNews);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, []);
+
+  const categories = ['Semua', 'Berita Lokal', 'Berita Global'];
 
 
 
   const filteredNews = news.filter(art => {
-    const matchesTab = activeCategory === 'Unggulan' || art.category === activeCategory;
+    const matchesTab = activeCategory === 'Semua' || art.category === activeCategory;
     const matchesSearch = searchQuery === '' || 
       art.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
       art.description.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -153,10 +187,14 @@ export default function EcoUpdateView({ searchQuery }: EcoUpdateProps) {
             </button>
           </footer>
         </article>
+      ) : isLoading ? (
+        <div className="flex justify-center items-center py-16">
+          <div className="w-8 h-8 border-4 border-[#154212] border-t-transparent rounded-full animate-spin"></div>
+        </div>
       ) : (
         <>
           {/* Featured Hero Banner */}
-          {activeCategory === 'Unggulan' && filteredNews.length > 0 && (
+          {activeCategory === 'Semua' && filteredNews.length > 0 && (
             <section 
               onClick={() => setReadingArticle(filteredNews[0])}
               className="relative w-full aspect-[21/9] rounded-3xl overflow-hidden shadow-md group cursor-pointer bg-inverse-surface border border-gray-150"

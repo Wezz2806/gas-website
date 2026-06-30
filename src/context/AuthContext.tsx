@@ -7,7 +7,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (fullName: string, email: string, password: string, role: 'student' | 'teacher') => Promise<void>;
+  register: (fullName: string, email: string, password: string, role: 'student' | 'admin') => Promise<void>;
   logout: () => Promise<void>;
   updateUserStreak: (newStreak: number, lastCheckin?: string | null) => void;
   updateUserProfile: (formData: FormData) => Promise<void>;
@@ -55,7 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     fullName: string,
     email: string,
     password: string,
-    role: 'student' | 'teacher'
+    role: 'student' | 'admin'
   ) => {
     await authService.register(fullName, email, password, role);
   }, []);

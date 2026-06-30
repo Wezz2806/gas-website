@@ -51,7 +51,7 @@ export const authService = {
   /**
    * Pendaftaran akun baru (Lokal).
    */
-  async register(fullName: string, email: string, password: string, role: 'student' | 'teacher'): Promise<{ success: boolean; message: string }> {
+  async register(fullName: string, email: string, password: string, role: 'student' | 'admin'): Promise<{ success: boolean; message: string }> {
     return apiRequest<{ success: boolean; message: string }>(`${API_BASE}/register.php`, {
       method: 'POST',
       body: JSON.stringify({ full_name: fullName, email, password, role }),

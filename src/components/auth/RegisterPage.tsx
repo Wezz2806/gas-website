@@ -4,7 +4,7 @@ import { AuthPage } from '../../types';
 
 interface RegisterPageProps {
   onNavigate: (page: AuthPage) => void;
-  onRegister: (fullName: string, email: string, password: string, role: 'student' | 'teacher') => Promise<void>;
+  onRegister: (fullName: string, email: string, password: string, role: 'student' | 'admin') => Promise<void>;
 }
 
 export default function RegisterPage({ onNavigate, onRegister }: RegisterPageProps) {

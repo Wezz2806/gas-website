@@ -2,20 +2,21 @@ export type Tab = 'dashboard' | 'ecopedia' | 'ecolab' | 'ecoupdate' | 'ecocreati
 
 export type AuthPage = 'login' | 'register' | 'forgot-password';
 
-/** @deprecated Teacher module removed — kept for type compatibility only */
-export type TeacherTab = 
-  | 'teacher-dashboard' 
-  | 'teacher-meetings' 
-  | 'teacher-submissions' 
-  | 'teacher-quiz' 
-  | 'teacher-progress';
+export type AdminTab = 
+  | 'admin-dashboard' 
+  | 'admin-users'
+  | 'admin-ecopedia'
+  | 'admin-ecoupdate'
+  | 'admin-ecocontact'
+  | 'admin-ecolab'
+  | 'admin-lkm-data';
 
 
 export interface User {
   id: number;
   full_name: string;
   email: string;
-  role: 'student' | 'teacher' | 'admin';
+  role: 'student' | 'admin';
   avatar_url: string | null;
   streak: number;
   auth_provider: 'local' | 'google';

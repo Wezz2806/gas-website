@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS users (
     full_name     VARCHAR(100)   NOT NULL,
     email         VARCHAR(150)   NOT NULL UNIQUE,
     password_hash VARCHAR(255)   DEFAULT NULL,   -- NULL jika login via Google
-    role          ENUM('student','teacher','admin') NOT NULL DEFAULT 'student',
+    role          ENUM('student','admin') NOT NULL DEFAULT 'student',
     avatar_url    VARCHAR(500)   DEFAULT NULL,
     eco_points    INT            NOT NULL DEFAULT 0,
     streak        INT            NOT NULL DEFAULT 0,

@@ -1,4 +1,4 @@
-import React, { useState, lazy, Suspense } from 'react';
+import React, { useState, lazy, Suspense, useEffect } from 'react';
 import { Tab, AuthPage } from './types';
 import { Sprout, Loader2 } from 'lucide-react';
 
@@ -24,6 +24,18 @@ const EcoChallengeView = lazy(() => import('./components/EcoChallengeView'));
 const EcoContactView = lazy(() => import('./components/EcoContactView'));
 const SupportView = lazy(() => import('./components/SupportView'));
 
+
+
+// Lazy imports for Admin Panel
+const AdminSidebar = lazy(() => import('./components/admin/AdminSidebar'));
+const AdminDashboardView = lazy(() => import('./components/admin/AdminDashboardView'));
+const AdminUsersView = lazy(() => import('./components/admin/AdminUsersView'));
+const AdminEcopediaView = lazy(() => import('./components/admin/AdminEcopediaView'));
+const AdminEcoupdateView = lazy(() => import('./components/admin/AdminEcoupdateView'));
+const AdminEcocontactView = lazy(() => import('./components/admin/AdminEcocontactView'));
+const AdminEcolabView = lazy(() => import('./components/admin/AdminEcolabView'));
+const AdminLkmDataView = lazy(() => import('./components/admin/AdminLkmDataView'));
+
 // Shared fallback for lazy-loaded tabs
 function TabFallback() {
   return (
@@ -43,9 +55,20 @@ function AppContent() {
   } = useAuth();
   
   const [authPage, setAuthPage] = useState<AuthPage>('login');
-  const [activeTab, setActiveTab] = useState<Tab>('dashboard');
+  const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
+
+  // Set default tab based on user role when authenticated
+  useEffect(() => {
+    if (user) {
+      if (user.role === 'admin') {
+        setActiveTab('admin-dashboard');
+      } else {
+        setActiveTab('dashboard');
+      }
+    }
+  }, [user]);
 
   // 1. Splash Screen while loading session
   if (isLoading) {
@@ -91,12 +114,68 @@ function AppContent() {
     );
   }
 
-  // 3. Main student dashboard
+  // 3. Admin Layout
+  if (user?.role === 'admin') {
+    return (
+      <div className="min-h-screen bg-slate-50 flex font-sans antialiased text-slate-800">
+        <Suspense fallback={<TabFallback />}>
+          <AdminSidebar 
+            activeTab={activeTab as any} 
+            setActiveTab={setActiveTab} 
+          />
+        </Suspense>
+
+        <div id="main-container-viewport" className="flex-1 lg:ml-64 transition-all duration-300 min-w-0">
+          <Header 
+            activeTab={activeTab as any}
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+          />
+
+          <main className="pt-20 pb-12 px-4 md:px-6 lg:px-8 max-w-7xl mx-auto min-h-[calc(100vh-64px)]">
+            <Suspense fallback={<TabFallback />}>
+              {activeTab === 'admin-dashboard' && (
+                <AdminDashboardView setActiveTab={setActiveTab} />
+              )}
+
+              {activeTab === 'admin-users' && (
+                <AdminUsersView />
+              )}
+
+              {activeTab === 'admin-ecopedia' && (
+                <AdminEcopediaView />
+              )}
+
+              {activeTab === 'admin-ecoupdate' && (
+                <AdminEcoupdateView />
+              )}
+
+              {activeTab === 'admin-ecocontact' && (
+                <AdminEcocontactView />
+              )}
+
+              {activeTab === 'admin-ecolab' && (
+                <AdminEcolabView />
+              )}
+
+              {activeTab === 'admin-lkm-data' && (
+                <AdminLkmDataView />
+              )}
+            </Suspense>
+          </main>
+        </div>
+      </div>
+    );
+  }
+
+
+
+  // 5. Main student dashboard (Default)
   return (
     <div className="min-h-screen bg-[#FFF7ED] flex font-sans antialiased text-gray-800">
       
       <Sidebar 
-        activeTab={activeTab} 
+        activeTab={activeTab as Tab} 
         setActiveTab={(tab) => {
           setActiveTab(tab);
           setSearchQuery('');
@@ -107,7 +186,7 @@ function AppContent() {
       <div id="main-container-viewport" className="flex-1 lg:ml-64 transition-all duration-300 min-w-0">
         
         <Header 
-          activeTab={activeTab}
+          activeTab={activeTab as Tab}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
         />
@@ -116,7 +195,7 @@ function AppContent() {
           <Suspense fallback={<TabFallback />}>
             {activeTab === 'dashboard' && (
               <DashboardView 
-                setActiveTab={setActiveTab} 
+                setActiveTab={(tab) => setActiveTab(tab as string)} 
               />
             )}
 
@@ -130,7 +209,7 @@ function AppContent() {
 
             {activeTab === 'ecolab' && (
               <EcoLabView 
-                setActiveTab={setActiveTab} 
+                setActiveTab={(tab) => setActiveTab(tab as string)} 
                 onSelectBook={setSelectedBookId}
               />
             )}
