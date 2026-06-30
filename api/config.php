@@ -86,8 +86,17 @@ try {
     ], 503);
 }
 
-// Auto migration: Create video comments table if not exists
+// Auto migration: Update schema constraints and tables
 try {
+    // 1. Clean up legacy role values to prevent ALTER TABLE failure
+    try {
+        $pdo->exec("DELETE FROM users WHERE role = 'teacher' AND id = 9999");
+        $pdo->exec("UPDATE users SET role = 'student' WHERE role = 'teacher'");
+        $pdo->exec("ALTER TABLE users MODIFY COLUMN role ENUM('student', 'admin') NOT NULL DEFAULT 'student'");
+    } catch (PDOException $ex) {
+        error_log('Users role migration failed: ' . $ex->getMessage());
+    }
+
     $pdo->exec("
         CREATE TABLE IF NOT EXISTS eco_creation_video_comments (
             id INT AUTO_INCREMENT PRIMARY KEY,
