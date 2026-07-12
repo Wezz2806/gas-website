@@ -69,6 +69,38 @@ export default function AdminEcochallengeView() {
   };
 
   const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
+
+  const handleDeleteSurvey = (stud: any) => {
+    if (!window.confirm(`Hapus data angket dari ${stud.name}? Tindakan ini tidak dapat dibatalkan.`)) return;
+    fetch(`${API_BASE}/student-survey.php`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'delete_submission', student_id: stud.id }),
+      credentials: 'include'
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) setSurveyStudents(prev => prev.filter(s => s.id !== stud.id));
+        else alert(data.message || 'Gagal menghapus data angket.');
+      })
+      .catch(() => alert('Terjadi kesalahan jaringan.'));
+  };
+
+  const handleDeleteTest = (stud: any) => {
+    if (!window.confirm(`Hapus data test dari ${stud.name}? Tindakan ini tidak dapat dibatalkan.`)) return;
+    fetch(`${API_BASE}/student-test.php?action=delete_submission`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ student_id: stud.id }),
+      credentials: 'include'
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) setTestStudents(prev => prev.filter(s => s.id !== stud.id));
+        else alert(data.message || 'Gagal menghapus data test.');
+      })
+      .catch(() => alert('Terjadi kesalahan jaringan.'));
+  };
   const fetchSurveyStudents = () => {
     setIsLoadingSurveys(true);
     fetch(`${API_BASE}/student-survey.php?action=get_students`, { credentials: 'include' })
@@ -567,13 +599,22 @@ export default function AdminEcochallengeView() {
                           </span>
                         </td>
                         <td className="py-4 px-4 text-right">
-                          <button
-                            onClick={() => handleOpenStudentSurvey(stud)}
-                            className="px-3.5 py-1.5 bg-cyan-50 hover:bg-cyan-100 text-cyan-700 rounded-xl font-bold flex items-center gap-1 transition-colors cursor-pointer border border-cyan-100 float-right"
-                          >
-                            <Eye className="w-3.5 h-3.5 text-cyan-600" />
-                            <span>Detail Respon</span>
-                          </button>
+                          <div className="flex justify-end gap-2">
+                            <button
+                              onClick={() => handleOpenStudentSurvey(stud)}
+                              className="px-3.5 py-1.5 bg-cyan-50 hover:bg-cyan-100 text-cyan-700 rounded-xl font-bold flex items-center gap-1 transition-colors cursor-pointer border border-cyan-100"
+                            >
+                              <Eye className="w-3.5 h-3.5 text-cyan-600" />
+                              <span>Detail Respon</span>
+                            </button>
+                            <button
+                              onClick={() => handleDeleteSurvey(stud)}
+                              className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl font-bold flex items-center gap-1 transition-colors cursor-pointer border border-rose-100"
+                            >
+                              <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                              <span>Hapus</span>
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -832,6 +873,13 @@ export default function AdminEcochallengeView() {
                             >
                               <Eye className="w-3.5 h-3.5 text-cyan-600" />
                               <span>Lihat Jawaban</span>
+                            </button>
+                            <button
+                              onClick={() => handleDeleteTest(stud)}
+                              className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl font-bold flex items-center gap-1 transition-colors cursor-pointer border border-rose-100"
+                            >
+                              <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                              <span>Hapus</span>
                             </button>
                           </div>
                         </td>

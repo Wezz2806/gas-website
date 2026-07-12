@@ -81,6 +81,28 @@ if ($method === 'GET') {
         ], 500);
     }
 } elseif ($method === 'POST') {
+    $body = getRequestBody();
+    $action = isset($body['action']) ? trim($body['action']) : '';
+
+    // ADMIN: Hapus data angket satu murid
+    if ($action === 'delete_submission') {
+        if ($currentUser['role'] !== 'admin') {
+            sendJson(['success' => false, 'message' => 'Akses ditolak.'], 403);
+        }
+        $studentId = isset($body['student_id']) ? (int)$body['student_id'] : 0;
+        if ($studentId <= 0) {
+            sendJson(['success' => false, 'message' => 'ID Murid tidak valid.'], 400);
+        }
+        try {
+            $stmt = $pdo->prepare("DELETE FROM student_surveys WHERE student_id = :student_id");
+            $stmt->execute(['student_id' => $studentId]);
+            sendJson(['success' => true, 'message' => 'Data angket murid berhasil dihapus.']);
+        } catch (PDOException $e) {
+            sendJson(['success' => false, 'message' => 'Gagal menghapus data angket: ' . $e->getMessage()], 500);
+        }
+        exit;
+    }
+
     // Only student role can save/update their survey response
     if ($currentUser['role'] !== 'student') {
         sendJson([
@@ -88,6 +110,7 @@ if ($method === 'GET') {
             'message' => 'Hanya murid yang dapat mengisi angket respon.'
         ], 403);
     }
+
 
     $body = getRequestBody();
     $answers = $body['answers'] ?? null;

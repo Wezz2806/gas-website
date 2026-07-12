@@ -72,6 +72,25 @@ export default function AdminEcolabView() {
       .finally(() => setIsSubmittingGrade(false));
   };
 
+  const handleDeleteSubmission = (sub: StudentSubmission) => {
+    if (!window.confirm(`Hapus submisi "${sub.original_name}" dari ${sub.student_name}? Tindakan ini tidak dapat dibatalkan.`)) return;
+    fetch(`${API_BASE}/ecolab.php`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'delete_submission', id: sub.id }),
+      credentials: 'include'
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          setSubmissions(prev => prev.filter(s => s.id !== sub.id));
+        } else {
+          alert(data.message || 'Gagal menghapus submisi.');
+        }
+      })
+      .catch(() => alert('Terjadi kesalahan jaringan.'));
+  };
+
   const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
   const fetchJournalStudents = () => {
     setIsLoadingJournal(true);
@@ -395,6 +414,13 @@ export default function AdminEcolabView() {
                             <Download className="w-3.5 h-3.5 text-cyan-600" />
                             <span>Download</span>
                           </a>
+                          <button
+                            onClick={() => handleDeleteSubmission(sub)}
+                            className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl font-bold flex items-center gap-1 transition-colors cursor-pointer border border-rose-100"
+                          >
+                            <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                            <span>Hapus</span>
+                          </button>
                         </div>
                       </td>
                     </tr>

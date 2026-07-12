@@ -159,6 +159,25 @@ if ($method === 'GET') {
         exit;
     }
 
+    if ($action === 'delete_submission') {
+        if ($currentUser['role'] !== 'admin') {
+            sendJson(['success' => false, 'message' => 'Hanya admin yang dapat menghapus data test murid.'], 403);
+        }
+        $body = getRequestBody();
+        $studentId = isset($body['student_id']) ? (int)$body['student_id'] : 0;
+        if ($studentId <= 0) {
+            sendJson(['success' => false, 'message' => 'ID Murid tidak valid.'], 400);
+        }
+        try {
+            $stmt = $pdo->prepare("DELETE FROM student_tests WHERE student_id = :student_id");
+            $stmt->execute(['student_id' => $studentId]);
+            sendJson(['success' => true, 'message' => 'Data test murid berhasil dihapus.']);
+        } catch (PDOException $e) {
+            sendJson(['success' => false, 'message' => 'Gagal menghapus data test: ' . $e->getMessage()], 500);
+        }
+        exit;
+    }
+
     if ($action === 'parse_docx') {
         if ($currentUser['role'] !== 'admin') {
             sendJson([
