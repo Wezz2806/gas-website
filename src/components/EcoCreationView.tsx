@@ -297,7 +297,7 @@ export default function EcoCreationView({ searchQuery }: EcoCreationViewProps) {
 
       const newVideo = await videoService.uploadVideo(
         uploadTitle,
-        uploadCategory,
+        'Umum',
         finalDuration || '00:00',
         selectedFile
       );
@@ -359,7 +359,7 @@ export default function EcoCreationView({ searchQuery }: EcoCreationViewProps) {
       const updatedVideo = await videoService.editVideo(
         editingVideo.id,
         editTitle,
-        editCategory,
+        'Umum',
         oldFileDeleted && newFileToUpload ? finalDuration : undefined,
         oldFileDeleted && newFileToUpload ? newFileToUpload : undefined
       );
@@ -468,14 +468,7 @@ export default function EcoCreationView({ searchQuery }: EcoCreationViewProps) {
     );
   });
 
-  const getCategoryGradient = (cat: string) => {
-    const c = cat.toLowerCase();
-    if (c.includes('sains')) return 'from-[#154212] to-emerald-600';
-    if (c.includes('robotik')) return 'from-teal-600 to-[#154212]';
-    if (c.includes('teknologi')) return 'from-emerald-700 to-[#006e1c]';
-    if (c.includes('lingkungan')) return 'from-[#006e1c] to-emerald-500';
-    return 'from-[#154212] to-emerald-700';
-  };
+
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-3 duration-300">
@@ -552,10 +545,7 @@ export default function EcoCreationView({ searchQuery }: EcoCreationViewProps) {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/0 to-transparent z-[1]"></div>
                   
-                  {/* Floating Category Badge */}
-                  <span className="absolute top-3 left-3 bg-white/95 backdrop-blur-sm text-[#006e1c] text-[10px] font-extrabold px-2.5 py-1 rounded-full shadow-sm uppercase tracking-wide z-10">
-                    {video.category}
-                  </span>
+                  {/* Floating Category Badge - Removed */}
 
                   {/* Edit/Delete Overlays for Owners */}
                   {isOwner && (
@@ -735,20 +725,7 @@ export default function EcoCreationView({ searchQuery }: EcoCreationViewProps) {
                 />
               </div>
 
-              <div>
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Kategori</label>
-                <select 
-                  value={uploadCategory}
-                  onChange={(e) => setUploadCategory(e.target.value)}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2 text-xs focus:ring-1 focus:ring-[#154212] focus:border-[#154212] focus:outline-none cursor-pointer"
-                >
-                  <option>Sains Rumah</option>
-                  <option>Teknologi</option>
-                  <option>Robotik</option>
-                  <option>Lingkungan</option>
-                  <option>Komunitas</option>
-                </select>
-              </div>
+              {/* Kategori - Removed */}
 
               <div>
                 <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">File Video</label>
@@ -868,20 +845,7 @@ export default function EcoCreationView({ searchQuery }: EcoCreationViewProps) {
                 />
               </div>
 
-              <div>
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Kategori</label>
-                <select 
-                  value={editCategory}
-                  onChange={(e) => setEditCategory(e.target.value)}
-                  className="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2 text-xs focus:ring-1 focus:ring-[#154212] focus:border-[#154212] focus:outline-none cursor-pointer"
-                >
-                  <option>Sains Rumah</option>
-                  <option>Teknologi</option>
-                  <option>Robotik</option>
-                  <option>Lingkungan</option>
-                  <option>Komunitas</option>
-                </select>
-              </div>
+              {/* Kategori - Removed */}
 
               {/* Video File Edit Area */}
               <div>
