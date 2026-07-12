@@ -226,7 +226,7 @@ export default function SettingsView({}: SettingsProps) {
             </div>
             <h4 className="font-display font-semibold text-[#154212] text-sm">Privasi & Standar Hijau</h4>
             <p className="text-xs text-gray-400 leading-relaxed font-medium">
-              GAS berkomitmen menjaga kerahasiaan data mahasiswa sirkular secara penuh. Seluruh data progres evaluasi, check-in seminar, dan file LKM disimpan privat di dalam memori database terenkripsi demi keamanan Anda.
+              GAS berkomitmen menjaga kerahasiaan data murid sirkular secara penuh. Seluruh data progres evaluasi, check-in seminar, dan file LKM disimpan privat di dalam memori database terenkripsi demi keamanan Anda.
             </p>
           </div>
         </aside>

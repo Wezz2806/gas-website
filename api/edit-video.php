@@ -31,7 +31,7 @@ if ($video_id <= 0 || empty($title) || empty($category)) {
 }
 
 try {
-    // Pastikan video ini milik siswa yang sedang login
+    // Pastikan video ini milik murid yang sedang login
     $stmt = $pdo->prepare("SELECT id, filename, original_name, duration FROM eco_creation_videos WHERE id = :id AND student_id = :student_id LIMIT 1");
     $stmt->execute(['id' => $video_id, 'student_id' => $user_id]);
     $video = $stmt->fetch();
@@ -100,10 +100,10 @@ try {
         'id' => $video_id
     ]);
 
-    // Ambil nama mahasiswa pengunggah
+    // Ambil nama murid pengunggah
     $stmt_user = $pdo->prepare("SELECT full_name FROM users WHERE id = :id");
     $stmt_user->execute(['id' => $user_id]);
-    $user_name = $stmt_user->fetchColumn() ?: 'Siswa';
+    $user_name = $stmt_user->fetchColumn() ?: 'Murid';
 
     sendJson([
         'success' => true, 

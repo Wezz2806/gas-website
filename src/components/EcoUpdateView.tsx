@@ -174,7 +174,7 @@ export default function EcoUpdateView({ searchQuery }: EcoUpdateProps) {
           <main className="text-sm text-gray-700 leading-relaxed space-y-4 border-t border-gray-100 pt-6">
             <p>{readingArticle.content}</p>
             <p className="text-xs text-gray-500 bg-[#F5F5DC]/40 p-4 rounded-xl border border-[#c2c9bb]/30">
-              Disclaimer: Seluruh isi berita ini diterbitkan secara eksklusif dalam kerangka platform Green Action for Sustainable (GAS) untuk melatih wawasan kritis siswa.
+              Disclaimer: Seluruh isi berita ini diterbitkan secara eksklusif dalam kerangka platform Green Action for Sustainability (GAS) untuk melatih wawasan kritis murid.
             </p>
           </main>
 
@@ -251,7 +251,7 @@ export default function EcoUpdateView({ searchQuery }: EcoUpdateProps) {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-6">
-              {filteredNews.slice(0, 6).map((art) => (
+              {(activeCategory === 'Semua' ? filteredNews.slice(1) : filteredNews).map((art) => (
                 <article 
                   onClick={() => setReadingArticle(art)}
                   key={art.id}

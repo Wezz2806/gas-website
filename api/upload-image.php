@@ -33,7 +33,7 @@ $file_size = $_FILES['image']['size'];
 
 // Tentukan sub-folder berdasarkan jenis modul
 $type = isset($_POST['type']) ? trim($_POST['type']) : 'general';
-$allowed_types = ['ecopedia', 'ecoupdate', 'ecocontact', 'general'];
+$allowed_types = ['ecopedia', 'ecoupdate', 'ecocontact', 'test', 'general'];
 if (!in_array($type, $allowed_types)) {
     $type = 'general';
 }

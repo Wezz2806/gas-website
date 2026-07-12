@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { initialMeetings } from '../data';
-import { Meeting } from '../types';
+import { Meeting, JournalRow } from '../types';
 import { 
   Users, 
   FlaskConical, 
@@ -29,6 +29,75 @@ export default function EcoLabView({ setActiveTab, onSelectBook }: EcoLabViewPro
 
   // Track uploaded files per meeting ID
   const [uploadedFiles, setUploadedFiles] = useState<Record<string, string>>({});
+
+  // Journal states
+  const [showJournalModal, setShowJournalModal] = useState(false);
+  const [journalRows, setJournalRows] = useState<JournalRow[]>([]);
+  const [isSavingJournal, setIsSavingJournal] = useState(false);
+  const [isLoadingJournal, setIsLoadingJournal] = useState(false);
+  const [journalSuccessMessage, setJournalSuccessMessage] = useState<string | null>(null);
+
+  const handleOpenJournal = () => {
+    setShowJournalModal(true);
+    setIsLoadingJournal(true);
+    fetch('/api/sustainability-journal.php')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.journal) {
+          setJournalRows(data.journal);
+        } else {
+          // Initialize empty journal rows if fails
+          const emptyRows = Array.from({ length: 12 }, (_, i) => ({
+            row_index: i,
+            tanggal: '',
+            warna: '',
+            aroma: '',
+            gas: '',
+            alasan: '',
+            solusi: ''
+          }));
+          setJournalRows(emptyRows);
+        }
+      })
+      .catch(() => {
+        const emptyRows = Array.from({ length: 12 }, (_, i) => ({
+          row_index: i,
+          tanggal: '',
+          warna: '',
+          aroma: '',
+          gas: '',
+          alasan: '',
+          solusi: ''
+        }));
+        setJournalRows(emptyRows);
+      })
+      .finally(() => {
+        setIsLoadingJournal(false);
+      });
+  };
+
+  const handleSaveJournal = async () => {
+    setIsSavingJournal(true);
+    setJournalSuccessMessage(null);
+    try {
+      const res = await fetch('/api/sustainability-journal.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ journal: journalRows })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setJournalSuccessMessage('Jurnal monitoring berhasil disimpan!');
+        setTimeout(() => setJournalSuccessMessage(null), 3000);
+      } else {
+        alert(data.message || 'Gagal menyimpan jurnal.');
+      }
+    } catch (err) {
+      alert('Terjadi kesalahan koneksi.');
+    } finally {
+      setIsSavingJournal(false);
+    }
+  };
 
   // Load meetings and submissions from the database on mount
   useEffect(() => {
@@ -189,7 +258,7 @@ export default function EcoLabView({ setActiveTab, onSelectBook }: EcoLabViewPro
       {/* Page Header */}
       <header className="text-left">
         <h2 className="font-display font-black text-2xl text-[#154212] mb-2">
-          EcoLab — Lembar Kerja Mahasiswa (LKM)
+          EcoLab — Lembar Kerja Murid (LKM)
         </h2>
         <p className="font-sans text-sm text-[#42493e] max-w-2xl leading-relaxed">
           Mari unduh, lalu kerjakan LKM dari guru, dan unggah scan LKM untuk diunggah pada setiap pertemuan untuk mendapatkan pengalaman belajar yang baru!
@@ -208,19 +277,17 @@ export default function EcoLabView({ setActiveTab, onSelectBook }: EcoLabViewPro
             </h3>
           </div>
         </div>
-        <a 
-          href="https://docs.google.com/forms/d/e/1FAIpQLSeA-5RY50WN6-CWtXuCpvHu1WrCPfp15DaipRzr7q7SqPOrRg/viewform?usp=publish-editor"
-          target="_blank"
-          rel="noopener noreferrer"
+        <button 
+          onClick={handleOpenJournal}
           className="w-full md:w-auto px-5 py-3 bg-white text-[#154212] font-black text-xs rounded-xl shadow-md hover:bg-emerald-50 active:scale-95 transition-all flex items-center justify-center gap-2 shrink-0 cursor-pointer"
         >
           <span>Isi Jurnal Sekarang</span>
           <Eye className="w-4 h-4 text-[#154212]" />
-        </a>
+        </button>
       </div>
 
       {/* Meeting Timeline Card Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-left">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 text-left">
         {meetings.map((meeting) => {
           const IconComponent = getMeetingIcon(meeting.icon);
           const hasUploaded = !!uploadedFiles[meeting.id];
@@ -232,14 +299,14 @@ export default function EcoLabView({ setActiveTab, onSelectBook }: EcoLabViewPro
           return (
             <div 
               key={meeting.id}
-              className={`bg-white/95 rounded-2xl p-5 flex flex-col border-t-4 transition-all hover:translate-y-[-4px] hover:shadow-md ${
+              className={`bg-white/95 rounded-2xl p-5 flex flex-col sm:flex-row gap-5 border-l-4 transition-all hover:translate-y-[-4px] hover:shadow-md ${
                 isCompleted 
                   ? 'border-[#006e1c]' 
                   : 'border-amber-400 shadow-sm'
               }`}
             >
-              {/* LKM Cover Image */}
-              <div className="w-full h-36 rounded-xl overflow-hidden mb-4 relative select-none border border-gray-150/50 bg-gray-50">
+              {/* LKM Cover Image (Left side) */}
+              <div className="w-full sm:w-32 aspect-[3/4] rounded-xl overflow-hidden relative select-none border border-gray-150/50 bg-gray-50 shrink-0">
                 <img 
                   alt={`Cover LKM ${meeting.number}`}
                   src={`./Cover LKM ${meeting.number}.png`}
@@ -247,95 +314,100 @@ export default function EcoLabView({ setActiveTab, onSelectBook }: EcoLabViewPro
                 />
               </div>
 
-              <div className="flex justify-between items-start mb-3">
-                <div className={`p-1.5 rounded-lg ${isCompleted ? 'bg-emerald-50 text-[#006e1c]' : 'bg-amber-50 text-amber-700'}`}>
-                  <IconComponent className="w-4 h-4" />
-                </div>
-                <div className="flex items-center gap-1">
-                  {isCompleted && <CheckCircle className="w-3.5 h-3.5 text-[#006e1c]" />}
-                  <span className={`text-[10px] font-bold uppercase ${isCompleted ? 'text-[#006e1c]' : 'text-amber-700'}`}>
-                    MEETING {meeting.number}
-                  </span>
-                </div>
-              </div>
-
-              <h4 className="font-semibold text-sm text-[#154212] mb-2 min-h-[40px] line-clamp-2 leading-snug">
-                {meeting.title}
-              </h4>
-              <p className="text-[11px] text-gray-500 leading-relaxed mb-6 flex-grow">
-                {meeting.description}
-              </p>
-
-              {/* File Info Box with Delete/Edit feature if Uploaded */}
-              {hasUploaded && (
-                <div className="mb-4 p-2.5 bg-emerald-50/70 rounded-xl border border-emerald-100/50 flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <FileText className="w-4 h-4 text-[#006e1c] shrink-0" />
-                    <span className="text-[10px] text-emerald-950 font-bold truncate">{fileName}</span>
+              {/* Content (Right side) */}
+              <div className="flex-1 flex flex-col justify-between min-w-0">
+                <div>
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="flex items-center gap-1">
+                      {isCompleted && <CheckCircle className="w-3.5 h-3.5 text-[#006e1c]" />}
+                      <span className={`text-[10px] font-bold uppercase ${isCompleted ? 'text-[#006e1c]' : 'text-amber-700'}`}>
+                        MEETING {meeting.number}
+                      </span>
+                    </div>
+                    <div className={`p-1 rounded-lg ${isCompleted ? 'bg-emerald-50 text-[#006e1c]' : 'bg-amber-50 text-amber-700'}`}>
+                      <IconComponent className="w-4 h-4" />
+                    </div>
                   </div>
-                  <button 
-                    onClick={() => handleRemoveFile(meeting.id)}
-                    className="p-1 rounded-md text-red-600 hover:bg-red-50 transition-colors cursor-pointer shrink-0"
-                    title="Hapus / Edit berkas"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
+
+                  <h4 className="font-semibold text-sm md:text-base text-[#154212] mb-1 leading-snug truncate">
+                    {meeting.title}
+                  </h4>
+                  <p className="text-[11px] text-gray-500 leading-relaxed mb-4 line-clamp-2">
+                    {meeting.description}
+                  </p>
                 </div>
-              )}
 
-              {/* Card Actions */}
-              <div className="space-y-2 mt-auto">
-                <button 
-                  onClick={() => {
-                    if (onSelectBook) {
-                      if (meeting.number === 1 || meeting.number === 2) {
-                        onSelectBook('green-chemistry');
-                      } else if (meeting.number === 3 || meeting.number === 4) {
-                        onSelectBook('ecoenzyme');
-                      }
-                    }
-                    setActiveTab('ecopedia');
-                  }}
-                  className="w-full flex items-center justify-between p-2.5 rounded-xl bg-gray-50 text-gray-700 text-xs font-bold border border-gray-200 hover:bg-emerald-50 hover:text-emerald-900 transition-colors cursor-pointer"
-                >
-                  <span>Lihat Buku Materi</span>
-                  <BookOpen className="w-4 h-4 text-[#006e1c]" />
-                </button>
+                {/* File Info Box if Uploaded */}
+                {hasUploaded && (
+                  <div className="mb-3 p-2 bg-emerald-50/70 rounded-xl border border-emerald-100/50 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <FileText className="w-3.5 h-3.5 text-[#006e1c] shrink-0" />
+                      <span className="text-[10px] text-emerald-950 font-bold truncate">{fileName}</span>
+                    </div>
+                    <button 
+                      onClick={() => handleRemoveFile(meeting.id)}
+                      className="p-1 rounded-md text-red-600 hover:bg-red-50 transition-colors cursor-pointer shrink-0"
+                      title="Hapus / Edit berkas"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                )}
 
-                <div className="grid grid-cols-3 gap-1.5">
-                  <button 
-                    onClick={() => setActiveReadingMeeting(meeting)}
-                    className="flex flex-col items-center justify-center p-2 rounded-xl border border-gray-200 hover:border-emerald-700 text-gray-600 hover:text-emerald-800 text-[9px] font-bold uppercase transition-all cursor-pointer bg-white"
-                    title="Baca LKM"
-                  >
-                    <Eye className="w-4 h-4 text-[#006e1c]" />
-                    <span className="mt-1">Baca</span>
-                  </button>
-
-                  <button 
-                    onClick={() => handleDownloadLkm(meeting)}
-                    className="flex flex-col items-center justify-center p-2 rounded-xl border border-gray-200 hover:border-emerald-700 text-gray-600 hover:text-emerald-800 text-[9px] font-bold uppercase transition-all cursor-pointer bg-white"
-                    title="Unduh LKM"
-                  >
-                    <Download className="w-4 h-4 text-blue-600" />
-                    <span className="mt-1">Unduh</span>
-                  </button>
-
+                {/* Card Actions */}
+                <div className="flex flex-col sm:flex-row gap-2 mt-auto">
                   <button 
                     onClick={() => {
-                      setSelectedMeeting(meeting);
-                      setShowUploadModal(true);
+                      if (onSelectBook) {
+                        if (meeting.number === 1 || meeting.number === 2) {
+                          onSelectBook('green-chemistry');
+                        } else if (meeting.number === 3 || meeting.number === 4) {
+                          onSelectBook('ecoenzyme');
+                        }
+                      }
+                      setActiveTab('ecopedia');
                     }}
-                    className={`flex flex-col items-center justify-center p-2 rounded-xl border text-[9px] font-bold uppercase transition-all cursor-pointer ${
-                      hasUploaded 
-                        ? 'border-gray-200 text-[#006e1c] hover:bg-emerald-50 bg-emerald-50/25' 
-                        : 'border-amber-250 text-amber-700 bg-amber-50/50 hover:bg-amber-50'
-                    }`}
-                    title="Unggah LKM"
+                    className="flex-1 flex items-center justify-center gap-2 p-2 rounded-xl bg-gray-50 text-gray-700 text-xs font-bold border border-gray-200 hover:bg-emerald-50 hover:text-emerald-900 transition-colors cursor-pointer"
                   >
-                    <Upload className="w-4 h-4" />
-                    <span className="mt-1">{hasUploaded ? 'Re-Up' : 'Unggah'}</span>
+                    <span>Buku Materi</span>
+                    <BookOpen className="w-3.5 h-3.5 text-[#006e1c]" />
                   </button>
+
+                  <div className="grid grid-cols-3 gap-1.5 shrink-0">
+                    <button 
+                      onClick={() => setActiveReadingMeeting(meeting)}
+                      className="flex flex-col items-center justify-center p-1.5 px-3 rounded-xl border border-gray-200 hover:border-emerald-700 text-gray-600 hover:text-emerald-800 text-[9px] font-bold uppercase transition-all cursor-pointer bg-white"
+                      title="Baca LKM"
+                    >
+                      <Eye className="w-3.5 h-3.5 text-[#006e1c]" />
+                      <span className="mt-0.5">Baca</span>
+                    </button>
+
+                    <button 
+                      onClick={() => handleDownloadLkm(meeting)}
+                      className="flex flex-col items-center justify-center p-1.5 px-3 rounded-xl border border-gray-200 hover:border-emerald-700 text-gray-600 hover:text-emerald-800 text-[9px] font-bold uppercase transition-all cursor-pointer bg-white"
+                      title="Unduh LKM"
+                    >
+                      <Download className="w-3.5 h-3.5 text-blue-600" />
+                      <span className="mt-0.5">Unduh</span>
+                    </button>
+
+                    <button 
+                      onClick={() => {
+                        setSelectedMeeting(meeting);
+                        setShowUploadModal(true);
+                      }}
+                      className={`flex flex-col items-center justify-center p-1.5 px-3 rounded-xl border text-[9px] font-bold uppercase transition-all cursor-pointer ${
+                        hasUploaded 
+                          ? 'border-gray-200 text-[#006e1c] hover:bg-emerald-50 bg-emerald-50/25' 
+                          : 'border-amber-250 text-amber-700 bg-amber-50/50 hover:bg-amber-50'
+                      }`}
+                      title="Unggah LKM"
+                    >
+                      <Upload className="w-3.5 h-3.5" />
+                      <span className="mt-0.5">{hasUploaded ? 'Re-Up' : 'Unggah'}</span>
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -470,6 +542,171 @@ export default function EcoLabView({ setActiveTab, onSelectBook }: EcoLabViewPro
           embedUrl={getLkmEmbedUrl(activeReadingMeeting)} 
           onClose={() => setActiveReadingMeeting(null)} 
         />
+      )}
+
+      {/* Sustainability Journal Modal */}
+      {showJournalModal && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl w-full max-w-6xl h-[90vh] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="bg-[#154212] p-5 text-white flex justify-between items-center shrink-0">
+              <div className="flex items-center gap-3">
+                <ClipboardList className="w-6 h-6 text-[#91f78e]" />
+                <div>
+                  <h4 className="font-display font-bold text-base">Jurnal Monitoring Keberlanjutan</h4>
+                  <p className="text-[11px] text-[#a1d494]">Lakukan pengamatan dan isi parameter fisik secara berkala</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setShowJournalModal(false)} 
+                className="text-white hover:text-red-400 hover:bg-white/10 p-1.5 rounded-full transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Content - Table (Scrollable) */}
+            <div className="flex-1 overflow-auto p-6">
+              {isLoadingJournal ? (
+                <div className="flex flex-col items-center justify-center h-full py-12 gap-2">
+                  <div className="w-8 h-8 border-4 border-[#154212] border-t-transparent rounded-full animate-spin"></div>
+                  <span className="text-xs text-gray-500 font-bold">Memuat data jurnal...</span>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {journalSuccessMessage && (
+                    <div className="p-3.5 bg-emerald-50 border border-emerald-250 text-[#006e1c] text-xs font-bold rounded-2xl flex items-center gap-2 animate-in fade-in duration-250">
+                      <CheckCircle className="w-4 h-4 text-[#006e1c]" />
+                      <span>{journalSuccessMessage}</span>
+                    </div>
+                  )}
+
+                  <div className="overflow-x-auto border border-emerald-600 rounded-2xl">
+                    <table className="w-full text-xs border-collapse border border-emerald-600 text-left min-w-[900px]">
+                      <thead>
+                        <tr className="bg-emerald-800 text-white font-bold text-center">
+                          <th rowSpan={2} className="border border-emerald-600 p-3 w-36">Tanggal</th>
+                          <th colSpan={3} className="border border-emerald-600 p-2">Parameter Fisik yang Diamati</th>
+                          <th rowSpan={2} className="border border-emerald-600 p-3 min-w-[220px]">Mengapa hal itu bisa terjadi?</th>
+                          <th rowSpan={2} className="border border-emerald-600 p-3 min-w-[220px]">Solusi Lanjutan yang Dilakukan</th>
+                        </tr>
+                        <tr className="bg-emerald-700 text-white font-bold text-center">
+                          <th className="border border-emerald-600 p-2 w-36">Warna</th>
+                          <th className="border border-emerald-600 p-2 w-36">Aroma</th>
+                          <th className="border border-emerald-600 p-2 w-36">Gas</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-emerald-600 text-emerald-950 font-sans">
+                        {journalRows.map((row, idx) => (
+                          <tr key={idx} className="hover:bg-emerald-50/30">
+                            <td className="border border-emerald-600 p-1">
+                              <input 
+                                type="text" 
+                                placeholder="Hari, DD/MM/YYYY"
+                                className="w-full bg-transparent border-0 focus:ring-0 text-xs p-2 text-emerald-950 font-medium outline-none placeholder:text-gray-300"
+                                value={row.tanggal}
+                                onChange={(e) => {
+                                  const updated = [...journalRows];
+                                  updated[idx].tanggal = e.target.value;
+                                  setJournalRows(updated);
+                                }}
+                              />
+                            </td>
+                            <td className="border border-emerald-600 p-1">
+                              <input 
+                                type="text" 
+                                placeholder="Isi warna..."
+                                className="w-full bg-transparent border-0 focus:ring-0 text-xs p-2 text-emerald-950 font-medium outline-none placeholder:text-gray-300"
+                                value={row.warna}
+                                onChange={(e) => {
+                                  const updated = [...journalRows];
+                                  updated[idx].warna = e.target.value;
+                                  setJournalRows(updated);
+                                }}
+                              />
+                            </td>
+                            <td className="border border-emerald-600 p-1">
+                              <input 
+                                type="text" 
+                                placeholder="Isi aroma..."
+                                className="w-full bg-transparent border-0 focus:ring-0 text-xs p-2 text-emerald-950 font-medium outline-none placeholder:text-gray-300"
+                                value={row.aroma}
+                                onChange={(e) => {
+                                  const updated = [...journalRows];
+                                  updated[idx].aroma = e.target.value;
+                                  setJournalRows(updated);
+                                }}
+                              />
+                            </td>
+                            <td className="border border-emerald-600 p-1">
+                              <input 
+                                type="text" 
+                                placeholder="Isi gas..."
+                                className="w-full bg-transparent border-0 focus:ring-0 text-xs p-2 text-emerald-950 font-medium outline-none placeholder:text-gray-300"
+                                value={row.gas}
+                                onChange={(e) => {
+                                  const updated = [...journalRows];
+                                  updated[idx].gas = e.target.value;
+                                  setJournalRows(updated);
+                                }}
+                              />
+                            </td>
+                            <td className="border border-emerald-600 p-1">
+                              <textarea 
+                                rows={2}
+                                placeholder="Tulis penjelasannya di sini..."
+                                className="w-full bg-transparent border-0 focus:ring-0 text-xs p-2 text-emerald-950 font-medium outline-none resize-y placeholder:text-gray-300"
+                                value={row.alasan}
+                                onChange={(e) => {
+                                  const updated = [...journalRows];
+                                  updated[idx].alasan = e.target.value;
+                                  setJournalRows(updated);
+                                }}
+                              />
+                            </td>
+                            <td className="border border-emerald-600 p-1">
+                              <textarea 
+                                rows={2}
+                                placeholder="Tulis rencana tindak lanjut di sini..."
+                                className="w-full bg-transparent border-0 focus:ring-0 text-xs p-2 text-emerald-950 font-medium outline-none resize-y placeholder:text-gray-300"
+                                value={row.solusi}
+                                onChange={(e) => {
+                                  const updated = [...journalRows];
+                                  updated[idx].solusi = e.target.value;
+                                  setJournalRows(updated);
+                                }}
+                              />
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="bg-gray-50 px-6 py-4 flex justify-end gap-3 border-t border-gray-150 shrink-0">
+              <button
+                onClick={() => setShowJournalModal(false)}
+                className="px-4 py-2.5 text-xs font-bold text-gray-500 hover:bg-gray-100 rounded-xl cursor-pointer transition-colors"
+              >
+                Tutup
+              </button>
+              <button
+                onClick={handleSaveJournal}
+                disabled={isSavingJournal || isLoadingJournal}
+                className="px-5 py-2.5 bg-[#154212] hover:bg-[#006e1c] text-white font-bold text-xs rounded-xl flex items-center gap-1.5 cursor-pointer shadow-md hover:shadow-lg disabled:opacity-50 transition-all active:scale-95"
+              >
+                {isSavingJournal && (
+                  <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                )}
+                <span>Simpan Jurnal</span>
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

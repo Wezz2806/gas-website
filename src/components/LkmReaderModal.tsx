@@ -39,7 +39,7 @@ export default function LkmReaderModal({ meeting, embedUrl, onClose }: LkmReader
           {isLoading && (
             <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100/90 text-gray-500 gap-3">
               <Loader2 className="w-8 h-8 animate-spin text-[#006e1c]" />
-              <span className="text-xs font-semibold">Memuat Lembar Kerja Mahasiswa...</span>
+              <span className="text-xs font-semibold">Memuat Lembar Kerja Murid...</span>
             </div>
           )}
 

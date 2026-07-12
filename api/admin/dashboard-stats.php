@@ -89,6 +89,24 @@ try {
     $stmtPoints = $pdo->query("SELECT SUM(eco_points) as total_points FROM users");
     $totalPoints = (int)($stmtPoints->fetch()['total_points'] ?? 0);
 
+    // 6. Jurnal Monitoring count (unique murid)
+    $totalJournals = 0;
+    try {
+        $totalJournals = (int)$pdo->query("SELECT COUNT(DISTINCT student_id) FROM sustainability_journals")->fetchColumn();
+    } catch (PDOException $ex) {}
+
+    // 7. Surveys count (Angket)
+    $totalSurveys = 0;
+    try {
+        $totalSurveys = (int)$pdo->query("SELECT COUNT(*) FROM student_surveys")->fetchColumn();
+    } catch (PDOException $ex) {}
+
+    // 8. Test count (submitted = 1)
+    $totalTests = 0;
+    try {
+        $totalTests = (int)$pdo->query("SELECT COUNT(*) FROM student_tests WHERE submitted = 1")->fetchColumn();
+    } catch (PDOException $ex) {}
+
     sendJson([
         'success' => true,
         'stats' => [
@@ -101,7 +119,10 @@ try {
             'pending_videos' => $pendingVideos,
             'total_messages' => $totalMessages,
             'unread_messages' => $unreadMessages,
-            'total_points' => $totalPoints
+            'total_points' => $totalPoints,
+            'total_journals' => $totalJournals,
+            'total_surveys' => $totalSurveys,
+            'total_tests' => $totalTests
         ]
     ]);
 

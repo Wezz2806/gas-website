@@ -4,7 +4,7 @@
 ---
 
 ## **Ringkasan Proyek**
-**GAS (Green Action Students)** adalah platform edukasi digital interaktif yang dirancang untuk memandu siswa dan guru dalam pembelajaran keberlanjutan lingkungan, khususnya dalam proyek pembuatan **Ekoenzim** (fermentasi limbah organik) serta implementasi **Kimia Hijau (Green Chemistry)**. Platform ini mengusung pendekatan gamifikasi dengan fitur pelacakan progress tugas terstruktur (LKM), galeri video kreasi siswa (EcoCreation), forum evaluasi interaktif (EcoChallenge), presensi harian (Daily Check-in) dengan akumulasi poin, serta leaderboard kompetitif.
+**GAS (Green Action Students)** adalah platform edukasi digital interaktif yang dirancang untuk memandu murid dan guru dalam pembelajaran keberlanjutan lingkungan, khususnya dalam proyek pembuatan **Ekoenzim** (fermentasi limbah organik) serta implementasi **Kimia Hijau (Green Chemistry)**. Platform ini mengusung pendekatan gamifikasi dengan fitur pelacakan progress tugas terstruktur (LKM), galeri video kreasi murid (EcoCreation), forum evaluasi interaktif (EcoChallenge), presensi harian (Daily Check-in) dengan akumulasi poin, serta leaderboard kompetitif.
 
 *   **Peran:** Full-Stack Developer
 *   **Waktu Pengerjaan:** 2026
@@ -14,7 +14,7 @@
 ---
 
 ## **Latar Belakang & Masalah**
-Pendidikan lingkungan di sekolah seringkali hanya bersifat teoritis dan kurang mendorong tindakan nyata (sustainable action). Siswa kesulitan memantau perkembangan praktikum mandiri mereka (seperti fermentasi ekoenzim yang memakan waktu 3 bulan), kurang memiliki ruang untuk berbagi inovasi secara kreatif, dan kurang termotivasi untuk konsisten belajar secara berkelanjutan.
+Pendidikan lingkungan di sekolah seringkali hanya bersifat teoritis dan kurang mendorong tindakan nyata (sustainable action). Murid kesulitan memantau perkembangan praktikum mandiri mereka (seperti fermentasi ekoenzim yang memakan waktu 3 bulan), kurang memiliki ruang untuk berbagi inovasi secara kreatif, dan kurang termotivasi untuk konsisten belajar secara berkelanjutan.
 
 **Kebutuhan Utama:**
 1.  Sistem terstruktur untuk memandu praktikum bertahap dari pertemuan awal hingga pelabelan produk.
@@ -55,22 +55,22 @@ graph TD
 Menyediakan metode pendaftaran konvensional serta integrasi **Google Sign-In API**. Sesi pengguna dipertahankan menggunakan session PHP yang dikirim via cookie terenkripsi lintas domain (CORS). Fitur lupa password diakomodasi dengan sistem OTP 6-digit yang kedaluwarsa secara otomatis dalam 15 menit.
 
 ### **2. Dasbor Gamifikasi & Leaderboard**
-*   **Daily Check-in**: Siswa dapat mengklaim **+20 Eco-Points** setiap 24 jam. Sistem secara otomatis menghitung *streak* login beruntun untuk memacu kebiasaan belajar siswa.
-*   **Leaderboard Real-Time**: Query MySQL terindeks menyusun peringkat siswa berdasar skor akumulatif secara efisien.
+*   **Daily Check-in**: Murid dapat mengklaim **+20 Eco-Points** setiap 24 jam. Sistem secara otomatis menghitung *streak* login beruntun untuk memacu kebiasaan belajar murid.
+*   **Leaderboard Real-Time**: Query MySQL terindeks menyusun peringkat murid berdasar skor akumulatif secara efisien.
 
-### **3. EcoLab: Sistem Pengumpulan Lembar Kerja Mahasiswa (LKM)**
-Menyediakan alur praktikum terstruktur dalam 4 fase. Siswa dapat mengunduh format lembar kerja dari Google Drive, mengerjakannya, dan mengunggah laporan (PDF/DOCX/PPTX) secara langsung. 
-*   **Fitur Re-Upload & Delete**: Memungkinkan siswa merevisi tugas sebelum dinilai.
-*   **Feedback System**: Guru dapat memberikan nilai kuantitatif (0-100) dan catatan evaluasi kualitatif yang langsung tersinkronisasi di UI siswa.
+### **3. EcoLab: Sistem Pengumpulan Lembar Kerja Murid (LKM)**
+Menyediakan alur praktikum terstruktur dalam 4 fase. Murid dapat mengunduh format lembar kerja dari Google Drive, mengerjakannya, dan mengunggah laporan (PDF/DOCX/PPTX) secara langsung. 
+*   **Fitur Re-Upload & Delete**: Memungkinkan murid merevisi tugas sebelum dinilai.
+*   **Feedback System**: Guru dapat memberikan nilai kuantitatif (0-100) dan catatan evaluasi kualitatif yang langsung tersinkronisasi di UI murid.
 
-### **4. EcoCreation: Galeri Video Kreatif Siswa**
-Kliping video pendek buatan siswa yang mendokumentasikan inovasi lingkungan.
-*   **Deteksi Durasi Otomatis**: Memanfaatkan API media browser pada sisi client saat file video dipilih, membebaskan siswa dari keharusan menginput durasi secara manual.
+### **4. EcoCreation: Galeri Video Kreatif Murid**
+Kliping video pendek buatan murid yang mendokumentasikan inovasi lingkungan.
+*   **Deteksi Durasi Otomatis**: Memanfaatkan API media browser pada sisi client saat file video dipilih, membebaskan murid dari keharusan menginput durasi secara manual.
 *   **Video Streaming Engine**: API backend PHP memproses streaming file video berukuran besar secara modular guna menghemat bandwidth server.
 *   **Social Interactions**: Fitur menyukai (like), melihat (view count), serta menulis komentar diskusi di setiap video.
 
-### **5. EcoChallenge: Forum Diskusi & Posttest**
-Integrasi posttest berbasis Google Form serta ruang diskusi kelas. Siswa dapat mengomentari umpan balik guru, melakukan edit komentar secara *inline* (tanpa memuat ulang halaman), dan menghapus komentar yang ditulisnya sendiri.
+### **5. EcoChallenge: Forum Diskusi & Test**
+Integrasi test berbasis Google Form serta ruang diskusi kelas. Murid dapat mengomentari umpan balik guru, melakukan edit komentar secara *inline* (tanpa memuat ulang halaman), dan menghapus komentar yang ditulisnya sendiri.
 
 ---
 
@@ -120,4 +120,4 @@ Integrasi posttest berbasis Google Form serta ruang diskusi kelas. Siswa dapat m
 *   **Pemahaman Arsitektur Decoupled**: Memperkuat pemahaman saya mengenai integrasi backend-frontend terpisah dan bagaimana merancang REST API yang aman dan efisien.
 *   **Keamanan Aplikasi Web**: Mempelajari penanganan sanitasi input PHP PDO untuk mencegah SQL Injection, serta pengamanan cookie sesi terhadap ancaman pencurian sesi (Session Hijacking).
 *   **Manajemen Aset Statis**: Mengimplementasikan streaming video berbasis server serta manajemen berkas unggahan di sistem file lokal secara terorganisir.
-*   **Gamifikasi UI/UX**: Berhasil mendesain antarmuka bertema lingkungan dengan visual premium yang mendorong interaksi aktif siswa melalui poin dan peringkat.
+*   **Gamifikasi UI/UX**: Berhasil mendesain antarmuka bertema lingkungan dengan visual premium yang mendorong interaksi aktif murid melalui poin dan peringkat.

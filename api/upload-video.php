@@ -66,10 +66,10 @@ if (move_uploaded_file($file_tmp, $target_file)) {
 
         $inserted_id = $pdo->lastInsertId();
 
-        // Ambil nama mahasiswa pengunggah
+        // Ambil nama murid pengunggah
         $stmt_user = $pdo->prepare("SELECT full_name FROM users WHERE id = :id");
         $stmt_user->execute(['id' => $user_id]);
-        $user_name = $stmt_user->fetchColumn() ?: 'Siswa';
+        $user_name = $stmt_user->fetchColumn() ?: 'Murid';
 
         sendJson([
             'success' => true,

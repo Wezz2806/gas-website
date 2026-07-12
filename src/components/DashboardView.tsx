@@ -86,28 +86,15 @@ export default function DashboardView({
       <section className="text-left bg-gradient-to-r from-emerald-50 to-[#F5F5DC] p-6 rounded-3xl border border-[#c2c9bb]/40">
         <div className="flex items-center gap-2">
           <span className="text-[#006e1c] font-bold text-xs uppercase tracking-widest bg-emerald-100 px-2.5 py-1 rounded-full">
-            Status Siswa Aktif
+            Status Murid Aktif
           </span>
         </div>
-        {hasCheckedInToday ? (
-          <>
-            <h2 className="font-display font-black text-2xl md:text-3xl text-[#154212] mt-2 mb-1">
-              Halo, Sahabat GAS!
-            </h2>
-            <p className="font-sans text-sm text-[#42493e] leading-relaxed">
-              Selamat datang di ruang belajar kita hari ini. Semoga kamu dalam keadaan sehat, semangat, dan siap menemukan pengetahuan baru yang bermanfaat untuk diri sendiri, masyarakat, dan lingkungan. Yuk, mulai perjalanan belajarmu hari ini!
-            </p>
-          </>
-        ) : (
-          <>
-            <h2 className="font-display font-black text-2xl md:text-3xl text-[#154212] mt-2 mb-1">
-              Siap belajar? Awali dengan mengisi absensi terlebih dahulu.
-            </h2>
-            <p className="font-sans text-sm text-[#42493e] leading-relaxed">
-              Guru ingin memastikan semua murid hebat sudah bergabung. Yuk, klik menu absensi sekarang!
-            </p>
-          </>
-        )}
+        <h2 className="font-display font-black text-2xl md:text-3xl text-[#154212] mt-2 mb-1">
+          Halo, Sahabat GAS!
+        </h2>
+        <p className="font-sans text-sm text-[#42493e] leading-relaxed">
+          Selamat datang di ruang belajar kita hari ini. Semoga kamu dalam keadaan sehat, semangat, dan siap menemukan pengetahuan baru yang bermanfaat untuk diri sendiri, masyarakat, dan lingkungan. Yuk, mulai perjalanan belajarmu hari ini!
+        </p>
       </section>
 
       {/* Bento Grid Layout */}
@@ -138,12 +125,12 @@ export default function DashboardView({
 
           <div className="z-10 text-center md:text-left flex-1">
             <h3 className="font-display font-bold text-lg md:text-xl text-[#154212] mb-1.5">
-              {hasCheckedInToday ? 'Anda sudah presensi hari ini!' : 'Kirim presensi kehadiran untuk hari ini!'}
+              {hasCheckedInToday ? 'Anda sudah presensi hari ini!' : 'Siap belajar? Awali dengan mengisi absensi terlebih dahulu.'}
             </h3>
             <p className="font-sans text-xs md:sm text-[#42493e] mb-4">
               {hasCheckedInToday 
                 ? 'Kehadiran Anda telah tercatat untuk Seminar Keberlanjutan pagi ini.'
-                : 'Catat kehadiran Anda hari ini untuk mengonfirmasi kehadiran (sehari sekali).'
+                : 'Guru ingin memastikan semua murid hebat sudah bergabung. Yuk, klik menu absensi sekarang!'
               }
             </p>
 

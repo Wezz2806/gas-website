@@ -157,7 +157,7 @@ export default function Header({
       case 'admin-ecopedia' as any: return 'Kelola Pustaka EcoPedia';
       case 'admin-ecoupdate' as any: return 'Kelola Portal EcoUpdate';
       case 'admin-ecocontact' as any: return 'Kelola Personel EcoContact';
-      default: return 'Green Action for Sustainable';
+      default: return 'Green Action for Sustainability';
     }
   };
 
@@ -173,7 +173,7 @@ export default function Header({
       {/* Center Title — hidden on small screens */}
       <div className="flex-grow justify-center items-center mx-4 hidden md:flex">
         <span className="font-display font-bold text-xs lg:text-base text-[#154212] tracking-wide text-center">
-          Green Action for Sustainable
+          Green Action for Sustainability
         </span>
       </div>
 
@@ -203,7 +203,7 @@ export default function Header({
             <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-[#91f78e] shadow-sm relative group-hover:scale-105 transition-transform">
               {user && user.avatar_url ? (
                 <img 
-                  alt="Profil Siswa" 
+                  alt="Profil Murid" 
                   src={getImageUrl(user.avatar_url)}
                   referrerPolicy="no-referrer"
                   className="w-full h-full object-cover"

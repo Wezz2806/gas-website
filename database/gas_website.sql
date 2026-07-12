@@ -61,7 +61,7 @@ CREATE TABLE `eco_challenge_evaluations` (
 --
 
 INSERT INTO `eco_challenge_evaluations` (`id`, `teacher_id`, `evaluation_text`, `published_at`, `updated_at`) VALUES
-(1, 2, 'Secara keseluruhan, hasil posttest menunjukkan pemahaman yang baik terhadap materi ekoenzim dan kimia hijau.', '2026-05-25 20:52:24', '2026-05-25 20:52:24');
+(1, 2, 'Secara keseluruhan, hasil test menunjukkan pemahaman yang baik terhadap materi ekoenzim dan kimia hijau.', '2026-05-25 20:52:24', '2026-05-25 20:52:24');
 
 -- --------------------------------------------------------
 

@@ -9,7 +9,7 @@ export type AdminTab =
   | 'admin-ecoupdate'
   | 'admin-ecocontact'
   | 'admin-ecolab'
-  | 'admin-lkm-data';
+  | 'admin-ecochallenge';
 
 
 export interface User {
@@ -109,4 +109,14 @@ export interface QuizQuestion {
   question: string;
   options: string[];
   correctAnswer: number;
+}
+
+export interface JournalRow {
+  row_index: number;
+  tanggal: string;
+  warna: string;
+  aroma: string;
+  gas: string;
+  alasan: string;
+  solusi: string;
 }

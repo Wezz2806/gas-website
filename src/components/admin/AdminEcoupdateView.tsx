@@ -235,7 +235,7 @@ export default function AdminEcoupdateView() {
             Kelola Portal EcoUpdate
           </h2>
           <p className="text-sm text-slate-500 mt-1">
-            Tambah, sunting, dan hapus artikel atau berita terkait lingkungan di portal siswa.
+            Tambah, sunting, dan hapus artikel atau berita terkait lingkungan di portal murid.
           </p>
         </div>
         <button

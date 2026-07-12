@@ -11,7 +11,9 @@ import {
   RefreshCw,
   ArrowRight,
   TrendingUp,
-  AlertCircle
+  AlertCircle,
+  ClipboardList,
+  FileCheck
 } from 'lucide-react';
 import { AdminTab } from '../../types';
 
@@ -26,6 +28,9 @@ interface DashboardStats {
   total_messages: number;
   unread_messages: number;
   total_points: number;
+  total_journals: number;
+  total_surveys: number;
+  total_tests: number;
 }
 
 interface AdminDashboardViewProps {
@@ -44,6 +49,9 @@ export default function AdminDashboardView({ setActiveTab }: AdminDashboardViewP
     total_messages: 0,
     unread_messages: 0,
     total_points: 0,
+    total_journals: 0,
+    total_surveys: 0,
+    total_tests: 0,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -105,62 +113,69 @@ export default function AdminDashboardView({ setActiveTab }: AdminDashboardViewP
       )}
 
       {/* Grid Utama Statistik */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-left">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 text-left">
         
-        {/* Total Users */}
+        {/* Total Murid Terdaftar */}
         <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center gap-4">
           <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl">
             <Users className="w-6 h-6" />
           </div>
           <div>
-            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Total Pengguna</span>
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Total Murid Terdaftar</span>
             <h4 className="text-xl font-bold text-gray-800 mt-0.5">
-              {loading ? '...' : stats.total_users}
+              {loading ? '...' : stats.total_students}
             </h4>
           </div>
         </div>
 
-        {/* Distributed Eco Points */}
+        {/* Total Submit LKM */}
         <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center gap-4">
-          <div className="p-3 bg-amber-50 text-amber-600 rounded-2xl">
-            <Award className="w-6 h-6" />
-          </div>
-          <div>
-            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Total Eco-Points</span>
-            <h4 className="text-xl font-bold text-gray-800 mt-0.5">
-              {loading ? '...' : stats.total_points.toLocaleString('id-ID')} EP
-            </h4>
-          </div>
-        </div>
-
-        {/* Submissions Pending */}
-        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center gap-4">
-          <div className="p-3 bg-red-50 text-red-600 rounded-2xl">
+          <div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl">
             <FileSpreadsheet className="w-6 h-6" />
           </div>
           <div>
-            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">LKM Menunggu Nilai</span>
-            <h4 className="text-xl font-bold text-gray-800 mt-0.5 flex items-center gap-1.5">
-              {loading ? '...' : stats.pending_submissions}
-              {stats.pending_submissions > 0 && (
-                <span className="text-[8px] bg-red-100 text-red-700 px-1.5 py-0.5 rounded-full font-bold">Pending</span>
-              )}
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Total Submit LKM</span>
+            <h4 className="text-xl font-bold text-gray-800 mt-0.5">
+              {loading ? '...' : stats.total_submissions}
             </h4>
           </div>
         </div>
 
-        {/* Unread Contact Messages */}
+        {/* Total Submit Jurnal Monitoring */}
         <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center gap-4">
-          <div className="p-3 bg-purple-50 text-purple-600 rounded-2xl">
-            <Mail className="w-6 h-6" />
+          <div className="p-3 bg-amber-50 text-amber-600 rounded-2xl">
+            <TrendingUp className="w-6 h-6" />
           </div>
           <div>
-            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Pesan Belum Dibaca</span>
-            <h4 className="text-xl font-bold text-gray-800 mt-0.5 flex items-center gap-1.5">
-              {loading ? '...' : stats.unread_messages}
-              {stats.unread_messages > 0 && (
-                <span className="text-[8px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded-full font-bold">Baru</span>
-              )}
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Total Submit Jurnal Monitoring</span>
+            <h4 className="text-xl font-bold text-gray-800 mt-0.5">
+              {loading ? '...' : stats.total_journals}
+            </h4>
+          </div>
+        </div>
+
+        {/* Total Submit Angket */}
+        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center gap-4">
+          <div className="p-3 bg-purple-50 text-purple-600 rounded-2xl">
+            <ClipboardList className="w-6 h-6" />
+          </div>
+          <div>
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Total Submit Angket</span>
+            <h4 className="text-xl font-bold text-gray-800 mt-0.5">
+              {loading ? '...' : stats.total_surveys}
+            </h4>
+          </div>
+        </div>
+
+        {/* Total Submit Test */}
+        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm flex items-center gap-4">
+          <div className="p-3 bg-rose-50 text-rose-600 rounded-2xl">
+            <FileCheck className="w-6 h-6" />
+          </div>
+          <div>
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Total Submit Test</span>
+            <h4 className="text-xl font-bold text-gray-800 mt-0.5">
+              {loading ? '...' : stats.total_tests}
             </h4>
           </div>
         </div>
@@ -183,7 +198,7 @@ export default function AdminDashboardView({ setActiveTab }: AdminDashboardViewP
               <div>
                 <div className="flex justify-between text-xs font-semibold mb-1">
                   <span className="text-gray-600 flex items-center gap-1">
-                    <UserCheck className="w-3.5 h-3.5 text-blue-500" /> Siswa (Student)
+                    <UserCheck className="w-3.5 h-3.5 text-blue-500" /> Murid (Student)
                   </span>
                   <span className="text-gray-800">{stats.total_students} ({stats.total_users > 0 ? Math.round((stats.total_students / stats.total_users) * 100) : 0}%)</span>
                 </div>
@@ -250,7 +265,7 @@ export default function AdminDashboardView({ setActiveTab }: AdminDashboardViewP
               <div className="p-4 bg-slate-50 rounded-2xl col-span-2">
                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Hubungan Pesan Kontak</span>
                 <span className="text-sm font-semibold text-slate-700 mt-1 block">
-                  Total {stats.total_messages} pesan masuk dari siswa.
+                  Total {stats.total_messages} pesan masuk dari murid.
                 </span>
               </div>
             </div>

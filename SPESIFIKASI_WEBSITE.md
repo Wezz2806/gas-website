@@ -2,7 +2,7 @@
 ## **GAS Website — Green Action Students**
 *Dari Pengetahuan ke Aksi Berkelanjutan (From Knowledge to Sustainable Action)*
 
-Dokumen ini berisi penjelasan spesifikasi teknis lengkap dari platform **GAS Website**, sebuah platform edukasi keberlanjutan lingkungan yang dirancang untuk siswa dan guru. Dokumen ini ditujukan kepada pengembang, pengajar, maupun administrator sistem untuk memahami arsitektur, skema basis data, alur kerja sistem, fungsionalitas modul, serta antarmuka API yang tersedia.
+Dokumen ini berisi penjelasan spesifikasi teknis lengkap dari platform **GAS Website**, sebuah platform edukasi keberlanjutan lingkungan yang dirancang untuk murid dan guru. Dokumen ini ditujukan kepada pengembang, pengajar, maupun administrator sistem untuk memahami arsitektur, skema basis data, alur kerja sistem, fungsionalitas modul, serta antarmuka API yang tersedia.
 
 ---
 
@@ -10,7 +10,7 @@ Dokumen ini berisi penjelasan spesifikasi teknis lengkap dari platform **GAS Web
 1. [Deskripsi Umum & Tujuan](#1-deskripsi-umum--tujuan)
 2. [Arsitektur Sistem & Stack Teknologi](#2-arsitektur-sistem--stack-teknologi)
 3. [Spesifikasi Basis Data (Database Schema)](#3-spesifikasi-basis-data-database-schema)
-4. [Spesifikasi Fungsional Modul (Siswa)](#4-spesifikasi-fungsional-modul-siswa)
+4. [Spesifikasi Fungsional Modul (Murid)](#4-spesifikasi-fungsional-modul-murid)
 5. [Spesifikasi API Endpoint (Backend PHP)](#5-spesifikasi-api-endpoint-backend-php)
 6. [Struktur Direktori Proyek](#6-struktur-direktori-proyek)
 7. [Panduan Instalasi & Deployment Lokal](#7-panduan-instalasi--deployment-lokal)
@@ -19,14 +19,14 @@ Dokumen ini berisi penjelasan spesifikasi teknis lengkap dari platform **GAS Web
 
 ## **1. Deskripsi Umum & Tujuan**
 
-**Green Action Students (GAS) Website** adalah aplikasi web interaktif yang dikembangkan untuk memfasilitasi pembelajaran keberlanjutan lingkungan secara kolaboratif. Fokus utama dari platform ini adalah memandu siswa dalam proyek pembuatan **Ekoenzim** (fermentasi limbah kulit buah organik menjadi cairan serbaguna) serta penerapan **Kimia Hijau (Green Chemistry)**.
+**Green Action Students (GAS) Website** adalah aplikasi web interaktif yang dikembangkan untuk memfasilitasi pembelajaran keberlanjutan lingkungan secara kolaboratif. Fokus utama dari platform ini adalah memandu murid dalam proyek pembuatan **Ekoenzim** (fermentasi limbah kulit buah organik menjadi cairan serbaguna) serta penerapan **Kimia Hijau (Green Chemistry)**.
 
 Platform ini mengintegrasikan:
 *   **Pembelajaran Mandiri (E-Learning)**: Membaca materi digital secara interaktif.
-*   **Lembar Kerja Mahasiswa/Siswa (LKM)**: Mengunduh panduan praktikum dan mengunggah laporan praktikum bertahap.
+*   **Lembar Kerja Murid/Murid (LKM)**: Mengunduh panduan praktikum dan mengunggah laporan praktikum bertahap.
 *   **Kolaborasi Kreatif**: Berbagi inovasi lingkungan dalam bentuk video pendek.
 *   **Gamifikasi Terintegrasi**: Mengumpulkan Eco-Points, mempertahankan Streak harian, dan bersaing di Leaderboard.
-*   **Evaluasi Guru**: Mengerjakan kuis/posttest dan berdiskusi di forum evaluasi.
+*   **Evaluasi Guru**: Mengerjakan kuis/test dan berdiskusi di forum evaluasi.
 
 ---
 
@@ -110,7 +110,7 @@ erDiagram
 ### **Detail Struktur Tabel**
 
 #### **1. Tabel `users`**
-Menyimpan data pengguna (siswa, guru, dan admin).
+Menyimpan data pengguna (murid, guru, dan admin).
 | Field | Tipe Data | Nullable | Default | Keterangan |
 | :--- | :--- | :--- | :--- | :--- |
 | `id` | INT | No | *Auto-Increment* | Primary Key |
@@ -143,14 +143,14 @@ Menampung kode OTP untuk verifikasi atur ulang kata sandi.
 | `created_at` | TIMESTAMP | No | CURRENT_TIMESTAMP | Waktu pengajuan OTP |
 
 #### **3. Tabel `student_submissions`**
-Menyimpan berkas LKM yang dikumpulkan siswa serta nilainya.
+Menyimpan berkas LKM yang dikumpulkan murid serta nilainya.
 | Field | Tipe Data | Nullable | Default | Keterangan |
 | :--- | :--- | :--- | :--- | :--- |
 | `id` | INT | No | *Auto-Increment* | Primary Key |
 | `student_id` | INT | No | | Foreign Key -> `users.id` (ON DELETE CASCADE) |
 | `meeting_id` | VARCHAR(10) | No | | Kode pertemuan (m1, m2, m3, m4) |
 | `filename` | VARCHAR(255) | No | | Nama file terenkripsi unik di server |
-| `original_name` | VARCHAR(255) | No | | Nama file asli unggahan siswa |
+| `original_name` | VARCHAR(255) | No | | Nama file asli unggahan murid |
 | `grade` | TINYINT UNSIGNED | Yes | NULL | Nilai tugas (0 - 100) dari guru |
 | `teacher_comment` | TEXT | Yes | NULL | Komentar evaluasi dari pengajar |
 | `status` | ENUM('pending', 'graded') | No | 'pending' | Status peninjauan tugas |
@@ -170,7 +170,7 @@ Mendokumentasikan sesi pertemuan/timeline praktikum ekoenzim.
 | `updated_at` | TIMESTAMP | No | CURRENT_TIMESTAMP | Diperbarui otomatis saat baris diubah |
 
 #### **5. Tabel `eco_creation_videos`**
-Berisi unggahan video karya inovasi kreatif siswa.
+Berisi unggahan video karya inovasi kreatif murid.
 | Field | Tipe Data | Nullable | Default | Keterangan |
 | :--- | :--- | :--- | :--- | :--- |
 | `id` | INT | No | *Auto-Increment* | Primary Key |
@@ -189,17 +189,17 @@ Berisi unggahan video karya inovasi kreatif siswa.
 
 ---
 
-## **4. Spesifikasi Fungsional Modul (Siswa)**
+## **4. Spesifikasi Fungsional Modul (Murid)**
 
 ### **A. Modul Otentikasi & Pengaturan Pengguna**
 *   **Registrasi & Login**: Otentikasi menggunakan email & kata sandi dengan verifikasi lokal, atau menggunakan akun Google (OAuth 2.0).
-*   **Lupa Sandi (OTP)**: Siswa meminta OTP verifikasi yang dikirim ke email mereka via PHPMailer untuk mereset sandi.
+*   **Lupa Sandi (OTP)**: Murid meminta OTP verifikasi yang dikirim ke email mereka via PHPMailer untuk mereset sandi.
 *   **Pengaturan Profil**: Mengubah nama lengkap, foto profil (avatar), mengubah kata sandi lama, serta opsi menghapus avatar secara permanen.
 
 ### **B. Dashboard Utama (Pusat Kendali)**
-*   **Eco-Points & Streak**: Menampilkan jumlah poin terkumpul dan jumlah hari beruntun siswa masuk ke web.
+*   **Eco-Points & Streak**: Menampilkan jumlah poin terkumpul dan jumlah hari beruntun murid masuk ke web.
 *   **Presensi Harian (Daily Check-in)**: Tombol sekali sehari untuk klaim bonus +20 Eco-Points.
-*   **Leaderboard**: Peringkat seluruh siswa berdasarkan total Eco-Points secara *real-time*.
+*   **Leaderboard**: Peringkat seluruh murid berdasarkan total Eco-Points secara *real-time*.
 *   **Sekilas Progress Proyek**: Menunjukkan status penyelesaian LKM dari 4 pertemuan.
 *   **Berita Lingkungan Lokal**: Menampilkan ringkasan berita lingkungan terpopuler di Surabaya & nasional.
 
@@ -216,7 +216,7 @@ Berisi unggahan video karya inovasi kreatif siswa.
     4.  *Meeting 4: Pengemasan Produk (Kontrol Kualitas)*
 *   **Unduh LKM**: Tombol unduh panduan worksheet resmi yang langsung terhubung ke Google Drive.
 *   **Unggah LKM**: Modul drag-and-drop file pendukung PDF/DOCX/PPTX (Maks 10MB) per pertemuan.
-*   **Umpan Balik Guru**: Notifikasi jika file telah dinilai beserta masukan tertulis dari pengajar. Siswa dapat menghapus tugas yang sudah diunggah untuk mengunggah ulang tugas baru.
+*   **Umpan Balik Guru**: Notifikasi jika file telah dinilai beserta masukan tertulis dari pengajar. Murid dapat menghapus tugas yang sudah diunggah untuk mengunggah ulang tugas baru.
 
 ### **E. EcoUpdate (Kliping Berita Lingkungan)**
 *   **Portal Berita Lengkap**: Menyajikan artikel edukasi lingkungan (misal: "Deklarasi She Heroes", "Sampah Mikroplastik Air Hujan Surabaya").
@@ -224,16 +224,16 @@ Berisi unggahan video karya inovasi kreatif siswa.
 *   **Interaksi Sosial**: Fitur untuk menyukai (like) artikel dan navigasi langsung ke tautan berita asli.
 
 ### **F. EcoCreation (Galeri Inovasi Video)**
-*   **Galeri Publik**: Kumpulan video inovasi sains ramah lingkungan buatan siswa.
-*   **Unggah Video Instan**: Siswa mengunggah berkas video (MP4/MOV/AVI) dengan deteksi durasi otomatis pada web.
+*   **Galeri Publik**: Kumpulan video inovasi sains ramah lingkungan buatan murid.
+*   **Unggah Video Instan**: Murid mengunggah berkas video (MP4/MOV/AVI) dengan deteksi durasi otomatis pada web.
 *   **Putar Video**: Pemutar video terintegrasi (HTML5 Video Stream) yang merekam data tayangan (views).
-*   **Interaksi Galeri**: Siswa dapat menyukai (like) video teman lain, membaca komentar, serta menulis komentar baru.
-*   **Manajemen Karya Sendiri**: Khusus video miliknya, siswa dapat mengedit judul, mengganti file video, atau menghapus video tersebut kapan saja.
+*   **Interaksi Galeri**: Murid dapat menyukai (like) video teman lain, membaca komentar, serta menulis komentar baru.
+*   **Manajemen Karya Sendiri**: Khusus video miliknya, murid dapat mengedit judul, mengganti file video, atau menghapus video tersebut kapan saja.
 
-### **G. EcoChallenge (Posttest & Diskusi Kelas)**
-*   **Posttest Evaluasi**: Tautan terintegrasi ke form ujian akhir (Google Form).
+### **G. EcoChallenge (Test & Diskusi Kelas)**
+*   **Test Evaluasi**: Tautan terintegrasi ke form ujian akhir (Google Form).
 *   **Evaluasi Pengajar**: Catatan evaluasi akhir resmi dari guru pengampu kelas.
-*   **Forum Tanggapan Siswa**: Ruang bagi siswa untuk menulis diskusi kelas, bertanya, mengedit tanggapan, atau menghapus tanggapannya sendiri secara mandiri.
+*   **Forum Tanggapan Murid**: Ruang bagi murid untuk menulis diskusi kelas, bertanya, mengedit tanggapan, atau menghapus tanggapannya sendiri secara mandiri.
 
 ---
 
@@ -243,7 +243,7 @@ Semua endpoint API terletak di direktori `/api/` dan mengembalikan respons berfo
 
 ### **A. API Otentikasi & Sesi**
 *   `POST /api/register.php`
-    *   *Fungsi*: Mendaftarkan akun siswa baru.
+    *   *Fungsi*: Mendaftarkan akun murid baru.
     *   *Parameter*: `full_name`, `email`, `password`.
 *   `POST /api/login.php`
     *   *Fungsi*: Validasi kredensial lokal dan membuat sesi pengguna.
@@ -268,7 +268,7 @@ Semua endpoint API terletak di direktori `/api/` dan mengembalikan respons berfo
 
 ### **C. API EcoLab (Submissions)**
 *   `GET /api/get-submissions.php`
-    *   *Fungsi*: Mengambil semua daftar berkas LKM yang pernah dikumpulkan oleh siswa yang sedang login.
+    *   *Fungsi*: Mengambil semua daftar berkas LKM yang pernah dikumpulkan oleh murid yang sedang login.
 *   `POST /api/upload-submission.php`
     *   *Fungsi*: Mengunggah file LKM untuk pertemuan tertentu.
     *   *Parameter*: `meeting_id` (m1/m2/m3/m4) & file upload (`lkm_file`).
@@ -292,13 +292,13 @@ Semua endpoint API terletak di direktori `/api/` dan mengembalikan respons berfo
 
 ### **E. API Diskusi & Komentar**
 *   `GET /api/get-comments.php`
-    *   *Fungsi*: Mengambil daftar diskusi siswa pada modul EcoChallenge.
+    *   *Fungsi*: Mengambil daftar diskusi murid pada modul EcoChallenge.
 *   `POST /api/add-comment.php`
     *   *Fungsi*: Menambahkan tanggapan/diskusi baru.
 *   `POST /api/edit-comment.php`
-    *   *Fungsi*: Mengubah konten komentar milik siswa bersangkutan.
+    *   *Fungsi*: Mengubah konten komentar milik murid bersangkutan.
 *   `POST /api/delete-comment.php`
-    *   *Fungsi*: Menghapus komentar diskusi siswa bersangkutan.
+    *   *Fungsi*: Menghapus komentar diskusi murid bersangkutan.
 
 ---
 
@@ -328,10 +328,10 @@ GAS Website/
 │   ├── assets/                # Gambar, logo, & file css
 │   ├── components/            # Komponen Tampilan (Per Halaman)
 │   │   ├── auth/              # Halaman Login, Register, Forgot Password
-│   │   ├── DashboardView.tsx  # Tampilan Dashboard Siswa
+│   │   ├── DashboardView.tsx  # Tampilan Dashboard Murid
 │   │   ├── EcoLabView.tsx     # Tampilan Timeline LKM
 │   │   ├── EcoCreationView.tsx# Tampilan Galeri & Upload Video
-│   │   ├── EcoChallengeView.tsx# Tampilan Posttest & Diskusi Kelas
+│   │   ├── EcoChallengeView.tsx# Tampilan Test & Diskusi Kelas
 │   │   └── Header.tsx / Sidebar.tsx # Tata Letak (Layout) Navigasi
 │   ├── context/               # State Global (AuthContext)
 │   ├── services/              # API Client (auth, submission, video, comment)

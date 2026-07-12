@@ -33,7 +33,7 @@ try {
 
     $stmt_user = $pdo->prepare("SELECT full_name FROM users WHERE id = :id");
     $stmt_user->execute(['id' => $user_id]);
-    $author = $stmt_user->fetchColumn() ?: 'Siswa';
+    $author = $stmt_user->fetchColumn() ?: 'Murid';
 
     sendJson([
         'success' => true,

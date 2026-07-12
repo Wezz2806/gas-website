@@ -7,7 +7,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 }
 
 try {
-    // Ambil seluruh tanggapan/komentar siswa untuk evaluasi id = 1
+    // Ambil seluruh tanggapan/komentar murid untuk evaluasi id = 1
     $stmt = $pdo->query(
         "SELECT c.id, c.student_id, c.content, c.created_at, u.full_name as author
          FROM eco_challenge_comments c

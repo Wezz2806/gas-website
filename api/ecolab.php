@@ -9,7 +9,7 @@ if ($method === 'GET') {
     $action = isset($_GET['action']) ? trim($_GET['action']) : '';
 
     if ($action === 'get_submissions') {
-        // HANYA ADMIN YANG BISA MELIHAT SUBMISSIONS SISWA
+        // HANYA ADMIN YANG BISA MELIHAT SUBMISSIONS MURID
         if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
             sendJson([
                 'success' => false,
@@ -19,7 +19,7 @@ if ($method === 'GET') {
 
         try {
             $stmt = $pdo->query("
-                SELECT ss.id, ss.meeting_id, ss.filename, ss.original_name, ss.status, ss.submitted_at, 
+                SELECT ss.id, ss.meeting_id, ss.filename, ss.original_name, ss.status, ss.submitted_at, ss.grade,
                        u.full_name as student_name, u.email as student_email, em.title as meeting_title
                 FROM student_submissions ss
                 JOIN users u ON ss.student_id = u.id
@@ -40,7 +40,7 @@ if ($method === 'GET') {
         exit;
     }
 
-    // Default: Ambil list meetings/materi LKM untuk siswa/umum
+    // Default: Ambil list meetings/materi LKM untuk murid/umum
     try {
         $stmt = $pdo->query("SELECT * FROM ecolab_meetings ORDER BY number ASC");
         $meetings = $stmt->fetchAll();
@@ -65,6 +65,39 @@ if ($method === 'GET') {
 
     $body = getRequestBody();
     $action = isset($body['action']) ? trim($body['action']) : '';
+
+    // Beri Nilai / Grading LKM Murid
+    if ($action === 'grade_submission') {
+        $submission_id = isset($body['id']) ? (int)$body['id'] : 0;
+        $grade = isset($body['grade']) && $body['grade'] !== '' ? (int)$body['grade'] : null;
+        if ($submission_id <= 0) {
+            sendJson([
+                'success' => false,
+                'message' => 'ID Pengumpulan tidak valid.'
+            ], 400);
+        }
+        try {
+            $stmt = $pdo->prepare("
+                UPDATE student_submissions 
+                SET grade = :grade, status = 'graded', graded_at = CURRENT_TIMESTAMP
+                WHERE id = :id
+            ");
+            $stmt->execute([
+                'grade' => $grade,
+                'id' => $submission_id
+            ]);
+            sendJson([
+                'success' => true,
+                'message' => 'Nilai LKM berhasil disimpan.'
+            ]);
+        } catch (PDOException $e) {
+            sendJson([
+                'success' => false,
+                'message' => 'Gagal menyimpan nilai LKM: ' . $e->getMessage()
+            ], 500);
+        }
+        exit;
+    }
 
     // Hapus Materi LKM
     if ($action === 'delete') {
@@ -91,7 +124,7 @@ if ($method === 'GET') {
         exit;
     }
 
-    // Aksi hapus berkas LKM yang diunggah siswa
+    // Aksi hapus berkas LKM yang diunggah murid
     if ($action === 'delete_submission') {
         $submission_id = isset($body['id']) ? (int)$body['id'] : 0;
         if ($submission_id <= 0) {
@@ -115,7 +148,7 @@ if ($method === 'GET') {
                 $stmtDel->execute(['id' => $submission_id]);
                 sendJson([
                     'success' => true,
-                    'message' => 'Berkas pengumpulan siswa berhasil dihapus.'
+                    'message' => 'Berkas pengumpulan murid berhasil dihapus.'
                 ]);
             } else {
                 sendJson([
@@ -126,7 +159,7 @@ if ($method === 'GET') {
         } catch (PDOException $e) {
             sendJson([
                 'success' => false,
-                'message' => 'Gagal menghapus berkas LKM siswa: ' . $e->getMessage()
+                'message' => 'Gagal menghapus berkas LKM murid: ' . $e->getMessage()
             ], 500);
         }
         exit;

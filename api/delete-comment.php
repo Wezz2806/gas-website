@@ -19,7 +19,7 @@ if ($comment_id <= 0) {
 }
 
 try {
-    // Pastikan komentar ini milik siswa yang sedang login
+    // Pastikan komentar ini milik murid yang sedang login
     $stmt = $pdo->prepare("SELECT id FROM eco_challenge_comments WHERE id = :id AND student_id = :student_id LIMIT 1");
     $stmt->execute(['id' => $comment_id, 'student_id' => $user_id]);
     if (!$stmt->fetch()) {

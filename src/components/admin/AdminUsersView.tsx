@@ -198,7 +198,7 @@ export default function AdminUsersView() {
                   ? 'bg-indigo-50 text-indigo-700 border border-indigo-100' 
                   : 'bg-blue-50 text-blue-700 border border-blue-100'
               }`}>
-                {item.role === 'admin' ? 'Admin' : 'Siswa'}
+                {item.role === 'admin' ? 'Admin' : 'Murid'}
               </span>
               {!isSelf && (
                 <button 
@@ -247,7 +247,7 @@ export default function AdminUsersView() {
       {/* Header */}
       <div>
         <h2 className="font-display font-black text-2xl text-slate-800">Manajemen Pengguna</h2>
-        <p className="text-xs text-gray-500">Lihat, cari, ganti role (siswa/admin), atau hapus akun pengguna terdaftar.</p>
+        <p className="text-xs text-gray-500">Lihat, cari, ganti role (murid/admin), atau hapus akun pengguna terdaftar.</p>
       </div>
 
       {/* Toast Notification */}
@@ -284,7 +284,7 @@ export default function AdminUsersView() {
             className="border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-500 outline-none"
           >
             <option value="">Semua Peran</option>
-            <option value="student">Siswa (Student)</option>
+            <option value="student">Murid (Student)</option>
             <option value="admin">Administrator</option>
           </select>
         </div>
@@ -334,13 +334,13 @@ export default function AdminUsersView() {
             </div>
           )}
 
-          {/* Box 2: Siswa */}
+          {/* Box 2: Murid */}
           {(roleFilter === '' || roleFilter === 'student') && (
             <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-slate-50/50">
                 <div className="flex items-center gap-2">
                   <Users className="w-5 h-5 text-blue-600" />
-                  <h3 className="font-display font-bold text-slate-800 text-sm">Daftar Siswa (Student)</h3>
+                  <h3 className="font-display font-bold text-slate-800 text-sm">Daftar Murid (Student)</h3>
                   <span className="bg-blue-100 text-blue-800 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
                     {studentUsers.length}
                   </span>
@@ -349,7 +349,7 @@ export default function AdminUsersView() {
               
               {studentUsers.length === 0 ? (
                 <div className="py-10 text-center text-xs text-gray-400 italic">
-                  Tidak ada siswa ditemukan.
+                  Tidak ada murid ditemukan.
                 </div>
               ) : (
                 <div className="overflow-x-auto">

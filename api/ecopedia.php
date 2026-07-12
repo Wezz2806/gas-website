@@ -7,7 +7,7 @@ $method = $_SERVER['REQUEST_METHOD'];
 
 if ($method === 'GET') {
     try {
-        $stmt = $pdo->query("SELECT * FROM ecopedia_books");
+        $stmt = $pdo->query("SELECT * FROM ecopedia_books ORDER BY (CASE WHEN id = 'green-chemistry' THEN 1 WHEN id = 'ecoenzyme' THEN 2 ELSE 3 END) ASC");
         $books = $stmt->fetchAll();
         sendJson([
             'success' => true,

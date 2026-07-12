@@ -26,7 +26,7 @@ export default function AdminSidebar({ activeTab, setActiveTab }: AdminSidebarPr
     { id: 'admin-users' as AdminTab, label: 'Manajemen Pengguna', icon: Users },
     { id: 'admin-ecopedia' as AdminTab, label: 'Kelola EcoPedia', icon: BookOpen },
     { id: 'admin-ecolab' as AdminTab, label: 'Kelola EcoLab', icon: FlaskConical },
-    { id: 'admin-lkm-data' as AdminTab, label: 'Kelola Data LKM', icon: ClipboardList },
+    { id: 'admin-ecochallenge' as AdminTab, label: 'Kelola EcoChallenge', icon: ClipboardList },
     { id: 'admin-ecoupdate' as AdminTab, label: 'Kelola EcoUpdate', icon: Newspaper },
     { id: 'admin-ecocontact' as AdminTab, label: 'Kelola EcoContact', icon: PhoneCall },
   ];
@@ -80,15 +80,10 @@ export default function AdminSidebar({ activeTab, setActiveTab }: AdminSidebarPr
         })}
       </nav>
 
-      {/* Logout button at bottom */}
-      <div className="mt-auto px-4 pt-4 border-t border-slate-800">
-        <button
-          onClick={logout}
-          className="w-full text-left py-2.5 px-4 rounded-xl flex items-center gap-3 text-xs font-semibold text-rose-300 hover:text-rose-100 hover:bg-rose-500/10 transition-colors cursor-pointer"
-        >
-          <LogOut className="w-4 h-4" />
-          <span>Keluar Sesi (Logout)</span>
-        </button>
+      {/* Partner Logos */}
+      <div className="mt-auto px-4 pt-4 border-t border-slate-800 flex items-center justify-center gap-4">
+        <img src="/edu_stem_logo.jpg" alt="Edu STEM Center" className="h-10 object-contain rounded-lg bg-white p-1 shadow-sm" />
+        <img src="/unesa_logo.png" alt="UNESA" className="h-10 object-contain" />
       </div>
     </aside>
   );

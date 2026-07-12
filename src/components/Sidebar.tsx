@@ -92,24 +92,13 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
         })}
       </nav>
 
-      {/* Bottom Nav */}
-      <div className={`mt-auto pt-4 border-t border-[#2d5a27] space-y-1 ${compact ? 'px-0' : 'px-4'}`}>
-        <button
-          onClick={() => handleNavClick('support')}
-          title={compact ? 'Dukungan & FAQ' : undefined}
-          className={`w-full text-left py-2.5 flex items-center transition-colors text-xs font-semibold cursor-pointer rounded-lg ${
-            compact ? 'justify-center px-2' : 'px-4 gap-3'
-          } ${
-            activeTab === 'support'
-              ? 'bg-[#91f78e] text-[#002201] shadow-inner'
-              : 'text-[#bcf0ae] hover:text-white hover:bg-white/5'
-          }`}
-        >
-          <LifeBuoy className="w-4 h-4 shrink-0" />
-          {!compact && <span>Dukungan & FAQ</span>}
-        </button>
+      {/* Bottom Nav / Partner Logos */}
+      <div className={`mt-auto pt-4 border-t border-[#2d5a27] flex items-center justify-center gap-4 ${compact ? 'flex-col px-0' : 'px-4'}`}>
+        <img src="/edu_stem_logo.jpg" alt="Edu STEM Center" className="h-10 object-contain rounded-lg bg-white p-1 shadow-sm" />
+        <img src="/unesa_logo.png" alt="UNESA" className="h-10 object-contain" />
       </div>
     </>
+
   );
 
   return (

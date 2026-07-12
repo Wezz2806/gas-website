@@ -52,7 +52,7 @@ export default function SupportView({}: SupportProps) {
         </div>
         <div className="z-10 relative space-y-2">
           <span className="text-[10px] bg-[#91f78e] text-[#002201] font-bold px-3 py-1 rounded-full uppercase tracking-widest w-fit block">
-            Pusat Bantuan Siswa
+            Pusat Bantuan Murid
           </span>
           <h2 className="font-display font-black text-xl md:text-2xl mt-1.5">
             Dukungan & FAQ Hub

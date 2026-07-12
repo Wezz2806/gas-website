@@ -3,11 +3,11 @@
 --  Dibuat ulang: Mei 2026
 --  Perubahan dari v1:
 --    - Hapus: teacher_materials (modul guru dihapus)
---    - Hapus: quiz_questions (posttest kini pakai Google Form)
+--    - Hapus: quiz_questions (test kini pakai Google Form)
 --    - Hapus: kolom role teacher dari ENUM users (tetap ada 'teacher' untuk admin)
---    - Tambah: eco_challenge_comments (kolom evaluasi + komentar siswa)
---    - Tambah: eco_creation_videos (unggahan video siswa)
---    - Tambah: eco_contact_messages (pesan siswa ke guru)
+--    - Tambah: eco_challenge_comments (kolom evaluasi + komentar murid)
+--    - Tambah: eco_creation_videos (unggahan video murid)
+--    - Tambah: eco_contact_messages (pesan murid ke guru)
 --    - Tambah: INDEX tambahan untuk query umum
 --    - Tambah: kolom last_login di users
 -- ============================================================
@@ -54,13 +54,13 @@ CREATE TABLE IF NOT EXISTS password_resets (
     INDEX idx_expires   (expires_at)          -- untuk cleanup expired OTPs
 );
 
--- ── TABEL PENGUMPULAN TUGAS LKM SISWA ────────────────────────────────────────
+-- ── TABEL PENGUMPULAN TUGAS LKM MURID ────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS student_submissions (
     id            INT          AUTO_INCREMENT PRIMARY KEY,
     student_id    INT          NOT NULL,
     meeting_id    VARCHAR(10)  NOT NULL,          -- m1, m2, m3, m4
     filename      VARCHAR(255) NOT NULL,           -- nama file di server
-    original_name VARCHAR(255) NOT NULL,           -- nama file asli dari siswa
+    original_name VARCHAR(255) NOT NULL,           -- nama file asli dari murid
     grade         TINYINT UNSIGNED DEFAULT NULL,   -- nilai 0-100 dari guru
     teacher_comment TEXT        DEFAULT NULL,      -- catatan/masukan dari guru
     status        ENUM('pending','graded') NOT NULL DEFAULT 'pending',
@@ -93,7 +93,7 @@ INSERT IGNORE INTO meetings (id, number, title, description, icon, status) VALUE
   ('m4', 4, 'Pengemasan Produk',       'Meracik formula sabun enzim, pelabelan, dan presentasi produk kepada komunitas sekolah.', 'inventory', 'scheduled');
 
 -- ── TABEL KOLOM EVALUASI ECOCHALLENGE ────────────────────────────────────────
--- Menyimpan teks evaluasi guru dan komentar diskusi siswa
+-- Menyimpan teks evaluasi guru dan komentar diskusi murid
 CREATE TABLE IF NOT EXISTS eco_challenge_evaluations (
     id            INT        AUTO_INCREMENT PRIMARY KEY,
     teacher_id    INT        NOT NULL,                  -- guru yang menulis evaluasi
@@ -119,7 +119,7 @@ CREATE TABLE IF NOT EXISTS eco_challenge_comments (
 );
 
 -- ── TABEL UNGGAHAN VIDEO ECOCREATION ─────────────────────────────────────────
--- Video diunggah siswa, ditinjau guru sebelum tampil
+-- Video diunggah murid, ditinjau guru sebelum tampil
 CREATE TABLE IF NOT EXISTS eco_creation_videos (
     id            INT          AUTO_INCREMENT PRIMARY KEY,
     student_id    INT          NOT NULL,
@@ -142,7 +142,7 @@ CREATE TABLE IF NOT EXISTS eco_creation_videos (
     INDEX idx_approved_at (approved_at DESC)   -- untuk urutan galeri terbaru
 );
 
--- ── TABEL PESAN ECOCONTACT (Siswa → Guru) ────────────────────────────────────
+-- ── TABEL PESAN ECOCONTACT (Murid → Guru) ────────────────────────────────────
 CREATE TABLE IF NOT EXISTS eco_contact_messages (
     id           INT          AUTO_INCREMENT PRIMARY KEY,
     student_id   INT          NOT NULL,

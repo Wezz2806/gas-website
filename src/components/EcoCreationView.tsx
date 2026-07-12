@@ -486,10 +486,10 @@ export default function EcoCreationView({ searchQuery }: EcoCreationViewProps) {
           <div>
             <h2 className="font-display font-black text-2xl text-[#154212] mb-1 flex items-center gap-2">
               <Sparkles className="w-6 h-6 text-[#006e1c]" />
-              EcoCreation — Galeri Video Siswa
+              EcoCreation — Galeri Video Murid
             </h2>
             <p className="text-xs md:text-sm text-[#42493e] max-w-2xl">
-              Unggah dan kelola video inovasi lingkungan Anda. Durasi dideteksi otomatis saat memilih berkas. Siswa dapat mengedit judul atau mengganti file videonya kapan saja.
+              Unggah dan kelola video inovasi lingkungan Anda. Durasi dideteksi otomatis saat memilih berkas. Murid dapat mengedit judul atau mengganti file videonya kapan saja.
             </p>
           </div>
           <button 
@@ -508,7 +508,7 @@ export default function EcoCreationView({ searchQuery }: EcoCreationViewProps) {
           <CheckCircle className="w-5 h-5 text-[#006e1c] shrink-0 mt-0.5" />
           <div className="text-left">
             <p className="text-sm font-bold text-emerald-950">Video berhasil dipublikasikan!</p>
-            <p className="text-xs text-gray-600 mt-0.5">Karya Anda sekarang dapat langsung dilihat oleh seluruh siswa di galeri EcoCreation.</p>
+            <p className="text-xs text-gray-600 mt-0.5">Karya Anda sekarang dapat langsung dilihat oleh seluruh murid di galeri EcoCreation.</p>
           </div>
         </div>
       )}
@@ -654,7 +654,7 @@ export default function EcoCreationView({ searchQuery }: EcoCreationViewProps) {
               <h3 className="font-display font-bold text-lg">Galeri Video EcoCreation</h3>
             </div>
             <p className="text-sm text-[#bcf0ae] leading-relaxed">
-              Belum ada video dari siswa yang diunggah. Unggah video kreatif Anda untuk berbagi inovasi dengan komunitas GAS!
+              Belum ada video dari murid yang diunggah. Unggah video kreatif Anda untuk berbagi inovasi dengan komunitas GAS!
             </p>
           </div>
 
@@ -665,7 +665,7 @@ export default function EcoCreationView({ searchQuery }: EcoCreationViewProps) {
             <div>
               <p className="text-base font-bold text-gray-700">Galeri Video Kosong</p>
               <p className="text-sm text-gray-500 mt-1 max-w-md">
-                Jadilah siswa pertama yang membagikan karya video kreatif Anda tentang lingkungan atau ekoenzim di sini.
+                Jadilah murid pertama yang membagikan karya video kreatif Anda tentang lingkungan atau ekoenzim di sini.
               </p>
             </div>
             <button
@@ -1026,7 +1026,7 @@ export default function EcoCreationView({ searchQuery }: EcoCreationViewProps) {
                   {activeVideo.student_name.substring(0, 2).toUpperCase()}
                 </div>
                 <div>
-                  <p className="text-xs text-gray-400">Diunggah oleh siswa</p>
+                  <p className="text-xs text-gray-400">Diunggah oleh murid</p>
                   <p className="text-sm font-bold text-white">{activeVideo.student_name}</p>
                 </div>
               </div>

@@ -1,0 +1,373 @@
+<?php
+// api/student-test.php
+
+require_once 'config.php';
+require_once 'docx-parser.php';
+
+$method = $_SERVER['REQUEST_METHOD'];
+
+// Authentication protection
+if (!isset($_SESSION['user'])) {
+    sendJson([
+        'success' => false,
+        'message' => 'Silakan login terlebih dahulu.'
+    ], 401);
+}
+
+$currentUser = $_SESSION['user'];
+
+if ($method === 'GET') {
+    $action = isset($_GET['action']) ? trim($_GET['action']) : '';
+
+    if ($action === 'get_students') {
+        // ADMIN ONLY: get list of students who submitted or started tests
+        if ($currentUser['role'] !== 'admin') {
+            sendJson([
+                'success' => false,
+                'message' => 'Akses ditolak.'
+            ], 403);
+        }
+
+        try {
+            $stmt = $pdo->query("
+                SELECT u.id, u.full_name AS name, u.email, p.updated_at as last_updated, p.current_step, p.submitted, p.grade
+                FROM users u
+                JOIN student_tests p ON u.id = p.student_id
+                WHERE u.role = 'student'
+                ORDER BY last_updated DESC
+            ");
+            $students = $stmt->fetchAll();
+            sendJson([
+                'success' => true,
+                'students' => $students
+            ]);
+        } catch (PDOException $e) {
+            sendJson([
+                'success' => false,
+                'message' => 'Gagal mengambil data test murid: ' . $e->getMessage()
+            ], 500);
+        }
+        exit;
+    }
+
+    if ($action === 'get_cases') {
+        // Anyone logged in can fetch cases
+        try {
+            $stmt = $pdo->query("SELECT * FROM test_cases ORDER BY id ASC");
+            $cases = [];
+            foreach ($stmt->fetchAll() as $row) {
+                $cases[] = [
+                    'id' => (int)$row['id'],
+                    'title' => $row['title'],
+                    'elements' => json_decode($row['content_json'], true) ?: [],
+                    'questions' => json_decode($row['questions_json'], true) ?: []
+                ];
+            }
+            sendJson([
+                'success' => true,
+                'cases' => $cases
+            ]);
+        } catch (PDOException $e) {
+            sendJson([
+                'success' => false,
+                'message' => 'Gagal mengambil soal kasus: ' . $e->getMessage()
+            ], 500);
+        }
+        exit;
+    }
+
+    // Default: Get test data for a student
+    $studentId = $currentUser['id'];
+    if ($currentUser['role'] === 'admin' && isset($_GET['student_id'])) {
+        $studentId = (int)$_GET['student_id'];
+    }
+
+    try {
+        $stmt = $pdo->prepare("SELECT * FROM student_tests WHERE student_id = :student_id");
+        $stmt->execute(['student_id' => $studentId]);
+        $test = $stmt->fetch();
+
+        if ($test) {
+            $testData = [
+                'answers' => json_decode($test['answers'], true) ?: new stdClass(),
+                'current_step' => (int)$test['current_step'],
+                'submitted' => (int)$test['submitted'],
+                'updated_at' => $test['updated_at']
+            ];
+            if ($currentUser['role'] === 'admin') {
+                $testData['grade'] = $test['grade'] !== null ? (int)$test['grade'] : null;
+            }
+            sendJson([
+                'success' => true,
+                'test' => $testData
+            ]);
+        } else {
+            sendJson([
+                'success' => true,
+                'test' => null
+            ]);
+        }
+    } catch (PDOException $e) {
+        sendJson([
+            'success' => false,
+            'message' => 'Gagal mengambil data test: ' . $e->getMessage()
+        ], 500);
+    }
+} elseif ($method === 'POST') {
+    // Check if it is an admin action
+    $action = isset($_GET['action']) ? trim($_GET['action']) : '';
+
+    if ($action === 'grade_test') {
+        if ($currentUser['role'] !== 'admin') {
+            sendJson([
+                'success' => false,
+                'message' => 'Hanya admin yang dapat memberi nilai.'
+            ], 403);
+        }
+
+        $body = getRequestBody();
+        $studentId = isset($body['student_id']) ? (int)$body['student_id'] : 0;
+        $grade = isset($body['grade']) && $body['grade'] !== '' ? (int)$body['grade'] : null;
+
+        if ($studentId <= 0) {
+            sendJson([
+                'success' => false,
+                'message' => 'ID Murid tidak valid.'
+            ], 400);
+        }
+
+        try {
+            $stmt = $pdo->prepare("
+                UPDATE student_tests 
+                SET grade = :grade 
+                WHERE student_id = :student_id
+            ");
+            $stmt->execute([
+                'grade' => $grade,
+                'student_id' => $studentId
+            ]);
+            sendJson([
+                'success' => true,
+                'message' => 'Nilai evaluasi berhasil disimpan.'
+            ]);
+        } catch (PDOException $e) {
+            sendJson([
+                'success' => false,
+                'message' => 'Gagal menyimpan nilai evaluasi: ' . $e->getMessage()
+            ], 500);
+        }
+        exit;
+    }
+
+    if ($action === 'parse_docx') {
+        if ($currentUser['role'] !== 'admin') {
+            sendJson([
+                'success' => false,
+                'message' => 'Hanya admin yang dapat mengupload dokumen soal.'
+            ], 403);
+        }
+
+        if (!isset($_FILES['docx_file']) || $_FILES['docx_file']['error'] !== UPLOAD_ERR_OK) {
+            sendJson([
+                'success' => false,
+                'message' => 'Dokumen DOCX tidak diupload atau terjadi error saat upload.'
+            ], 400);
+        }
+
+        $tmpName = $_FILES['docx_file']['tmp_name'];
+        $uploadDir = __DIR__ . '/../uploads/test';
+        $webPathPrefix = '/uploads/test';
+
+        // Copy the uploaded file for diagnostics/inspection
+        @copy($tmpName, $uploadDir . '/last_uploaded.docx');
+
+        try {
+            $parsedData = parseDocx($tmpName, $uploadDir, $webPathPrefix);
+            sendJson([
+                'success' => true,
+                'parsed' => $parsedData
+            ]);
+        } catch (Exception $e) {
+            sendJson([
+                'success' => false,
+                'message' => 'Gagal memproses dokumen: ' . $e->getMessage()
+            ], 500);
+        }
+        exit;
+    }
+
+    if ($action === 'save_case_data') {
+        if ($currentUser['role'] !== 'admin') {
+            sendJson([
+                'success' => false,
+                'message' => 'Hanya admin yang dapat mengubah soal kasus.'
+            ], 403);
+        }
+
+        $body = getRequestBody();
+        $caseId = isset($body['case_id']) ? (int)$body['case_id'] : 0;
+        $title = isset($body['title']) ? trim($body['title']) : '';
+        $elements = $body['elements'] ?? [];
+        $questions = $body['questions'] ?? [];
+
+        if ($caseId < 1 || empty($title)) {
+            sendJson([
+                'success' => false,
+                'message' => 'ID Kasus dan Judul Kasus wajib diisi.'
+            ], 400);
+        }
+
+        try {
+            $stmt = $pdo->prepare("
+                INSERT INTO test_cases (id, title, content_json, questions_json)
+                VALUES (:id, :title, :content_json, :questions_json)
+                ON DUPLICATE KEY UPDATE
+                    title = VALUES(title),
+                    content_json = VALUES(content_json),
+                    questions_json = VALUES(questions_json)
+            ");
+            $stmt->execute([
+                'id' => $caseId,
+                'title' => $title,
+                'content_json' => json_encode($elements, JSON_UNESCAPED_UNICODE),
+                'questions_json' => json_encode($questions, JSON_UNESCAPED_UNICODE)
+            ]);
+
+            sendJson([
+                'success' => true,
+                'message' => "Kasus $caseId berhasil disimpan."
+            ]);
+        } catch (PDOException $e) {
+            sendJson([
+                'success' => false,
+                'message' => 'Gagal menyimpan kasus: ' . $e->getMessage()
+            ], 500);
+        }
+        exit;
+    }
+
+    if ($action === 'delete_case') {
+        if ($currentUser['role'] !== 'admin') {
+            sendJson([
+                'success' => false,
+                'message' => 'Hanya admin yang dapat menghapus kasus.'
+            ], 403);
+        }
+
+        $body = getRequestBody();
+        $caseId = isset($body['case_id']) ? (int)$body['case_id'] : 0;
+
+        if ($caseId < 1) {
+            sendJson([
+                'success' => false,
+                'message' => 'ID Kasus tidak valid.'
+            ], 400);
+        }
+
+        try {
+            $pdo->beginTransaction();
+
+            $stmt = $pdo->prepare("DELETE FROM test_cases WHERE id = :id");
+            $stmt->execute(['id' => $caseId]);
+
+            // Fetch all remaining cases ordered by current id ASC
+            $remaining = $pdo->query("SELECT * FROM test_cases ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
+
+            // Temporarily offset their IDs to avoid duplicate key conflicts during update
+            $pdo->exec("UPDATE test_cases SET id = id + 10000");
+
+            // Update the IDs to be 1-based sequential indices (1, 2, 3, ...)
+            $updateStmt = $pdo->prepare("UPDATE test_cases SET id = :new_id WHERE id = :old_id");
+            foreach ($remaining as $idx => $case) {
+                $oldId = (int)$case['id'] + 10000;
+                $newId = $idx + 1;
+                $updateStmt->execute([
+                    'new_id' => $newId,
+                    'old_id' => $oldId
+                ]);
+            }
+
+            $pdo->commit();
+            sendJson([
+                'success' => true,
+                'message' => 'Kasus berhasil dihapus dan urutan kasus telah diperbarui secara berurutan.'
+            ]);
+        } catch (PDOException $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            sendJson([
+                'success' => false,
+                'message' => 'Gagal menghapus dan mengatur ulang urutan kasus: ' . $e->getMessage()
+            ], 500);
+        }
+        exit;
+    }
+
+    // Default student save/submit response
+    if ($currentUser['role'] !== 'student') {
+        sendJson([
+            'success' => false,
+            'message' => 'Hanya murid yang dapat mengerjakan test.'
+        ], 403);
+    }
+
+    $body = getRequestBody();
+    $answers = $body['answers'] ?? null;
+    $currentStep = isset($body['current_step']) ? (int)$body['current_step'] : 1;
+    $submitted = isset($body['submitted']) ? (int)$body['submitted'] : 0;
+
+    if (!is_array($answers)) {
+        sendJson([
+            'success' => false,
+            'message' => 'Jawaban test tidak valid.'
+        ], 400);
+    }
+
+    $studentId = $currentUser['id'];
+    $answersJson = json_encode($answers);
+
+    try {
+        // Double check if already submitted. Once submitted, lock it.
+        $checkStmt = $pdo->prepare("SELECT submitted FROM student_tests WHERE student_id = :student_id");
+        $checkStmt->execute(['student_id' => $studentId]);
+        $existingSubmitted = $checkStmt->fetchColumn();
+
+        if ($existingSubmitted == 1) {
+            sendJson([
+                'success' => false,
+                'message' => 'Test Anda sudah dikirimkan dan tidak dapat diubah lagi.'
+            ], 400);
+        }
+
+        $stmt = $pdo->prepare("
+            INSERT INTO student_tests (student_id, answers, current_step, submitted)
+            VALUES (:student_id, :answers, :current_step, :submitted)
+            ON DUPLICATE KEY UPDATE
+                answers = VALUES(answers),
+                current_step = VALUES(current_step),
+                submitted = VALUES(submitted)
+        ");
+        $stmt->execute([
+            'student_id' => $studentId,
+            'answers' => $answersJson,
+            'current_step' => $currentStep,
+            'submitted' => $submitted
+        ]);
+
+        sendJson([
+            'success' => true,
+            'message' => $submitted ? 'Test berhasil dikirimkan.' : 'Progress test berhasil disimpan.'
+        ]);
+    } catch (PDOException $e) {
+        sendJson([
+            'success' => false,
+            'message' => 'Gagal menyimpan test: ' . $e->getMessage()
+        ], 500);
+    }
+} else {
+    sendJson([
+        'success' => false,
+        'message' => 'Metode request tidak diizinkan.'
+    ], 405);
+}

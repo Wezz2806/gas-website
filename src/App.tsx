@@ -34,7 +34,7 @@ const AdminEcopediaView = lazy(() => import('./components/admin/AdminEcopediaVie
 const AdminEcoupdateView = lazy(() => import('./components/admin/AdminEcoupdateView'));
 const AdminEcocontactView = lazy(() => import('./components/admin/AdminEcocontactView'));
 const AdminEcolabView = lazy(() => import('./components/admin/AdminEcolabView'));
-const AdminLkmDataView = lazy(() => import('./components/admin/AdminLkmDataView'));
+const AdminEcochallengeView = lazy(() => import('./components/admin/AdminEcochallengeView'));
 
 // Shared fallback for lazy-loaded tabs
 function TabFallback() {
@@ -158,8 +158,8 @@ function AppContent() {
                 <AdminEcolabView />
               )}
 
-              {activeTab === 'admin-lkm-data' && (
-                <AdminLkmDataView />
+              {activeTab === 'admin-ecochallenge' && (
+                <AdminEcochallengeView />
               )}
             </Suspense>
           </main>

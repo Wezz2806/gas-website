@@ -7,7 +7,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 }
 
 try {
-    // Ambil semua video yang diunggah siswa, gabungkan dengan tabel user untuk mengambil nama siswa
+    // Ambil semua video yang diunggah murid, gabungkan dengan tabel user untuk mengambil nama murid
     $stmt = $pdo->query(
         "SELECT v.id, v.student_id, v.title, v.category, v.duration, v.filename, v.original_name, 
                 v.views, v.likes, v.submitted_at, u.full_name as student_name,

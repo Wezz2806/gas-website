@@ -46,7 +46,7 @@ try {
     $stmt_user = $pdo->prepare("SELECT full_name, avatar_url FROM users WHERE id = :id");
     $stmt_user->execute(['id' => $user_id]);
     $user_info = $stmt_user->fetch();
-    $author = $user_info['full_name'] ?? 'Siswa';
+    $author = $user_info['full_name'] ?? 'Murid';
     $avatar_url = $user_info['avatar_url'] ?? null;
 
     sendJson([
