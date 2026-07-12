@@ -19,9 +19,14 @@ if ($video_id <= 0) {
 }
 
 try {
-    // Pastikan video ini milik murid yang sedang login
-    $stmt = $pdo->prepare("SELECT id, filename FROM eco_creation_videos WHERE id = :id AND student_id = :student_id LIMIT 1");
-    $stmt->execute(['id' => $video_id, 'student_id' => $user_id]);
+    $user_role = $_SESSION['user']['role'] ?? '';
+    if ($user_role === 'admin') {
+        $stmt = $pdo->prepare("SELECT id, filename FROM eco_creation_videos WHERE id = :id LIMIT 1");
+        $stmt->execute(['id' => $video_id]);
+    } else {
+        $stmt = $pdo->prepare("SELECT id, filename FROM eco_creation_videos WHERE id = :id AND student_id = :student_id LIMIT 1");
+        $stmt->execute(['id' => $video_id, 'student_id' => $user_id]);
+    }
     $video = $stmt->fetch();
 
     if (!$video) {

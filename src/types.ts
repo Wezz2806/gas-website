@@ -9,7 +9,8 @@ export type AdminTab =
   | 'admin-ecoupdate'
   | 'admin-ecocontact'
   | 'admin-ecolab'
-  | 'admin-ecochallenge';
+  | 'admin-ecochallenge'
+  | 'admin-ecocreation';
 
 
 export interface User {

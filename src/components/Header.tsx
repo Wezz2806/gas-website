@@ -157,6 +157,7 @@ export default function Header({
       case 'admin-ecopedia' as any: return 'Kelola Pustaka EcoPedia';
       case 'admin-ecoupdate' as any: return 'Kelola Portal EcoUpdate';
       case 'admin-ecocontact' as any: return 'Kelola Personel EcoContact';
+      case 'admin-ecocreation' as any: return 'Kelola Karya EcoCreation';
       default: return 'Green Action for Sustainability';
     }
   };

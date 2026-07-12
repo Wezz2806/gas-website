@@ -9,7 +9,8 @@ import {
   Newspaper,
   PhoneCall,
   FlaskConical,
-  ClipboardList
+  ClipboardList,
+  Video
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -27,6 +28,7 @@ export default function AdminSidebar({ activeTab, setActiveTab }: AdminSidebarPr
     { id: 'admin-ecopedia' as AdminTab, label: 'Kelola EcoPedia', icon: BookOpen },
     { id: 'admin-ecolab' as AdminTab, label: 'Kelola EcoLab', icon: FlaskConical },
     { id: 'admin-ecochallenge' as AdminTab, label: 'Kelola EcoChallenge', icon: ClipboardList },
+    { id: 'admin-ecocreation' as AdminTab, label: 'Kelola EcoCreation', icon: Video },
     { id: 'admin-ecoupdate' as AdminTab, label: 'Kelola EcoUpdate', icon: Newspaper },
     { id: 'admin-ecocontact' as AdminTab, label: 'Kelola EcoContact', icon: PhoneCall },
   ];
