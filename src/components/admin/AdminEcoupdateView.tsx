@@ -7,6 +7,8 @@ export default function AdminEcoupdateView() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
+
   // Modal States
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedArticle, setSelectedArticle] = useState<NewsArticle | null>(null);
@@ -38,7 +40,7 @@ export default function AdminEcoupdateView() {
     
     setIsFetchingMeta(true);
     try {
-      const res = await fetch(`/api/fetch-metadata.php?url=${encodeURIComponent(formUrl)}`);
+      const res = await fetch(`${API_BASE}/fetch-metadata.php?url=${encodeURIComponent(formUrl)}`);
       const data = await res.json();
       if (data.success) {
         if (data.title) setFormTitle(data.title);
@@ -72,7 +74,7 @@ export default function AdminEcoupdateView() {
     formData.append('type', moduleType);
 
     try {
-      const res = await fetch('/api/upload-image.php', {
+      const res = await fetch(`${API_BASE}/upload-image.php`, {
         method: 'POST',
         body: formData
       });
@@ -96,7 +98,7 @@ export default function AdminEcoupdateView() {
   const fetchNews = () => {
     setIsLoading(true);
     setError(null);
-    fetch('/api/ecoupdate.php')
+    fetch(`${API_BASE}/ecoupdate.php`)
       .then(res => res.json())
       .then(data => {
         if (data.success && data.news) {
@@ -178,7 +180,7 @@ export default function AdminEcoupdateView() {
         url: formUrl
       };
 
-      const res = await fetch('/api/ecoupdate.php', {
+      const res = await fetch(`${API_BASE}/ecoupdate.php`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -204,7 +206,7 @@ export default function AdminEcoupdateView() {
     if (!articleToDelete) return;
     setIsDeleting(true);
     try {
-      const res = await fetch('/api/ecoupdate.php', {
+      const res = await fetch(`${API_BASE}/ecoupdate.php`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

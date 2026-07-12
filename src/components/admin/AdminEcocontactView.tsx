@@ -19,6 +19,8 @@ export default function AdminEcocontactView() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
+
   // Modal States
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<ContactMember | null>(null);
@@ -55,7 +57,7 @@ export default function AdminEcocontactView() {
     formData.append('type', moduleType);
 
     try {
-      const res = await fetch('/api/upload-image.php', {
+      const res = await fetch(`${API_BASE}/upload-image.php`, {
         method: 'POST',
         body: formData
       });
@@ -79,7 +81,7 @@ export default function AdminEcocontactView() {
   const fetchMembers = () => {
     setIsLoading(true);
     setError(null);
-    fetch('/api/ecocontact.php')
+    fetch(`${API_BASE}/ecocontact.php`)
       .then(res => res.json())
       .then(data => {
         if (data.success && data.members) {
@@ -153,7 +155,7 @@ export default function AdminEcocontactView() {
         sort_order: formSortOrder
       };
 
-      const res = await fetch('/api/ecocontact.php', {
+      const res = await fetch(`${API_BASE}/ecocontact.php`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -179,7 +181,7 @@ export default function AdminEcocontactView() {
     if (!memberToDelete) return;
     setIsDeleting(true);
     try {
-      const res = await fetch('/api/ecocontact.php', {
+      const res = await fetch(`${API_BASE}/ecocontact.php`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

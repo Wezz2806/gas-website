@@ -7,6 +7,8 @@ export default function AdminEcopediaView() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
+
   // Modal States
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
@@ -42,7 +44,7 @@ export default function AdminEcopediaView() {
     formData.append('type', moduleType);
 
     try {
-      const res = await fetch('/api/upload-image.php', {
+      const res = await fetch(`${API_BASE}/upload-image.php`, {
         method: 'POST',
         body: formData
       });
@@ -62,7 +64,7 @@ export default function AdminEcopediaView() {
   const fetchBooks = () => {
     setIsLoading(true);
     setError(null);
-    fetch('/api/ecopedia.php')
+    fetch(`${API_BASE}/ecopedia.php`)
       .then(res => res.json())
       .then(data => {
         if (data.success && data.books) {
@@ -142,7 +144,7 @@ export default function AdminEcopediaView() {
     setSaveSuccess(false);
 
     try {
-      const res = await fetch('/api/ecopedia.php', {
+      const res = await fetch(`${API_BASE}/ecopedia.php`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -173,7 +175,7 @@ export default function AdminEcopediaView() {
     if (!bookToDelete) return;
     setIsDeleting(true);
     try {
-      const res = await fetch('/api/ecopedia.php', {
+      const res = await fetch(`${API_BASE}/ecopedia.php`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
