@@ -23,7 +23,8 @@ $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 $allowed_origins = [
     'http://localhost:5173',
     'https://gas-website.netlify.app',
-    'https://gaslearn.netlify.app'
+    'https://gaslearn.netlify.app',
+    'https://gas-website-production-46db.up.railway.app',
 ];
 
 if (in_array($origin, $allowed_origins)) {
@@ -181,6 +182,160 @@ try {
         ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     ");
 
+    // Auto-migration: sustainability_journals
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS sustainability_journals (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            student_id INT NOT NULL,
+            row_index INT NOT NULL,
+            tanggal VARCHAR(100) DEFAULT '',
+            warna VARCHAR(100) DEFAULT '',
+            aroma VARCHAR(100) DEFAULT '',
+            gas VARCHAR(100) DEFAULT '',
+            alasan TEXT,
+            solusi TEXT,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
+            UNIQUE KEY unique_student_row (student_id, row_index)
+        ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    ");
+
+    // Auto-migration: student_surveys
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS student_surveys (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            student_id INT NOT NULL,
+            answers TEXT NOT NULL,
+            feedback TEXT,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
+            UNIQUE KEY unique_student_survey (student_id)
+        ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    ");
+
+    // Auto-migration: student_tests
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS student_tests (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            student_id INT NOT NULL,
+            answers TEXT NOT NULL,
+            current_step INT DEFAULT 1,
+            submitted TINYINT DEFAULT 0,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
+            UNIQUE KEY unique_student_test (student_id)
+        ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    ");
+
+    // Auto-migration: test_cases
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS test_cases (
+            id INT PRIMARY KEY,
+            title VARCHAR(255) NOT NULL,
+            content_json LONGTEXT NOT NULL,
+            questions_json LONGTEXT NOT NULL,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    ");
+
+    // Seed test_cases if empty
+    $checkTestCases = $pdo->query("SELECT COUNT(*) FROM test_cases")->fetchColumn();
+    if ($checkTestCases == 0) {
+        $casesData = [
+            [
+                1,
+                "KASUS 1: Dari Botol ke Mikroplastik yang Kembali ke Meja Makan Kita",
+                json_encode([
+                    [
+                        "type" => "paragraph",
+                        "value" => "Setiap pagi, kantin sekolah dipenuhi murid yang membeli minuman dalam botol plastik sekali pakai. Dalam sehari, satu sekolah dapat menghasilkan ratusan botol plastik berbahan PET (polyethylene terephthalate). Tren menunjukkan peningkatan produksi plastik global meningkat dari ±200 juta ton (2000) menjadi lebih dari 400 juta ton (2024) melonjak dua kali lipat karena tuntutan masyarakat terhadap konsumsi kemasan sekali pakai."
+                    ],
+                    [
+                        "type" => "paragraph",
+                        "value" => "Namun sampah plastik ini berakhir langsung dibuang, sebagian dibuang ke tempat sampah, tetapi tidak sedikit yang tercecer di lingkungan dan terbawa air hujan menuju selokan."
+                    ],
+                    [
+                        "type" => "paragraph",
+                        "value" => "Data dari Kementerian Lingkungan Hidup dan Kehutanan (KLHK) menunjukkan bahwa Indonesia menghasilkan sekitar 68,5 juta ton sampah per tahun, dengan plastik mencapai ±17%. Di kota besar seperti Surabaya, sebagian sampah plastik ini berakhir di sungai yang bermuara ke laut. Plastik yang tidak terkelola akan terpapar sinar UV dan mengalami degradasi fisik menjadi mikroplastik."
+                    ],
+                    [
+                        "type" => "paragraph",
+                        "value" => "Mikroplastik ini masuk ke rantai makanan melalui organisme air seperti plankton dan ikan kecil. Studi global oleh UNEP menunjukkan bahwa mikroplastik telah ditemukan dalam air minum, garam, dan bahkan tubuh manusia. Ironisnya, plastik yang awalnya digunakan untuk kenyamanan manusia justru kembali sebagai ancaman kesehatan dan lingkungan. Di sisi lain, kebiasaan konsumsi praktis terus meningkat. Tanpa perubahan perilaku dan inovasi material, pencemaran ini akan semakin sulit dikendalikan."
+                    ]
+                ], JSON_UNESCAPED_UNICODE),
+                json_encode([
+                    ["id" => "q1", "label" => "1. Berdasarkan kasus diatas di jelaskan jika plastik menyumbang 17% sampah di Indonesia. Jelaskan mengapa plastik sekali pakai dapat menyebabkan pencemaran lingkungan yang berkepanjangan! Hubungkan jawabanmu dengan sifat-sifat plastik dalam kehidupan sehari-hari dan dampaknya terhadap lingkungan."],
+                    ["id" => "q2", "label" => "2. Identifikasilah faktor-faktor utama yang menyebabkan meningkatnya pencemaran plastik sekali pakai di lingkungan sekolah dan perkotaan. Jelaskan hubungan antara faktor tersebut dengan buruknya akumulasi plastik di lingkungan!"],
+                    ["id" => "q3", "label" => "3. Analisislah dampak keberadaan mikroplastik terhadap organisme hidup dengan meninjau aspek kimia (interaksi dengan zat berbahaya) dan ekologi (rantai makanan). Jelaskan bagaimana proses tersebut dapat berdampak pada manusia!"],
+                    ["id" => "q4", "label" => "4. Rancanglah solusi alternatif untuk mengurangi penggunaan plastik sekali pakai di lingkungan sekolah dengan menerapkan minimal dua prinsip green chemistry!"]
+                ], JSON_UNESCAPED_UNICODE)
+            ],
+            [
+                2,
+                "KASUS 2: Limbah Deterjen Rumah Tangga",
+                json_encode([
+                    [
+                        "type" => "paragraph",
+                        "value" => "Di kawasan aliran Sungai Cikarang Bekasi Laut (CBL), aktivitas rumah tangga menjadi salah satu sumber utama pencemaran air. Setiap hari, masyarakat menggunakan deterjen untuk mencuci pakaian dan peralatan rumah tangga. Air limbah cucian yang mengandung surfaktan dan fosfat langsung dialirkan ke saluran drainase tanpa pengolahan lalu bermuara ke sungai yang juga dimanfaatkan untuk kebutuhan sehari-hari."
+                    ],
+                    [
+                        "type" => "paragraph",
+                        "value" => "Surfaktan dalam deterjen memiliki sifat hidrofilik dan hidrofobik yang efektif mengangkat kotoran, tetapi juga berpotensi mengganggu organisme air. Sementara itu, fosfat berperan sebagai “nutrisi” bagi alga. Ketika jumlahnya berlebih terjadi eutrofikasi atau ledakan pertumbuhan alga yang menutupi permukaan air. Akibatnya cahaya matahari terhalang dan kadar oksigen terlarut menurun drastis."
+                    ],
+                    [
+                        "type" => "table",
+                        "value" => [
+                            "headers" => ["Jenis Deterjen", "Kandungan Fosfat (%)", "Biodegradabilitas", "Dampak Lingkungan"],
+                            "rows" => [
+                                ["Deterjen konvensional", "20–35%", "Rendah", "Tinggi (eutrofikasi)"],
+                                ["Deterjen rendah fosfat", "5–10%", "Sedang", "Sedang"],
+                                ["Deterjen ramah lingkungan", "<1%", "Tinggi", "Rendah"]
+                            ]
+                        ]
+                    ]
+                ], JSON_UNESCAPED_UNICODE),
+                json_encode([
+                    ["id" => "q5", "label" => "5. Berdasarkan data kualitas air dan penjelasan tentang surfaktan dalam kasus, jelaskan bagaimana sifat kimia surfaktan dapat memengaruhi kualitas air sungai!"],
+                    ["id" => "q6", "label" => "6. Perhatikan data kadar fosfat dan kondisi air pada kasus. Jelaskan hubungan antara peningkatan kadar fosfat dengan terjadinya eutrofikasi di perairan!"],
+                    ["id" => "q7", "label" => "7. Berdasarkan narasi kasus, identifikasi: a. Sumber utama pencemaran air, b. Zat kimia yang berperan dalam pencemaran. Jelaskan alasan Anda!"],
+                    ["id" => "q8", "label" => "8. Jelaskan salah satu solusi adalah penggunaan deterjen ramah lingkungan. Evaluasilah solusi tersebut berdasarkan prinsip green chemistry!"]
+                ], JSON_UNESCAPED_UNICODE)
+            ],
+            [
+                3,
+                "KASUS 3: Pestisida Kimia: Panen Melimpah atau Lingkungan Terancam?",
+                json_encode([
+                    [
+                        "type" => "paragraph",
+                        "value" => "Pertanian sayur di Jawa Timur rutin menggunakan pestisida kimia sintetis untuk mengatasi serangan hama ulat dan wereng. Dalam satu musim tanam, penyemprotan dilakukan hingga 8–12 kali demi menjaga hasil panen tetap tinggi. Salah satu pestisida yang digunakan mengandung senyawa organofosfat yang bersifat toksik dan relatif persisten di lingkungan."
+                    ],
+                    [
+                        "type" => "paragraph",
+                        "value" => "Namun, dalam beberapa tahun terakhir, masyarakat mulai mengeluhkan perubahan lingkungan. Populasi lebah penyerbuk menurun drastis, ikan di saluran irigasi sering ditemukan mati, dan beberapa petani mengalami gejala pusing serta iritasi kulit setelah penyemprotan. Hasil uji sederhana menunjukkan adanya residu pestisida pada sayuran yang melebihi batas aman."
+                    ],
+                    [
+                        "type" => "paragraph",
+                        "value" => "Di sisi lain, petani menghadapi dilema jika harus memilih tanpa pestisida maka risiko gagal panen meningkat dan berdampak pada ekonomi mereka. Penggunaan pestisida memang meningkatkan produktivitas tetapi juga memicu pencemaran tanah, air, serta berpotensi membahayakan kesehatan manusia melalui rantai makanan."
+                    ],
+                    [
+                        "type" => "paragraph",
+                        "value" => "Diagram Tren Penggunaan Pestisida (Indonesia) - 2018 (45000), 2019 (48500), 2020 (52000), 2021 (55000), 2022 (58000)"
+                    ]
+                ], JSON_UNESCAPED_UNICODE),
+                json_encode([
+                    ["id" => "q9", "label" => "9. Berdasarkan data pada kasus, residu pestisida pada sayuran melebihi batas aman dan terjadi penurunan populasi organisme seperti lebah dan ikan. Jelaskan bagaimana sifat kimia pestisida sintetis dapat menyebabkan dampak tersebut terhadap lingkungan dan organisme hidup!"],
+                    ["id" => "q10", "label" => "10. Petani masih bergantung pada pestisida kimia untuk menjaga hasil panen. Rancang satu solusi berbasis prinsip green chemistry yang dapat digunakan sebagai alternatif pestisida kimia, serta jelaskan alasan ilmiahnya!"],
+                    ["id" => "q11", "label" => "11. Pestisida yang bersifat lipofilik dapat masuk ke rantai makanan dan mengalami peningkatan konsentrasi. Analisis bagaimana proses ini terjadi dari lingkungan hingga ke manusia, serta kaitkan dengan dampaknya terhadap kesehatan!"]
+                ], JSON_UNESCAPED_UNICODE)
+            ]
+        ];
+
+        $insertStmt = $pdo->prepare("INSERT INTO test_cases (id, title, content_json, questions_json) VALUES (?, ?, ?, ?)");
+        foreach ($casesData as $c) {
+            $insertStmt->execute($c);
+        }
+    }
+
     // Ensure student_submissions meeting_id has the correct collation to prevent illegal mix of collations on JOIN
     try {
         $pdo->exec("ALTER TABLE student_submissions MODIFY meeting_id VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL");
@@ -193,10 +348,10 @@ try {
     if ($checkMeetings == 0) {
         $pdo->exec("
             INSERT INTO ecolab_meetings (id, number, title, description, icon, status, embed_url, download_url) VALUES
-            ('m1', 1, 'Mengapa green chemistry penting?', 'Lembar Kerja Mahasiswa 1: Menganalisis urgensi dan prinsip dasar Green Chemistry.', 'groups', 'completed', 'https://drive.google.com/file/d/11an9PvFIlJnrJniqR2Z_k8W4hudX2yM_/preview', 'https://drive.google.com/file/d/11an9PvFIlJnrJniqR2Z_k8W4hudX2yM_/view?usp=sharing'),
-            ('m2', 2, 'Integrasi Prinsip Green Chemistry dalam Masalah Lingkungan', 'Lembar Kerja Mahasiswa 2: Memahami integrasi Green Chemistry dalam penyelesaian isu lingkungan.', 'science', 'ongoing', 'https://drive.google.com/file/d/1leOTPkIbRbEH8Lsy28B1yCnoeykc9RaQ/preview', 'https://drive.google.com/file/d/1leOTPkIbRbEH8Lsy28B1yCnoeykc9RaQ/view?usp=sharing'),
-            ('m3', 3, 'Aksi Nyata Berkelanjutan Berbasis Prinsip Green Chemistry', 'Lembar Kerja Mahasiswa 3: Merancang dan melaksanakan aksi nyata berkelanjutan berbasis kimia hijau.', 'biotech', 'scheduled', 'https://drive.google.com/file/d/18Y8klb4fEvTAy5AZL8--ihxX2df1rffg/preview', 'https://drive.google.com/file/d/18Y8klb4fEvTAy5AZL8--ihxX2df1rffg/view?usp=sharing'),
-            ('m4', 4, 'Agents of Change: Sampah Organik menjadi Solusi Organik', 'Lembar Kerja Mahasiswa 4: Mengembangkan solusi organik dari pengolahan limbah sampah organik sekitar.', 'inventory', 'scheduled', 'https://drive.google.com/file/d/14bqlkq9CD9DXx7N2VmzjdDxluy0RFgO5/preview', 'https://drive.google.com/file/d/14bqlkq9CD9DXx7N2VmzjdDxluy0RFgO5/view?usp=sharing')
+            ('m1', 1, 'Mengapa green chemistry penting?', 'Lembar Kerja Murid 1: Menganalisis urgensi dan prinsip dasar Green Chemistry.', 'groups', 'completed', 'https://drive.google.com/file/d/11an9PvFIlJnrJniqR2Z_k8W4hudX2yM_/preview', 'https://drive.google.com/file/d/11an9PvFIlJnrJniqR2Z_k8W4hudX2yM_/view?usp=sharing'),
+            ('m2', 2, 'Integrasi Prinsip Green Chemistry dalam Masalah Lingkungan', 'Lembar Kerja Murid 2: Memahami integrasi Green Chemistry dalam penyelesaian isu lingkungan.', 'science', 'ongoing', 'https://drive.google.com/file/d/1leOTPkIbRbEH8Lsy28B1yCnoeykc9RaQ/preview', 'https://drive.google.com/file/d/1leOTPkIbRbEH8Lsy28B1yCnoeykc9RaQ/view?usp=sharing'),
+            ('m3', 3, 'Aksi Nyata Berkelanjutan Berbasis Prinsip Green Chemistry', 'Lembar Kerja Murid 3: Merancang dan melaksanakan aksi nyata berkelanjutan berbasis kimia hijau.', 'biotech', 'scheduled', 'https://drive.google.com/file/d/18Y8klb4fEvTAy5AZL8--ihxX2df1rffg/preview', 'https://drive.google.com/file/d/18Y8klb4fEvTAy5AZL8--ihxX2df1rffg/view?usp=sharing'),
+            ('m4', 4, 'Agents of Change: Sampah Organik menjadi Solusi Organik', 'Lembar Kerja Murid 4: Mengembangkan solusi organik dari pengolahan limbah sampah organik sekitar.', 'inventory', 'scheduled', 'https://drive.google.com/file/d/14bqlkq9CD9DXx7N2VmzjdDxluy0RFgO5/preview', 'https://drive.google.com/file/d/14bqlkq9CD9DXx7N2VmzjdDxluy0RFgO5/view?usp=sharing')
         ");
     }
 
