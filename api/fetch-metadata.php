@@ -37,22 +37,73 @@ if (empty($url) || !filter_var($url, FILTER_VALIDATE_URL)) {
 }
 
 try {
-    // Set timeout dan User Agent agar tidak diblokir oleh situs berita
-    $options = [
-        'http' => [
-            'method' => 'GET',
-            'header' => "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36\r\nAccept-Language: id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7\r\n",
-            'timeout' => 5 // 5 detik timeout
-        ]
-    ];
-    $context = stream_context_create($options);
-    $html = @file_get_contents($url, false, $context);
+    $html = false;
+    $httpCode = 0;
 
-    if ($html === false) {
+    if (function_exists('curl_init')) {
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        curl_setopt($ch, CURLOPT_MAXREDIRS, 5);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_USERAGENT, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36");
+        $headers = [
+            "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8",
+            "Accept-Language: id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7",
+            "Cache-Control: no-cache",
+            "Pragma: no-cache"
+        ];
+        curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+        $html = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+    } else {
+        // Fallback ke file_get_contents
+        $options = [
+            'http' => [
+                'method' => 'GET',
+                'header' => "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36\r\nAccept-Language: id-ID,id;q=0.9,en-US;q=0.8,en;q=0.7\r\n",
+                'timeout' => 10,
+                'ignore_errors' => true
+            ]
+        ];
+        $context = stream_context_create($options);
+        $html = @file_get_contents($url, false, $context);
+        
+        if (isset($http_response_header) && is_array($http_response_header)) {
+            preg_match('{HTTP\/\S*\s(\d+)}', $http_response_header[0], $match);
+            $httpCode = isset($match[1]) ? (int)$match[1] : 0;
+        }
+    }
+
+    if ($html === false || empty($html)) {
         sendJson([
             'success' => false,
-            'message' => 'Gagal mengambil konten dari URL. Situs mungkin memblokir akses otomatis.'
-        ], 500);
+            'message' => 'Gagal menghubungi server tujuan. Harap periksa kembali koneksi internet Anda.'
+        ], 502);
+    }
+
+    if ($httpCode === 404) {
+        sendJson([
+            'success' => false,
+            'message' => 'Halaman tidak ditemukan (Error 404). Silakan periksa kembali apakah URL yang Anda masukkan sudah benar.'
+        ], 404);
+    }
+
+    if ($httpCode === 403) {
+        sendJson([
+            'success' => false,
+            'message' => 'Akses ditolak oleh situs tujuan (Error 403). Situs tersebut memblokir pengambilan data otomatis.'
+        ], 403);
+    }
+
+    if ($httpCode >= 400) {
+        sendJson([
+            'success' => false,
+            'message' => 'Gagal mengambil data dari URL. Situs merespon dengan kode error HTTP ' . $httpCode . '.'
+        ], 502);
     }
 
     // Suppress warning DOMDocument untuk HTML5 tag yang tidak valid
