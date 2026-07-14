@@ -13,6 +13,10 @@ export default defineConfig(() => {
       tailwindcss(),
     ],
 
+    define: {
+      'import.meta.env.VITE_API_BASE_URL': JSON.stringify('/api'),
+    },
+
     resolve: {
       alias: {
         '@': path.resolve(__dirname, './src'),
