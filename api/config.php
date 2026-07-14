@@ -221,11 +221,19 @@ try {
             answers TEXT NOT NULL,
             current_step INT DEFAULT 1,
             submitted TINYINT DEFAULT 0,
+            grade INT DEFAULT NULL,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
             UNIQUE KEY unique_student_test (student_id)
         ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     ");
+
+    // Add grade column to student_tests if it does not exist (for existing installations)
+    try {
+        $pdo->exec("ALTER TABLE student_tests ADD COLUMN grade INT DEFAULT NULL AFTER submitted");
+    } catch (PDOException $e) {
+        // Column might already exist, ignore error
+    }
 
     // Auto-migration: test_cases
     $pdo->exec("
