@@ -585,6 +585,7 @@ export default function EcoChallengeView({}: EcoChallengeViewProps) {
                   {/* Current Case Details */}
                   {testCases.map((c, idx) => {
                     const stepNum = idx + 1;
+                    const caseId = c.id || stepNum;
                     if (stepNum !== testStep) return null;
                     return (
                       <div key={c.id || stepNum} className="space-y-6 animate-in fade-in slide-in-from-right-3 duration-300">
@@ -709,7 +710,7 @@ export default function EcoChallengeView({}: EcoChallengeViewProps) {
                             const getTableGrid = (qId: string, qTable: any) => {
                               let grid: string[][] = [];
                               try {
-                                const parsed = JSON.parse(testAnswers[qId] || '');
+                                const parsed = JSON.parse(testAnswers[`${caseId}_${qId}`] || testAnswers[qId] || '');
                                 if (Array.isArray(parsed) && parsed.length === qTable.rows.length) {
                                   grid = parsed;
                                 }
@@ -760,7 +761,7 @@ export default function EcoChallengeView({}: EcoChallengeViewProps) {
                                                           newGrid[rIdx][cIdx] = e.target.value;
                                                           setTestAnswers(prev => ({
                                                             ...prev,
-                                                            [q.id]: JSON.stringify(newGrid)
+                                                            [`${caseId}_${q.id}`]: JSON.stringify(newGrid)
                                                           }));
                                                         }}
                                                         placeholder="Ketik jawaban..."
@@ -784,11 +785,11 @@ export default function EcoChallengeView({}: EcoChallengeViewProps) {
                                   <textarea
                                     rows={4}
                                     disabled={testSubmitted}
-                                    value={testAnswers[q.id] || ''}
+                                    value={testAnswers[`${caseId}_${q.id}`] ?? testAnswers[q.id] ?? ''}
                                     onChange={(e) => {
                                       setTestAnswers(prev => ({
                                         ...prev,
-                                        [q.id]: e.target.value
+                                        [`${caseId}_${q.id}`]: e.target.value
                                       }));
                                     }}
                                     placeholder={testSubmitted ? "Tidak ada jawaban." : "Tuliskan jawaban analitis dan ilmiah Anda di sini..."}

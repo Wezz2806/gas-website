@@ -1651,7 +1651,8 @@ export default function AdminEcochallengeView() {
                         </div>
                         <div className="space-y-4">
                           {c.questions && c.questions.map((q: any) => {
-                            const ans = selectedTestAnswers[q.id];
+                            const caseId = c.id || c.step || stepNum;
+                            const ans = selectedTestAnswers[`${caseId}_${q.id}`] ?? selectedTestAnswers[q.id];
                             
                             // Try parsing tabular answer
                             let parsedTable: string[][] | null = null;
