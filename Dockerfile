@@ -2,8 +2,8 @@ FROM php:8.2-cli
 
 # Install pdo_mysql untuk koneksi database
 RUN apt-get update -y && \
-    apt-get install -y libmariadb-dev && \
-    docker-php-ext-install pdo_mysql && \
+    apt-get install -y libmariadb-dev libzip-dev zip unzip && \
+    docker-php-ext-install pdo_mysql zip && \
     rm -rf /var/lib/apt/lists/*
 
 # Set working directory
