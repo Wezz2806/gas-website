@@ -351,7 +351,7 @@ export default function AdminEcochallengeView() {
           }}
           className={`pb-3 px-6 text-xs font-bold border-b-2 transition-all cursor-pointer ${
             activeSubTab === 'test'
-              ? 'border-cyan-600 text-cyan-650'
+              ? 'border-cyan-600 text-cyan-600'
               : 'border-transparent text-slate-400 hover:text-slate-650'
           }`}
         >
@@ -1755,7 +1755,7 @@ export default function AdminEcochallengeView() {
                 type="button"
                 disabled={isSubmittingTestGrade}
                 onClick={handleSaveTestGrade}
-                className="flex-1 py-2.5 bg-cyan-650 hover:bg-cyan-700 text-white font-bold text-xs rounded-xl shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                className="flex-1 py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs rounded-xl shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 {isSubmittingTestGrade ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />

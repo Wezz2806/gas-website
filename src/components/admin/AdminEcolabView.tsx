@@ -635,7 +635,7 @@ export default function AdminEcolabView() {
                 type="button"
                 disabled={isSubmittingGrade}
                 onClick={handleSaveLkmGrade}
-                className="flex-1 py-2.5 bg-cyan-650 hover:bg-cyan-700 text-white font-bold text-xs rounded-xl shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                className="flex-1 py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs rounded-xl shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 {isSubmittingGrade ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
