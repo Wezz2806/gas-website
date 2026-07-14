@@ -374,62 +374,338 @@ try {
         ");
     }
 
-    // Seeding: ecoupdate_news
-    $checkNews = $pdo->query("SELECT COUNT(*) FROM ecoupdate_news")->fetchColumn();
-    if ($checkNews == 0) {
+        // Seeding: ecoupdate_news (version 2 - updated curated list)
+    $checkNewNews = $pdo->prepare("SELECT COUNT(*) FROM ecoupdate_news WHERE url = :url");
+    $checkNewNews->execute(['url' => 'https://www.metrotvnews.com/play/b1oCOX23-sidak-adipura-menteri-hanif-soroti-tumpukan-sampah-di-sungai-dan-tps-liar-surabaya']);
+    $hasNewNews = $checkNewNews->fetchColumn() > 0;
+
+    if (!$hasNewNews) {
+        // Clear old news
+        $pdo->exec("DELETE FROM ecoupdate_news");
+        
         $stmt = $pdo->prepare("
             INSERT INTO ecoupdate_news (title, category, date, read_time, description, content, cover_url, author, likes, comments_count, url) VALUES
             (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
-        $stmt->execute([
-            'Ratusan Perempuan Surabaya Deklarasikan “She Heroes” di CFD Tunjungan',
-            'Berita Lokal', '26 April 2026', '5 menit baca',
-            'Sekitar 500 perempuan memadati kawasan Car Free Day Jalan Tunjungan untuk mengikuti Deklarasi Gerakan “She Heroes” sebagai upaya menekan timbulan sampah plastik sekali pakai.',
-            'Sekitar 500 perempuan memadati kawasan Car Free Day Jalan Tunjungan untuk mengikuti Deklarasi Gerakan “She Heroes”. Gerakan ini mengajak perempuan mulai beralih dari pembalut sekali pakai menuju produk ramah lingkungan sebagai upaya menekan timbulan sampah plastik yang sulit terurai. Asisten Pemerintahan dan Kesejahteraan Rakyat Kota Surabaya, M. Fikser, menegaskan bahwa sampah pembalut sekali pakai menjadi ancaman nyata bagi sungai and lingkungan karena butuh waktu hingga 500 tahun untuk terurai. Bumbi bersama Tunas Hijau menghadirkan alternatif ramah lingkungan sebagai solusi nyata bagi satu juta perempuan usia produktif di Surabaya demi masa depan ekologis kota yang berkelanjutan.',
-            'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=800&q=80',
-            'Tunas Hijau ID', 412, 18,
-            'https://tunashijau.id/ratusan-perempuan-surabaya-deklarasikan-she-heroes-di-cfd-tunjungan/'
-        ]);
         
-        $stmt->execute([
-            'Penjualan Mobil Listrik di Surabaya Naik 4 Kali Lipat pada Awal 2026',
-            'Berita Lokal', '19 Mei 2026', '4 menit baca',
-            'Penjualan kendaraan listrik (EV) di Kota Surabaya mengalami kenaikan drastis hingga lebih dari empat kali lipat pada kuartal pertama 2026 berkat efisiensi biaya dan kemudahan perawatan.',
-            'Indomobil Dealers Group terus mendorong percepatan adopsi kendaraan listrik (EV) di Indonesia melalui gelaran pameran otomotif. CEO Indomobil Dealers Group, Santiko Wardoyo, menyatakan bahwa kendaraan listrik sangat ekonomis and efisien dari sisi bahan bakar serta perawatan pasca-penjualan yang jauh lebih murah karena tidak memerlukan oli. Untuk menunjang hal ini, PLN UID Jawa Timur berkomitmen dengan menyediakan sekitar 300 stasiun pengisian daya (SPKLU) yang tersebar luas demi meningkatkan kepercayaan masyarakat menggunakan kendaraan ramah lingkungan.',
-            'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=800&q=80',
-            'Lukman Hakim', 356, 22,
-            'httpsSurabaya.inews.id/read/691788/penjualan-mobil-listrik-di-surabaya-naik-4-kali-lipat-pada-awal-2026'
-        ]);
-        
-        $stmt->execute([
-            'Resolusi 2026 Namira Eco Print Surabaya: Gaungkan “Back to Nature”, Ajak Anak Muda Lebih Peduli Lingkungan',
-            'Berita Lokal', '23 Januari 2026', '5 menit baca',
-            'Menyambut tahun 2026, Namira Eco Print Surabaya mengusung tema "Back to Nature" dengan meluncurkan koleksi warna-warna alami dan mengajak generasi muda lebih peduli terhadap kelestarian alam.',
-            'Menyambut tahun 2026, Namira Eco Print menegaskan komitmennya untuk terus bergerak bersama alam melalui koleksi bernuansa "Back to Nature". Owner Namira Eco Print, Yayuk Eko Agustin, menyampaikan bahwa konsep ini diwujudkan dengan eksplorasi tanaman mangrove dan pewarna alami seperti rebusan bubuk kayu lockwood yang memunculkan warna biru lembut. Namira memegang komitmen teguh: siapa yang memetik daun wajib menanam kembali. Diharapkan produk fesyen ini dapat menjadi sarana edukasi bagi Gen Z dan Gen Alpha untuk mulai menghargai alam di sekitar mereka.',
-            'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=80',
-            'Dimas Mahendra', 289, 14,
-            'https://radarsurabaya.jawapos.com/surabaya/2601230024/resolusi-2026-namira-eco-print-surabaya-gaungkan-back-to-nature-ajak-anak-muda-lebih-peduli-lingkungan'
-        ]);
-        
-        $stmt->execute([
-            'Air Hujan Kota Surabaya Terkontaminasi Mikroplastik: Ecoton Himbau Warga Tidak Telan Air Hujan Secara Langsung',
-            'Berita Lokal', '23 November 2025', '5 menit baca',
-            'Penelitian terbaru dari Ecoton bersama jejaring GrowGreen, Jejak, dan River Warrior mengungkap air hujan di Surabaya terkontaminasi mikroplastik, dengan konsentrasi tertinggi di daerah Pakis Gelora dan Tanjung Perak.',
-            'Penelitian terbaru dari Lembaga Kajian Ekologi dan Konservasi Lahan Basah (Ecoton) bersama komunitas GrowGreen dan Jejak menunjukkan bahwa seluruh sampel air hujan di Kota Surabaya telah terkontaminasi oleh mikroplastik jenis fiber. Konsentrasi tertinggi ditemukan di Pakis Gelora dengan 356 partikel per liter and Tanjung Perak dengan 309 partikel per liter. Kontaminasi ini dipicu oleh pembakaran sampah terbuka, gesekan ban kendaraan dengan aspal, serta evaporasi uap air laut yang tercemar plastik. Ecoton mengimbau masyarakat tidak menelan air hujan secara langsung demi kesehatan.',
-            'https://images.unsplash.com/photo-1534274988757-a28bf1a57c17?auto=format&fit=crop&w=800&q=80',
-            'Ecoton News', 512, 37,
-            'https://ecoton.or.id/air-hujan-kota-surabaya-terkontaminasi-mikroplastik-ecoton-himbau-warga-tidak-telan-air-hujan-secara-langsung/'
-        ]);
-        
-        $stmt->execute([
-            '5 Things to Watch in Climate and Environment in 2026',
-            'Berita Global', '21 Januari 2026', '6 menit baca',
-            'Tahun 2026 menjadi momen krusial bagi aksi iklim global, kerja sama internasional, perkotaan berkelanjutan, dan keberpihakan pada sains.',
-            'United Nations University merilis lima tren lingkungan global utama yang wajib diperhatikan sepanjang tahun 2026: (1) peningkatan suhu bumi global yang mendekati overshoot 1.5 derajat Celcius, (2) negosiasi COP 31 di Turki mengenai kelanjutan target pendanaan iklim developing nations, (3) upaya penyelarasan tiga konvensi Rio Conventions (Iklim, Biodiversitas, dan Lahan Degradasi), (4) peran strategis kepemimpinan perkotaan dalam transisi berkelanjutan yang adil di World Urban Forum Baku, serta (5) pentingnya mempertahankan komitmen kolaborasi ilmiah internasional berbasis data dan sains terpercaya.',
-            'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=800&q=80',
-            'United Nations University', 624, 45,
-            'https://unu.edu/ehs/article/5-things-watch-climate-and-environment-2026'
-        ]);
+        $newsData = [
+            [
+                'Berita Lingkungan Lokal dari metrotvnews.com',
+                'Berita Lokal',
+                '14 July 2026',
+                '5 menit baca',
+                'Akses langsung artikel lengkap untuk membaca berita seputar lingkungan hidup.',
+                'Akses langsung artikel lengkap untuk membaca berita seputar lingkungan hidup.',
+                'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=800&q=80',
+                'metrotvnews.com',
+                376,
+                13,
+                'https://www.metrotvnews.com/play/b1oCOX23-sidak-adipura-menteri-hanif-soroti-tumpukan-sampah-di-sungai-dan-tps-liar-surabaya'
+            ],
+            [
+                'Peringati Hari Bumi, ECOTON Hiasi Manequin dengan Sachet | Pilar.ID',
+                'Berita Lokal',
+                '14 July 2026',
+                '3 menit baca',
+                'Surabaya (pilar.id) - Dalam memperingati Hari Bumi yang jatuh pada 22 April. Yayasan ECOTON bersama beberapa komunitas, mahasiswa dan lainnya turun aksi di depan gedung Grahadi, Surabaya, Jumat (22/4/2022) Pada aksi kali ini, berdasar penjelasan Kholid Basyaiban, selaku Koordinator Lapangan (Kor...',
+                'Surabaya (pilar.id) - Dalam memperingati Hari Bumi yang jatuh pada 22 April. Yayasan ECOTON bersama beberapa komunitas, mahasiswa dan lainnya turun aksi di depan gedung Grahadi, Surabaya, Jumat (22/4/2022) Pada aksi kali ini, berdasar penjelasan Kholid Basyaiban, selaku Koordinator Lapangan (Kor...',
+                'https://www.pilar.id/wp-content/uploads/2022/04/6FF30E25-402F-477C-8E99-0BC84BC132D0.jpeg',
+                'https://www.facebook.com/mediapilarID/',
+                388,
+                21,
+                'https://www.pilar.id/peringati-hari-bumi-ecoton-hiasi-manequin-dengan-sachet/'
+            ],
+            [
+                'Pemkot Surabaya Terbitkan Perwali Pengurangan Penggunaan Kantong Plastik - Pemerintah Kota Surabaya',
+                'Berita Lokal',
+                '14 July 2026',
+                '3 menit baca',
+                'Pemkot Surabaya Terbitkan Perwali Pengurangan Penggunaan Kantong Plastik',
+                'Pemkot Surabaya Terbitkan Perwali Pengurangan Penggunaan Kantong Plastik',
+                'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=800&q=80',
+                'surabaya.go.id',
+                184,
+                20,
+                'https://surabaya.go.id/id/berita/65759/pemkot-surabaya-terbitkan-perwali-pengurangan-penggunaan-kantong-plastik'
+            ],
+            [
+                '6 Taman dan Jalur Hijau di Kota Surabaya Rusak Akibat Fenomena Koin Jagat, Pemkot Surabaya Lakukan Tindakan Tegas - Pemerintah Kota Surabaya',
+                'Berita Lokal',
+                '14 July 2026',
+                '6 menit baca',
+                '6 Taman dan Jalur Hijau di Kota Surabaya Rusak Akibat Fenomena Koin Jagat, Pemkot Surabaya Lakukan Tindakan Tegas',
+                '6 Taman dan Jalur Hijau di Kota Surabaya Rusak Akibat Fenomena Koin Jagat, Pemkot Surabaya Lakukan Tindakan Tegas',
+                'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=800&q=80',
+                'surabaya.go.id',
+                277,
+                13,
+                'https://www.surabaya.go.id/id/berita/23345/6-taman-dan-jalur-hijau-di-kota-surabaya-rusak-akibat-fenomena-koin-jagat-pemkot-surabaya-lakukan-tindakan-tegas'
+            ],
+            [
+                'Jaga Kebersihan Lingkungan, Ratusan Siswa SD-SMP Rutin Bersih-bersih Pantai Nambangan - Pemerintah Kota Surabaya',
+                'Berita Lokal',
+                '14 July 2026',
+                '6 menit baca',
+                'Jaga Kebersihan Lingkungan, Ratusan Siswa SD-SMP Rutin Bersih-bersih Pantai Nambangan',
+                'Jaga Kebersihan Lingkungan, Ratusan Siswa SD-SMP Rutin Bersih-bersih Pantai Nambangan',
+                'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=800&q=80',
+                'surabaya.go.id',
+                295,
+                29,
+                'https://surabaya.go.id/id/berita/10882/jaga-kebersihan-lingkungan-ratusan-siswa-sd-smp-rutin-bersih-bersih-pantai-nambangan'
+            ],
+            [
+                'Ratusan Perempuan Surabaya Deklarasikan “She Heroes” di CFD Tunjungan',
+                'Berita Lokal',
+                '14 July 2026',
+                '6 menit baca',
+                'Sekitar 500 perempuan memadati kawasan Car Free Day Jalan Tunjungan untuk mengikuti Deklarasi Gerakan “She Heroes”, Minggu (26/4/2026) . Gerakan …',
+                'Sekitar 500 perempuan memadati kawasan Car Free Day Jalan Tunjungan untuk mengikuti Deklarasi Gerakan “She Heroes”, Minggu (26/4/2026) . Gerakan …',
+                'https://tunashijau.id/wp-content/uploads/2026/04/she-changes.webp',
+                'Tunas Hijau ID',
+                336,
+                10,
+                'https://tunashijau.id/ratusan-perempuan-surabaya-deklarasikan-she-heroes-di-cfd-tunjungan/'
+            ],
+            [
+                'Penjualan Mobil Listrik di Surabaya Naik 4 Kali Lipat pada Awal 2026',
+                'Berita Lokal',
+                '14 July 2026',
+                '7 menit baca',
+                'Menurutnya, penggunaan kendaraan listrik di Jakarta relatif lebih cepat berkembang karena didukung kebijakan ganjil genap.',
+                'Menurutnya, penggunaan kendaraan listrik di Jakarta relatif lebih cepat berkembang karena didukung kebijakan ganjil genap.',
+                'https://img.inews.co.id/media/600/files/networks/2026/05/19/638da_mobil-listrik.jpg',
+                'https://surabaya.inews.id/',
+                382,
+                7,
+                'https://surabaya.inews.id/read/691788/penjualan-mobil-listrik-di-surabaya-naik-4-kali-lipat-pada-awal-2026'
+            ],
+            [
+                'Resolusi 2026 Namira Eco Print Surabaya: Gaungkan “Back to Nature”, Ajak Anak Muda Lebih Peduli Lingkungan',
+                'Berita Lokal',
+                '14 July 2026',
+                '6 menit baca',
+                'Radar Surabaya adalah media digital yang menjadi denyut informasi Surabaya Raya dan Jawa Timur. Menghadirkan berita cepat, tajam dan terpercaya. Mengawal setiap peristiwa, menghubungkan aspirasi masyarakat, serta menjadi referensi utama bagi pembaca yang ingin memahami perkembangan daerah secara ...',
+                'Radar Surabaya adalah media digital yang menjadi denyut informasi Surabaya Raya dan Jawa Timur. Menghadirkan berita cepat, tajam dan terpercaya. Mengawal setiap peristiwa, menghubungkan aspirasi masyarakat, serta menjadi referensi utama bagi pembaca yang ingin memahami perkembangan daerah secara ...',
+                'https://cdn-jpr.jawapos.com/images/11/2026/01/23/namira-2590344769.jpg',
+                'Dimas Mahendra',
+                283,
+                26,
+                'https://radarsurabaya.jawapos.com/surabaya/2601230024/resolusi-2026-namira-eco-print-surabaya-gaungkan-back-to-nature-ajak-anak-muda-lebih-peduli-lingkungan'
+            ],
+            [
+                'Air Hujan Kota Surabaya Terkontaminasi Mikroplastik: Ecoton Himbau Warga Tidak Telan Air Hujan Secara Langsung - ECOTON',
+                'Berita Lokal',
+                '14 July 2026',
+                '4 menit baca',
+                'Surabaya, November 2025 — Penelitian terbaru yang dipimpin oleh Lembaga Kajian Ekologi dan Konservasi Lahan Basah (Ecoton) mengungkap bahwa air hujan di Kota Surabaya telah terkontaminasi mikroplastik pada seluruh lokasi […]',
+                'Surabaya, November 2025 — Penelitian terbaru yang dipimpin oleh Lembaga Kajian Ekologi dan Konservasi Lahan Basah (Ecoton) mengungkap bahwa air hujan di Kota Surabaya telah terkontaminasi mikroplastik pada seluruh lokasi […]',
+                'https://ecoton.or.id/wp-content/uploads/2025/11/WhatsApp-Image-2025-11-14-at-16.12.54-scaled.jpeg',
+                'ECOTON NEWS',
+                432,
+                26,
+                'https://ecoton.or.id/air-hujan-kota-surabaya-terkontaminasi-mikroplastik-ecoton-himbau-warga-tidak-telan-air-hujan-secara-langsung/'
+            ],
+            [
+                'Surabaya Panas dengan Suhu Tembus 33 Derajat Celsius',
+                'Berita Lokal',
+                '14 July 2026',
+                '3 menit baca',
+                'Cuaca Surabaya 26 Mei 2026, udara kabur, suhu mencapai 33°C, kelembapan 57-97%. Hujan ringan di Bangkalan, Mojokerto cerah berawan. Waspadai perubahan cuaca!',
+                'Cuaca Surabaya 26 Mei 2026, udara kabur, suhu mencapai 33°C, kelembapan 57-97%. Hujan ringan di Bangkalan, Mojokerto cerah berawan. Waspadai perubahan cuaca!',
+                'https://akcdn.detik.net.id/api/wm/2026/03/29/ilusrasi-musim-panas-di-kota-surabaya-1774761615523_169.jpeg?wid=60&w=1200&v=1&t=jpeg',
+                'https://www.facebook.com/detikcom',
+                450,
+                18,
+                'https://www.detik.com/jatim/berita/d-8504622/surabaya-panas-dengan-suhu-tembus-33-derajat-celsius'
+            ],
+            [
+                'DLH Surabaya Temukan Warga Buang Rumen ke Kali, Satu Orang Kena Tipiring',
+                'Berita Lokal',
+                '14 July 2026',
+                '4 menit baca',
+                'Patroli yang dilakukan Dinas Lingkungan Hidup (DLH) Kota Surabaya masih menemukan warga yang mencuci dan membuang rumen atau kotoran hewan di Kali Surabaya, tepatnya Taman Asreboyo, Rabu (27/5/2026).',
+                'Patroli yang dilakukan Dinas Lingkungan Hidup (DLH) Kota Surabaya masih menemukan warga yang mencuci dan membuang rumen atau kotoran hewan di Kali Surabaya, tepatnya Taman Asreboyo, Rabu (27/5/2026).',
+                'https://www.suarasurabaya.net/wp-content/uploads/2026/05/WhatsApp-Image-2026-05-27-at-12.45.15-PM-e1779861215749.jpeg',
+                'suarasurabaya.net',
+                403,
+                27,
+                'https://www.suarasurabaya.net/kelanakota/2026/dlh-surabaya-temukan-warga-buang-rumen-ke-kali-satu-orang-kena-tipiring/'
+            ],
+            [
+                'Ascott Waterplace Surabaya Luncurkan \'One Stay One Tree\', Ajak Tamu Ikut Kurangi Emisi Karbon',
+                'Berita Lokal',
+                '14 July 2026',
+                '7 menit baca',
+                'Ascott Waterplace Surabaya luncurkan program \'One Stay One Tree\' saat Hari Bumi, ajak tamu kurangi emisi lewat adopsi dan penanaman pohon.',
+                'Ascott Waterplace Surabaya luncurkan program \'One Stay One Tree\' saat Hari Bumi, ajak tamu kurangi emisi lewat adopsi dan penanaman pohon.',
+                'https://cms.disway.id/uploads/d0185d8dac98f884a4b14a2cc1152122.jpeg',
+                'harian.disway.id',
+                250,
+                26,
+                'https://harian.disway.id/read/943491/ascott-waterplace-surabaya-luncurkan-one-stay-one-tree-ajak-tamu-ikut-kurangi-emisi-karbon/15'
+            ],
+            [
+                '5 Things to Watch in Climate and Environment in 2026',
+                'Berita Global',
+                '14 July 2026',
+                '7 menit baca',
+                '2026 is a crucial year for climate action, cooperation, sustainable cities and science. Here is what to look out for this year.',
+                '2026 is a crucial year for climate action, cooperation, sustainable cities and science. Here is what to look out for this year.',
+                'https://unu.edu/sites/default/files/styles/twtr_image/public/2026-01/Inline%20Media%20%E2%80%93%20Single%20Image%20944x531px%2817%29.png?itok=Erh7xT97',
+                'United Nations University',
+                443,
+                16,
+                'https://unu.edu/ehs/article/5-things-watch-climate-and-environment-2026'
+            ],
+            [
+                'Berita Lingkungan Global dari jatimnet.com',
+                'Berita Global',
+                '14 July 2026',
+                '5 menit baca',
+                'Akses langsung artikel lengkap untuk membaca berita seputar lingkungan hidup.',
+                'Akses langsung artikel lengkap untuk membaca berita seputar lingkungan hidup.',
+                'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=800&q=80',
+                'jatimnet.com',
+                232,
+                14,
+                'https://jatimnet.com/kenapa-generasi-muda-mulai-malu-buang-sampah-sembarangan'
+            ],
+            [
+                'World Environment Day 2026 to activate \'50 Cities at 50°C\' - EnviroNews - latest environment news, climate change, renewable energy',
+                'Berita Global',
+                '14 July 2026',
+                '6 menit baca',
+                'Extreme heat is becoming one of the fastest growing risks for cities worldwide. Many urban areas are already approaching, or will soon face,50°C-equivalent conditions that threaten health, infrastructure and daily life. But cities are also leading with solutions. The “50 Cities at 50°C” or ...',
+                'Extreme heat is becoming one of the fastest growing risks for cities worldwide. Many urban areas are already approaching, or will soon face,50°C-equivalent conditions that threaten health, infrastructure and daily life. But cities are also leading with solutions. The “50 Cities at 50°C” or ...',
+                'https://www.environewsnigeria.com/wp-content/uploads/2018/11/Accra.jpg',
+                'Michael Simire',
+                435,
+                25,
+                'https://www.environewsnigeria.com/world-environment-day-2026-to-activate-50-cities-at-50c/'
+            ],
+            [
+                'Perjanjian Laut Lepas PBB Mulai Berlaku, Upaya Besar Lindungi Samudera',
+                'Berita Global',
+                '14 July 2026',
+                '3 menit baca',
+                'High Seas Treaty atau BBNJA berlaku mulai Sabtu (17/1/2026). Perjanjian PBB ini jadi tonggak perlindungan laut lepas dan keanekaragaman hayati.',
+                'High Seas Treaty atau BBNJA berlaku mulai Sabtu (17/1/2026). Perjanjian PBB ini jadi tonggak perlindungan laut lepas dan keanekaragaman hayati.',
+                'https://asset.kompas.com/crops/S3OuFNeHIZ_3uFlqE40XuwPQ_7U=/0x0:995x663/1200x675/data/photo/2025/09/05/68ba88c0e13ae.png',
+                'KOMPAS.com',
+                321,
+                19,
+                'https://lestari.kompas.com/read/2026/01/16/191723886/perjanjian-laut-lepas-pbb-mulai-berlaku-upaya-besar-lindungi-samudera?page=all'
+            ],
+            [
+                'Solar and wind power are actually cheaper than the lowest-cost fossil fuels',
+                'Berita Global',
+                '14 July 2026',
+                '6 menit baca',
+                'The new data was backed by additional multi-agency reporting from the United Nations.',
+                'The new data was backed by additional multi-agency reporting from the United Nations.',
+                'https://cdn.prod.website-files.com/5f6cc9cd16d59d990c8fca33/6a0490bde700eba221af3f3e_solar-power-wind-energy-more-affordable.jpg',
+                'goodgoodgood.co',
+                209,
+                5,
+                'https://www.goodgoodgood.co/articles/solar-power-wind-energy-cheaper'
+            ],
+            [
+                'Ketika Perang Membuat Bumi Makin Panas',
+                'Berita Global',
+                '14 July 2026',
+                '5 menit baca',
+                'Selama kebijakan luar negeri masih didikte oleh kepentingan bahan bakar fosil, selama itu pula perang dan krisis iklim akan terus saling memakan.',
+                'Selama kebijakan luar negeri masih didikte oleh kepentingan bahan bakar fosil, selama itu pula perang dan krisis iklim akan terus saling memakan.',
+                'https://assetd.kompas.id/eCTXcDPbyqhA1hOEtDF53nfbCeU=/1024x576/smart/filters:format(webp):quality(80)/https://cdn-dam.kompas.id/images/2026/03/27/9115cdbf7dd837217c7fbe3e1f8ec459-20260327_Opini_Digital_1.jpg',
+                'Kompas.id',
+                232,
+                11,
+                'https://www.kompas.id/artikel/ketika-perang-semakin-membakar-bumi'
+            ],
+            [
+                'Dampak Konflik AS-Iran Jadi Ancaman \'Kiamat\' Bagi Ekosistem Laut Ini',
+                'Berita Global',
+                '14 July 2026',
+                '7 menit baca',
+                'Seiring berlanjutnya konflik, para ilmuwan semakin khawatir tentang dampak tumpahan minyak terhadap hewan di wilayah tersebut.',
+                'Seiring berlanjutnya konflik, para ilmuwan semakin khawatir tentang dampak tumpahan minyak terhadap hewan di wilayah tersebut.',
+                'https://akcdn.detik.net.id/visual/2015/09/01/1b274397-e1dc-412f-80f5-527cb561290d_169.jpg?w=1200',
+                'internasional',
+                187,
+                30,
+                'https://www.cnnindonesia.com/internasional/20260419161656-120-1349701/dampak-konflik-as-iran-jadi-ancaman-kiamat-bagi-ekosistem-laut-ini'
+            ],
+            [
+                'Tren Fast Fashion, Dari Gaya Hidup Jadi Ancaman Bencana Lingkungan Global',
+                'Berita Global',
+                '14 July 2026',
+                '5 menit baca',
+                'Radar Surabaya adalah media digital yang menjadi denyut informasi Surabaya Raya dan Jawa Timur. Menghadirkan berita cepat, tajam dan terpercaya. Mengawal setiap peristiwa, menghubungkan aspirasi masyarakat, serta menjadi referensi utama bagi pembaca yang ingin memahami perkembangan daerah secara ...',
+                'Radar Surabaya adalah media digital yang menjadi denyut informasi Surabaya Raya dan Jawa Timur. Menghadirkan berita cepat, tajam dan terpercaya. Mengawal setiap peristiwa, menghubungkan aspirasi masyarakat, serta menjadi referensi utama bagi pembaca yang ingin memahami perkembangan daerah secara ...',
+                'https://cdn-jpr.jawapos.com/images/11/2025/10/20/WhatsApp-Image-2025-10-20-at-045911_eb44420e-3595611048.jpg',
+                'Muhammad Firman Syah',
+                222,
+                29,
+                'https://radarsurabaya.jawapos.com/hobi-lifestyle/2510200023/tren-fast-fashion-dari-gaya-hidup-jadi-ancaman-bencana-lingkungan-global'
+            ],
+            [
+                'Pajak Karbon Uni Eropa Resmi Berlaku, Apa Dampaknya?',
+                'Berita Global',
+                '14 July 2026',
+                '3 menit baca',
+                'Uni Eropa mulai menerapkan pajak karbon atau CBAM pada 2026. Ekspor baja, semen, dan aluminium ke Eropa dikenakan biaya emisi karbon dioksida.',
+                'Uni Eropa mulai menerapkan pajak karbon atau CBAM pada 2026. Ekspor baja, semen, dan aluminium ke Eropa dikenakan biaya emisi karbon dioksida.',
+                'https://asset.kompas.com/crops/wwPaY8-F5aCWruqrynTKBn__t34=/0x1:1920x1281/1200x675/data/photo/2025/04/19/680356a50606b.jpg',
+                'KOMPAS.com',
+                436,
+                22,
+                'https://lestari.kompas.com/read/2026/01/02/165353086/pajak-karbon-uni-eropa-resmi-berlaku-apa-dampaknya?page=all'
+            ],
+            [
+                'Gelombang Panas Ekstrem Landa India dan Pakistan pada Mei 2026',
+                'Berita Global',
+                '14 July 2026',
+                '4 menit baca',
+                'Suhu udara di India dan Pakistan mencapai 50 derajat Celsius akibat gelombang panas dini yang dipicu fenomena El Nino kuat sejak awal April 2026.',
+                'Suhu udara di India dan Pakistan mencapai 50 derajat Celsius akibat gelombang panas dini yang dipicu fenomena El Nino kuat sejak awal April 2026.',
+                'https://cdn.babelinsight.id/media/images/2026/05/zJmqrmFIfE.jpeg?location=1&width=&height=&quality=&fit=1',
+                'Babel Insight',
+                417,
+                8,
+                'https://www.babelinsight.id/gelombang-panas-ekstrem-india-pakistan'
+            ],
+            [
+                'Alih Fungsi Lahan di Asia Tenggara Picu Krisis Polusi Udara, RI Paling Dirugikan',
+                'Berita Global',
+                '14 July 2026',
+                '4 menit baca',
+                'Alih fungsi lahan di Asia Tenggara erat kaitannya dengan sekitar 13.000 kematian tambahan pada tahun 2018 saja.',
+                'Alih fungsi lahan di Asia Tenggara erat kaitannya dengan sekitar 13.000 kematian tambahan pada tahun 2018 saja.',
+                'https://asset.kompas.com/crops/ActWJG0nysFJoS4kQ6PpUAGPraw=/0x0:999x666/1200x675/data/photo/2025/10/14/68ee2666746a1.jpg',
+                'KOMPAS.com',
+                396,
+                16,
+                'https://lestari.kompas.com/read/2026/05/26/172436186/alih-fungsi-lahan-di-asia-tenggara-picu-krisis-polusi-udara-ri-paling'
+            ],
+            [
+                'Asia-Pasifik Terancam Gagal Capai Target SDG PBB',
+                'Berita Global',
+                '14 July 2026',
+                '7 menit baca',
+                'Wilayah Asia-Pasifik diperkirakan akan gagal mencapai 103 dari 117 target pembangunan berkelanjutan (SDG) tahun 2030.',
+                'Wilayah Asia-Pasifik diperkirakan akan gagal mencapai 103 dari 117 target pembangunan berkelanjutan (SDG) tahun 2030.',
+                'https://asset.kompas.com/crops/TkoIroG0Ajy9IDvGtGglMd-vpug=/0x0:6000x4000/1200x675/data/photo/2025/12/09/69381a430ffc7.jpg',
+                'KOMPAS.com',
+                324,
+                30,
+                'https://lestari.kompas.com/read/2026/02/20/151900686/asia-pasifik-terancam-gagal-capai-target-sdg-pbb?page=all'
+            ],
+        ];
+
+        foreach ($newsData as $row) {
+            $stmt->execute($row);
+        }
     }
 
     // Seeding: ecocontact_members
