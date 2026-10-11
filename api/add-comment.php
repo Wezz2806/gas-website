@@ -18,14 +18,19 @@ if (empty($content)) {
     sendJson(['success' => false, 'message' => 'Komentar tidak boleh kosong.'], 400);
 }
 
-try {
+    $roomId = isset($data['room_id']) ? (int)$data['room_id'] : null;
+    if ($roomId <= 0) {
+        $roomId = null;
+    }
+
     // Simpan komentar ke database
     $stmt = $pdo->prepare(
-        "INSERT INTO eco_challenge_comments (evaluation_id, student_id, content) 
-         VALUES (1, :student_id, :content)"
+        "INSERT INTO eco_challenge_comments (evaluation_id, student_id, room_id, content) 
+         VALUES (1, :student_id, :room_id, :content)"
     );
     $stmt->execute([
         'student_id' => $user_id,
+        'room_id' => $roomId,
         'content' => $content
     ]);
 

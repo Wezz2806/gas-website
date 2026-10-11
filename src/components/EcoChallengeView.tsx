@@ -135,9 +135,11 @@ Di sisi lain, petani menghadapi dilema jika harus memilih tanpa pestisida maka r
   }
 ];
 
-interface EcoChallengeViewProps {}
+interface EcoChallengeViewProps {
+  roomId?: number;
+}
 
-export default function EcoChallengeView({}: EcoChallengeViewProps) {
+export default function EcoChallengeView({ roomId }: EcoChallengeViewProps) {
   const [submittedTest, setSubmittedTest] = useState(false);
   const [submittedAngket, setSubmittedAngket] = useState(false);
 
@@ -161,20 +163,27 @@ export default function EcoChallengeView({}: EcoChallengeViewProps) {
 
   // Load existing survey and test data on mount
   React.useEffect(() => {
+    const surveyUrl = roomId ? `/api/student-survey.php?room_id=${roomId}` : '/api/student-survey.php';
+    const testUrl = roomId ? `/api/student-test.php?room_id=${roomId}` : '/api/student-test.php';
+
     // Fetch survey
-    fetch('/api/student-survey.php')
+    fetch(surveyUrl)
       .then(res => res.json())
       .then(data => {
         if (data.success && data.survey) {
           setSurveyAnswers(data.survey.answers || {});
           setSurveyFeedback(data.survey.feedback || '');
           setSubmittedAngket(true);
+        } else {
+          setSurveyAnswers({});
+          setSurveyFeedback('');
+          setSubmittedAngket(false);
         }
       })
       .catch(err => console.error(err));
 
     // Fetch test
-    fetch('/api/student-test.php')
+    fetch(testUrl)
       .then(res => res.json())
       .then(data => {
         if (data.success && data.test) {
@@ -182,6 +191,11 @@ export default function EcoChallengeView({}: EcoChallengeViewProps) {
           setTestStep(data.test.current_step || 1);
           setTestSubmitted(data.test.submitted === 1);
           setSubmittedTest(data.test.submitted === 1);
+        } else {
+          setTestAnswers({});
+          setTestStep(1);
+          setTestSubmitted(false);
+          setSubmittedTest(false);
         }
       })
       .catch(err => console.error(err));
@@ -199,12 +213,13 @@ export default function EcoChallengeView({}: EcoChallengeViewProps) {
       .catch(() => {
         setTestCases(TEST_CASES);
       });
-  }, []);
+  }, [roomId]);
 
   const handleOpenTest = () => {
     setShowTestModal(true);
     setIsLoadingTest(true);
-    fetch('/api/student-test.php')
+    const testUrl = roomId ? `/api/student-test.php?room_id=${roomId}` : '/api/student-test.php';
+    fetch(testUrl)
       .then(res => res.json())
       .then(data => {
         if (data.success && data.test) {
@@ -228,7 +243,8 @@ export default function EcoChallengeView({}: EcoChallengeViewProps) {
         body: JSON.stringify({
           answers: testAnswers,
           current_step: nextStep,
-          submitted: isSubmitting ? 1 : 0
+          submitted: isSubmitting ? 1 : 0,
+          room_id: roomId
         })
       });
       const data = await res.json();
@@ -259,7 +275,8 @@ export default function EcoChallengeView({}: EcoChallengeViewProps) {
   const handleOpenSurvey = () => {
     setShowSurveyModal(true);
     setIsLoadingSurvey(true);
-    fetch('/api/student-survey.php')
+    const surveyUrl = roomId ? `/api/student-survey.php?room_id=${roomId}` : '/api/student-survey.php';
+    fetch(surveyUrl)
       .then(res => res.json())
       .then(data => {
         if (data.success && data.survey) {
@@ -280,7 +297,8 @@ export default function EcoChallengeView({}: EcoChallengeViewProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           answers: surveyAnswers,
-          feedback: surveyFeedback
+          feedback: surveyFeedback,
+          room_id: roomId
         })
       });
       const data = await res.json();

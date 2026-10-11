@@ -1,15 +1,14 @@
 import { useState, useEffect } from 'react';
-import { Tab } from '../types';
+import { Tab, Room } from '../types';
 import { 
   LayoutDashboard, 
   BookOpen, 
   FlaskConical, 
-  Newspaper, 
   Video, 
   HelpCircle, 
-  LifeBuoy,
   Leaf,
-  Phone,
+  ArrowLeft,
+  DoorOpen,
   Menu,
   X
 } from 'lucide-react';
@@ -17,19 +16,19 @@ import {
 interface SidebarProps {
   activeTab: Tab;
   setActiveTab: (tab: Tab) => void;
+  currentRoom?: Room | null;
+  onBackToRooms?: () => void;
 }
 
-export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
+export default function Sidebar({ activeTab, setActiveTab, currentRoom, onBackToRooms }: SidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const navItems = [
-    { id: 'dashboard' as Tab, label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'dashboard' as Tab, label: 'Dashboard Kelas', icon: LayoutDashboard },
     { id: 'ecopedia' as Tab, label: 'EcoPedia', icon: BookOpen },
     { id: 'ecolab' as Tab, label: 'EcoLab', icon: FlaskConical },
-    { id: 'ecoupdate' as Tab, label: 'EcoUpdate', icon: Newspaper },
     { id: 'ecocreation' as Tab, label: 'EcoCreation', icon: Video },
     { id: 'ecochallenge' as Tab, label: 'EcoChallenge', icon: HelpCircle },
-    { id: 'ecocontact' as Tab, label: 'EcoContact', icon: Phone },
   ];
 
   // Close mobile sidebar on route change
@@ -51,7 +50,7 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
   const NavContent = ({ compact = false }: { compact?: boolean }) => (
     <>
       {/* Brand Header */}
-      <div className={`px-4 mb-8 flex items-center gap-3 ${compact ? 'justify-center px-2' : ''}`}>
+      <div className={`px-4 mb-4 flex items-center gap-3 ${compact ? 'justify-center px-2' : ''}`}>
         <div className="w-10 h-10 shrink-0 rounded-xl bg-[#91f78e] shadow-inner flex items-center justify-center text-[#154212] transition-transform hover:scale-110 cursor-pointer">
           <Leaf className="w-6 h-6 fill-current" />
         </div>
@@ -66,6 +65,26 @@ export default function Sidebar({ activeTab, setActiveTab }: SidebarProps) {
           </div>
         )}
       </div>
+
+      {/* Back to Classes / Current Room Info Pill */}
+      {onBackToRooms && !compact && (
+        <div className="px-4 mb-6">
+          <button
+            onClick={onBackToRooms}
+            className="w-full px-3.5 py-2.5 rounded-2xl bg-white/10 hover:bg-white/15 text-white text-xs font-semibold flex items-center gap-2 border border-white/10 transition-all cursor-pointer group"
+          >
+            <ArrowLeft className="w-3.5 h-3.5 text-[#91f78e] group-hover:-translate-x-0.5 transition-transform" />
+            <span className="truncate">Semua Kelas</span>
+          </button>
+          {currentRoom && (
+            <div className="mt-2 px-3 py-2 rounded-xl bg-[#0e300b] border border-[#23581c] text-left">
+              <span className="text-[10px] uppercase font-bold text-[#91f78e] tracking-wider block">Kelas Aktif:</span>
+              <p className="text-xs font-bold text-white truncate">{currentRoom.name}</p>
+              <p className="text-[10px] text-emerald-300/80 font-mono mt-0.5">Kunci: {currentRoom.room_key}</p>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Primary Navigation links */}
       <nav className="flex-grow space-y-1">

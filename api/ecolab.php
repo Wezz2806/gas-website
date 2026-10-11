@@ -18,14 +18,26 @@ if ($method === 'GET') {
         }
 
         try {
-            $stmt = $pdo->query("
-                SELECT ss.id, ss.meeting_id, ss.filename, ss.original_name, ss.status, ss.submitted_at, ss.grade,
-                       u.full_name as student_name, u.email as student_email, em.title as meeting_title
+            $roomId = isset($_GET['room_id']) ? (int)$_GET['room_id'] : 0;
+            $query = "
+                SELECT ss.id, ss.room_id, ss.meeting_id, ss.filename, ss.original_name, ss.status, ss.submitted_at, ss.grade,
+                       u.full_name as student_name, u.email as student_email, 
+                       COALESCE(rm.title, em.title) as meeting_title
                 FROM student_submissions ss
                 JOIN users u ON ss.student_id = u.id
                 LEFT JOIN ecolab_meetings em ON ss.meeting_id = em.id
-                ORDER BY ss.submitted_at DESC
-            ");
+                LEFT JOIN room_meetings rm ON ss.meeting_id = rm.meeting_code AND rm.room_id = ss.room_id
+                WHERE 1=1
+            ";
+            $params = [];
+            if ($roomId > 0) {
+                $query .= " AND (ss.room_id = :room_id OR ss.room_id IS NULL)";
+                $params['room_id'] = $roomId;
+            }
+            $query .= " ORDER BY ss.submitted_at DESC";
+
+            $stmt = $pdo->prepare($query);
+            $stmt->execute($params);
             $submissions = $stmt->fetchAll();
             sendJson([
                 'success' => true,

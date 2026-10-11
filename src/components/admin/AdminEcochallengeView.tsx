@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { ClipboardList, Loader2, Eye, Download, Calendar, User, FileText, ArrowRight, Upload, Plus, Trash2, Save, File, Table, Image, BarChart3, ChevronUp, ChevronDown, Check, X } from 'lucide-react';
-import { Meeting, JournalRow } from '../../types';
+import { ClipboardList, Loader2, Eye, Download, Calendar, User, FileText, ArrowRight, Upload, Plus, Trash2, Save, File, Table, Image, BarChart3, ChevronUp, ChevronDown, Check, X, DoorOpen } from 'lucide-react';
+import { Meeting, JournalRow, Room } from '../../types';
+import { roomService } from '../../services/roomService';
 export default function AdminEcochallengeView() {
   const [error, setError] = useState<string | null>(null);
   const [activeSubTab, setActiveSubTab] = useState<'survey' | 'test'>('survey');
+  // Room filtering
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [selectedRoomId, setSelectedRoomId] = useState<number>(0);
+
   // Survey admin states
   const [surveyStudents, setSurveyStudents] = useState<any[]>([]);
   const [isLoadingSurveys, setIsLoadingSurveys] = useState(false);
@@ -101,9 +106,12 @@ export default function AdminEcochallengeView() {
       })
       .catch(() => alert('Terjadi kesalahan jaringan.'));
   };
-  const fetchSurveyStudents = () => {
+  const fetchSurveyStudents = (roomId: number = selectedRoomId) => {
     setIsLoadingSurveys(true);
-    fetch(`${API_BASE}/student-survey.php?action=get_students`, { credentials: 'include' })
+    const url = roomId > 0
+      ? `${API_BASE}/student-survey.php?action=get_students&room_id=${roomId}`
+      : `${API_BASE}/student-survey.php?action=get_students`;
+    fetch(url, { credentials: 'include' })
       .then(res => res.json())
       .then(data => {
         if (data.success && data.students) {
@@ -141,9 +149,12 @@ export default function AdminEcochallengeView() {
       });
   };
 
-  const fetchTestStudents = () => {
+  const fetchTestStudents = (roomId: number = selectedRoomId) => {
     setIsLoadingTests(true);
-    fetch(`${API_BASE}/student-test.php?action=get_students`, { credentials: 'include' })
+    const url = roomId > 0
+      ? `${API_BASE}/student-test.php?action=get_students&room_id=${roomId}`
+      : `${API_BASE}/student-test.php?action=get_students`;
+    fetch(url, { credentials: 'include' })
       .then(res => res.json())
       .then(data => {
         if (data.success && data.students) {
@@ -307,8 +318,18 @@ export default function AdminEcochallengeView() {
   };
   useEffect(() => {
     fetchTestCases();
-    fetchSurveyStudents();
-  }, []);  return (
+    roomService.getAdminRooms().then(data => setRooms(data)).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (activeSubTab === 'survey') {
+      fetchSurveyStudents(selectedRoomId);
+    } else {
+      fetchTestStudents(selectedRoomId);
+    }
+  }, [activeSubTab, selectedRoomId]);
+
+  return (
     <div className="space-y-10 text-left">
       {/* Page Header */}
       <header className="flex justify-between items-center flex-wrap gap-4 pb-4 border-b border-slate-200">
@@ -329,34 +350,46 @@ export default function AdminEcochallengeView() {
         </div>
       )}
 
-      {/* Tab Switcher */}
-      <div className="flex border-b border-slate-200 gap-2 mb-6">
-        <button
-          onClick={() => {
-            setActiveSubTab('survey');
-            fetchSurveyStudents();
-          }}
-          className={`pb-3 px-6 text-xs font-bold border-b-2 transition-all cursor-pointer ${
-            activeSubTab === 'survey'
-              ? 'border-cyan-600 text-cyan-600'
-              : 'border-transparent text-slate-400 hover:text-slate-650'
-          }`}
-        >
-          Angket Respon Murid
-        </button>
-        <button
-          onClick={() => {
-            setActiveSubTab('test');
-            fetchTestStudents();
-          }}
-          className={`pb-3 px-6 text-xs font-bold border-b-2 transition-all cursor-pointer ${
-            activeSubTab === 'test'
-              ? 'border-cyan-600 text-cyan-600'
-              : 'border-transparent text-slate-400 hover:text-slate-650'
-          }`}
-        >
-          Test Murid
-        </button>
+      {/* Tab Switcher & Room Filter */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200 gap-3 mb-6">
+        <div className="flex gap-2">
+          <button
+            onClick={() => setActiveSubTab('survey')}
+            className={`pb-3 px-6 text-xs font-bold border-b-2 transition-all cursor-pointer ${
+              activeSubTab === 'survey'
+                ? 'border-cyan-600 text-cyan-600'
+                : 'border-transparent text-slate-400 hover:text-slate-650'
+            }`}
+          >
+            Angket Respon Murid
+          </button>
+          <button
+            onClick={() => setActiveSubTab('test')}
+            className={`pb-3 px-6 text-xs font-bold border-b-2 transition-all cursor-pointer ${
+              activeSubTab === 'test'
+                ? 'border-cyan-600 text-cyan-600'
+                : 'border-transparent text-slate-400 hover:text-slate-650'
+            }`}
+          >
+            Test Murid
+          </button>
+        </div>
+
+        {/* Room Filter Dropdown */}
+        <div className="flex items-center gap-2 pb-2 sm:pb-0">
+          <DoorOpen className="w-4 h-4 text-cyan-600 shrink-0" />
+          <span className="text-xs font-bold text-slate-500 shrink-0">Filter Kelas:</span>
+          <select
+            value={selectedRoomId}
+            onChange={(e) => setSelectedRoomId(Number(e.target.value))}
+            className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 shadow-2xs cursor-pointer"
+          >
+            <option value={0}>Semua Kelas ({rooms.length})</option>
+            {rooms.map(r => (
+              <option key={r.id} value={r.id}>{r.name} ({r.room_key})</option>
+            ))}
+          </select>
+        </div>
       </div>      {activeSubTab === 'survey' && (() => {
         let totalYa = 0;
         let totalTidak = 0;

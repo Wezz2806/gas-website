@@ -28,13 +28,26 @@ if ($method === 'GET') {
         }
 
         try {
-            $stmt = $pdo->query("
-                SELECT u.id, u.full_name AS name, u.email, s.updated_at as last_updated, s.feedback, s.answers
-                FROM users u
-                JOIN student_surveys s ON u.id = s.student_id
-                WHERE u.role = 'student'
-                ORDER BY last_updated DESC
-            ");
+            $roomId = isset($_GET['room_id']) ? (int)$_GET['room_id'] : 0;
+            if ($roomId > 0) {
+                $stmt = $pdo->prepare("
+                    SELECT u.id, u.full_name AS name, u.email, s.updated_at as last_updated, s.feedback, s.answers
+                    FROM users u
+                    JOIN room_members rm ON u.id = rm.user_id AND rm.room_id = :room_id
+                    JOIN student_surveys s ON u.id = s.student_id
+                    WHERE u.role = 'student'
+                    ORDER BY last_updated DESC
+                ");
+                $stmt->execute(['room_id' => $roomId]);
+            } else {
+                $stmt = $pdo->query("
+                    SELECT u.id, u.full_name AS name, u.email, s.updated_at as last_updated, s.feedback, s.answers
+                    FROM users u
+                    JOIN student_surveys s ON u.id = s.student_id
+                    WHERE u.role = 'student'
+                    ORDER BY last_updated DESC
+                ");
+            }
             $students = $stmt->fetchAll();
             sendJson([
                 'success' => true,
@@ -55,9 +68,16 @@ if ($method === 'GET') {
         $studentId = (int)$_GET['student_id'];
     }
 
+    $roomId = isset($_GET['room_id']) ? (int)$_GET['room_id'] : 0;
+
     try {
-        $stmt = $pdo->prepare("SELECT * FROM student_surveys WHERE student_id = :student_id");
-        $stmt->execute(['student_id' => $studentId]);
+        if ($roomId > 0) {
+            $stmt = $pdo->prepare("SELECT * FROM student_surveys WHERE student_id = :student_id AND (room_id = :room_id OR room_id IS NULL) ORDER BY (room_id = :room_id) DESC LIMIT 1");
+            $stmt->execute(['student_id' => $studentId, 'room_id' => $roomId]);
+        } else {
+            $stmt = $pdo->prepare("SELECT * FROM student_surveys WHERE student_id = :student_id LIMIT 1");
+            $stmt->execute(['student_id' => $studentId]);
+        }
         $survey = $stmt->fetch();
 
         if ($survey) {
@@ -123,19 +143,21 @@ if ($method === 'GET') {
         ], 400);
     }
 
-    $studentId = $currentUser['id'];
-    $answersJson = json_encode($answers);
+    $roomId = isset($body['room_id']) ? (int)$body['room_id'] : 0;
+    $roomIdVal = $roomId > 0 ? $roomId : null;
 
     try {
         $stmt = $pdo->prepare("
-            INSERT INTO student_surveys (student_id, answers, feedback)
-            VALUES (:student_id, :answers, :feedback)
+            INSERT INTO student_surveys (student_id, room_id, answers, feedback)
+            VALUES (:student_id, :room_id, :answers, :feedback)
             ON DUPLICATE KEY UPDATE
                 answers = VALUES(answers),
-                feedback = VALUES(feedback)
+                feedback = VALUES(feedback),
+                room_id = COALESCE(VALUES(room_id), room_id)
         ");
         $stmt->execute([
             'student_id' => $studentId,
+            'room_id' => $roomIdVal,
             'answers' => $answersJson,
             'feedback' => $feedback
         ]);

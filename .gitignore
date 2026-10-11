@@ -9,3 +9,6 @@ coverage/
 !.env.netlify.example
 vendor/
 uploads/
+api/uploads/
+brain/
+

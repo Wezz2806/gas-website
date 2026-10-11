@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { initialMeetings } from '../data';
 import { Meeting, JournalRow } from '../types';
+import { roomService } from '../services/roomService';
 import { 
   Users, 
   FlaskConical, 
@@ -21,9 +22,10 @@ import LkmReaderModal from './LkmReaderModal';
 interface EcoLabViewProps {
   setActiveTab: (tab: any) => void;
   onSelectBook?: (bookId: string) => void;
+  roomId?: number;
 }
 
-export default function EcoLabView({ setActiveTab, onSelectBook }: EcoLabViewProps) {
+export default function EcoLabView({ setActiveTab, onSelectBook, roomId }: EcoLabViewProps) {
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -101,27 +103,30 @@ export default function EcoLabView({ setActiveTab, onSelectBook }: EcoLabViewPro
 
   // Load meetings and submissions from the database on mount
   useEffect(() => {
-    // 1. Fetch meetings
-    fetch('/api/ecolab.php')
-      .then(res => res.json())
-      .then(data => {
-        if (data.success && data.meetings) {
-          setMeetings(data.meetings);
+    setIsLoading(true);
+    // 1. Fetch meetings (room-specific or global)
+    const fetchMeetings = async () => {
+      try {
+        if (roomId) {
+          const roomMeetings = await roomService.getRoomMeetings(roomId);
+          setMeetings(roomMeetings.length > 0 ? roomMeetings : initialMeetings);
         } else {
-          setMeetings(initialMeetings);
+          const res = await fetch('/api/ecolab.php');
+          const data = await res.json();
+          setMeetings(data.success && data.meetings ? data.meetings : initialMeetings);
         }
-      })
-      .catch(() => {
+      } catch {
         setMeetings(initialMeetings);
-      })
-      .finally(() => {
+      } finally {
         setIsLoading(false);
-      });
+      }
+    };
+    fetchMeetings();
 
     // 2. Fetch submissions
     const fetchSubmissions = async () => {
       try {
-        const subs = await submissionService.getSubmissions();
+        const subs = await submissionService.getSubmissions(roomId);
         const mapped: Record<string, string> = {};
         Object.keys(subs).forEach(key => {
           mapped[key] = subs[key].original_name;
@@ -132,7 +137,7 @@ export default function EcoLabView({ setActiveTab, onSelectBook }: EcoLabViewPro
       }
     };
     fetchSubmissions();
-  }, []);
+  }, [roomId]);
 
   // File upload simulation states
   const [showUploadModal, setShowUploadModal] = useState(false);
@@ -198,7 +203,7 @@ export default function EcoLabView({ setActiveTab, onSelectBook }: EcoLabViewPro
     }, 150);
 
     try {
-      const submission = await submissionService.uploadSubmission(selectedMeeting.id, file);
+      const submission = await submissionService.uploadSubmission(selectedMeeting.id, file, roomId);
       clearInterval(interval);
       setUploadProgress(100);
       setUploadedFiles(prevFiles => ({

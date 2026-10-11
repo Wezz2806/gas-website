@@ -7,14 +7,23 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 }
 
 try {
-    // Ambil seluruh tanggapan/komentar murid untuk evaluasi id = 1
-    $stmt = $pdo->query(
-        "SELECT c.id, c.student_id, c.content, c.created_at, u.full_name as author
-         FROM eco_challenge_comments c
-         JOIN users u ON c.student_id = u.id
-         WHERE c.evaluation_id = 1
-         ORDER BY c.created_at ASC"
-    );
+    $roomId = isset($_GET['room_id']) ? (int)$_GET['room_id'] : 0;
+
+    $query = "SELECT c.id, c.student_id, c.room_id, c.content, c.created_at, u.full_name as author
+              FROM eco_challenge_comments c
+              JOIN users u ON c.student_id = u.id";
+    
+    if ($roomId > 0) {
+        $query .= " WHERE (c.room_id = :room_id OR c.room_id IS NULL)";
+    }
+    $query .= " ORDER BY c.created_at ASC";
+
+    $stmt = $pdo->prepare($query);
+    if ($roomId > 0) {
+        $stmt->execute(['room_id' => $roomId]);
+    } else {
+        $stmt->execute();
+    }
     $comments = $stmt->fetchAll();
 
     sendJson(['success' => true, 'comments' => $comments]);

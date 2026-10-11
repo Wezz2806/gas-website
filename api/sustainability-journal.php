@@ -28,14 +28,28 @@ if ($method === 'GET') {
         }
 
         try {
-            $stmt = $pdo->query("
-                SELECT u.id, u.full_name AS name, u.email, MAX(j.updated_at) as last_updated
-                FROM users u
-                JOIN sustainability_journals j ON u.id = j.student_id
-                WHERE u.role = 'student'
-                GROUP BY u.id, u.full_name, u.email
-                ORDER BY last_updated DESC
-            ");
+            $roomId = isset($_GET['room_id']) ? (int)$_GET['room_id'] : 0;
+            if ($roomId > 0) {
+                $stmt = $pdo->prepare("
+                    SELECT u.id, u.full_name AS name, u.email, MAX(j.updated_at) as last_updated
+                    FROM users u
+                    JOIN room_members rm ON u.id = rm.user_id AND rm.room_id = :room_id
+                    JOIN sustainability_journals j ON u.id = j.student_id
+                    WHERE u.role = 'student'
+                    GROUP BY u.id, u.full_name, u.email
+                    ORDER BY last_updated DESC
+                ");
+                $stmt->execute(['room_id' => $roomId]);
+            } else {
+                $stmt = $pdo->query("
+                    SELECT u.id, u.full_name AS name, u.email, MAX(j.updated_at) as last_updated
+                    FROM users u
+                    JOIN sustainability_journals j ON u.id = j.student_id
+                    WHERE u.role = 'student'
+                    GROUP BY u.id, u.full_name, u.email
+                    ORDER BY last_updated DESC
+                ");
+            }
             $students = $stmt->fetchAll();
             sendJson([
                 'success' => true,

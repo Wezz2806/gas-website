@@ -14,13 +14,18 @@ import {
   Film, 
   Heart, 
   MessageCircle, 
-  Tv
+  Tv,
+  DoorOpen
 } from 'lucide-react';
 import { videoService, VideoItem, VideoComment } from '@/services/videoService';
+import { Room } from '../../types';
+import { roomService } from '../../services/roomService';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
 
 export default function AdminEcocreationView() {
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [selectedRoomId, setSelectedRoomId] = useState<number>(0);
   const [videos, setVideos] = useState<VideoItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -35,11 +40,11 @@ export default function AdminEcocreationView() {
   const [isLoadingComments, setIsLoadingComments] = useState(false);
 
   // Fetch videos
-  const fetchVideos = async () => {
+  const fetchVideos = async (roomId: number = selectedRoomId) => {
     try {
       setIsLoading(true);
       setError(null);
-      const data = await videoService.getVideos();
+      const data = await videoService.getVideos(roomId > 0 ? roomId : undefined);
       setVideos(data);
     } catch (err: any) {
       console.error(err);
@@ -50,8 +55,12 @@ export default function AdminEcocreationView() {
   };
 
   useEffect(() => {
-    fetchVideos();
+    roomService.getAdminRooms().then(setRooms).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    fetchVideos(selectedRoomId);
+  }, [selectedRoomId]);
 
   // Handle Video Deletion
   const handleDeleteVideo = async (video: VideoItem) => {
@@ -201,6 +210,22 @@ export default function AdminEcocreationView() {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-250 rounded-2xl text-xs focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500 focus:outline-none text-slate-700"
             />
+          </div>
+
+          {/* Room Filter */}
+          <div className="flex items-center gap-2 self-start md:self-auto">
+            <DoorOpen className="w-4 h-4 text-cyan-600 shrink-0" />
+            <span className="text-xs font-bold text-slate-500 shrink-0">Filter Kelas:</span>
+            <select
+              value={selectedRoomId}
+              onChange={(e) => setSelectedRoomId(Number(e.target.value))}
+              className="text-xs font-semibold px-3 py-2 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 shadow-2xs cursor-pointer"
+            >
+              <option value={0}>Semua Kelas ({rooms.length})</option>
+              {rooms.map(r => (
+                <option key={r.id} value={r.id}>{r.name} ({r.room_key})</option>
+              ))}
+            </select>
           </div>
         </div>
 

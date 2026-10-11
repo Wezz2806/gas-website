@@ -8,16 +8,20 @@ import {
 } from 'lucide-react';
 import BookReaderModal from './BookReaderModal';
 
+import { roomService } from '../services/roomService';
+
 interface EcoPediaViewProps {
   searchQuery: string;
   initialBookId?: string | null;
   onClearInitialBook?: () => void;
+  roomId?: number;
 }
 
 export default function EcoPediaView({ 
   searchQuery, 
   initialBookId = null, 
-  onClearInitialBook 
+  onClearInitialBook,
+  roomId
 }: EcoPediaViewProps) {
   const [books, setBooks] = useState<Book[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -25,7 +29,26 @@ export default function EcoPediaView({
   const [downloadSuccessMessage, setDownloadSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch('/api/ecopedia.php')
+    setIsLoading(true);
+    if (roomId) {
+      roomService.getRoomEcopedia(roomId)
+        .then(data => {
+          if (data && data.length > 0) {
+            setBooks(data);
+          } else {
+            setBooks(initialBooks);
+          }
+        })
+        .catch(err => {
+          console.error('Error fetching room books:', err);
+          setBooks(initialBooks);
+        })
+        .finally(() => setIsLoading(false));
+      return;
+    }
+
+    const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
+    fetch(`${API_BASE}/ecopedia.php`)
       .then(res => res.json())
       .then(data => {
         if (data.success && data.books) {
@@ -50,10 +73,8 @@ export default function EcoPediaView({
         console.error('Error fetching books:', err);
         setBooks(initialBooks);
       })
-      .finally(() => {
-        setIsLoading(false);
-      });
-  }, []);
+      .finally(() => setIsLoading(false));
+  }, [roomId]);
 
   useEffect(() => {
     if (initialBookId && books.length > 0) {

@@ -27,9 +27,10 @@ const BACKEND_URL = API_BASE.replace(/\/api$/, '') || '';
 
 interface EcoCreationViewProps {
   searchQuery: string;
+  roomId?: number;
 }
 
-export default function EcoCreationView({ searchQuery }: EcoCreationViewProps) {
+export default function EcoCreationView({ searchQuery, roomId }: EcoCreationViewProps) {
   const { user } = useAuth();
   
   const [videos, setVideos] = useState<VideoItem[]>([]);
@@ -64,11 +65,11 @@ export default function EcoCreationView({ searchQuery }: EcoCreationViewProps) {
   const uploadFileInputRef = useRef<HTMLInputElement>(null);
   const editFileInputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch videos on mount
+  // Fetch videos on mount or when roomId changes
   const fetchVideos = async () => {
     try {
       setIsLoading(true);
-      const data = await videoService.getVideos();
+      const data = await videoService.getVideos(roomId);
       setVideos(data);
     } catch (err) {
       console.error('Failed to load videos:', err);
@@ -79,7 +80,7 @@ export default function EcoCreationView({ searchQuery }: EcoCreationViewProps) {
 
   useEffect(() => {
     fetchVideos();
-  }, []);
+  }, [roomId]);
 
   // State for active video comments
   const [videoComments, setVideoComments] = useState<VideoComment[]>([]);
@@ -299,7 +300,8 @@ export default function EcoCreationView({ searchQuery }: EcoCreationViewProps) {
         uploadTitle,
         'Umum',
         finalDuration || '00:00',
-        selectedFile
+        selectedFile,
+        roomId
       );
 
       clearInterval(progressInterval);

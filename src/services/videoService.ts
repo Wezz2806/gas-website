@@ -18,8 +18,9 @@ export interface VideoItem {
 }
 
 export const videoService = {
-  async getVideos(): Promise<VideoItem[]> {
-    const response = await fetch(`${API_BASE}/get-videos.php`, {
+  async getVideos(roomId?: number): Promise<VideoItem[]> {
+    const url = roomId ? `${API_BASE}/get-videos.php?room_id=${roomId}` : `${API_BASE}/get-videos.php`;
+    const response = await fetch(url, {
       method: 'GET',
       credentials: 'include',
       headers: {
@@ -33,12 +34,15 @@ export const videoService = {
     return data.videos || [];
   },
 
-  async uploadVideo(title: string, category: string, duration: string, file: File): Promise<VideoItem> {
+  async uploadVideo(title: string, category: string, duration: string, file: File, roomId?: number): Promise<VideoItem> {
     const formData = new FormData();
     formData.append('title', title);
     formData.append('category', category);
     formData.append('duration', duration);
     formData.append('video_file', file);
+    if (roomId) {
+      formData.append('room_id', String(roomId));
+    }
 
     const response = await fetch(`${API_BASE}/upload-video.php`, {
       method: 'POST',

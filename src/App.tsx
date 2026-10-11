@@ -1,5 +1,5 @@
 import React, { useState, lazy, Suspense, useEffect } from 'react';
-import { Tab, AuthPage } from './types';
+import { Tab, AuthPage, Room } from './types';
 import { Sprout, Loader2 } from 'lucide-react';
 
 // Static imports — needed immediately on first render
@@ -10,29 +10,26 @@ import RegisterPage from './components/auth/RegisterPage';
 import ForgotPasswordPage from './components/auth/ForgotPasswordPage';
 import { authService } from './services/authService';
 
-// Static layout imports — always visible after login
+// Static layout imports — always visible inside a room
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 
-// Lazy imports — loaded on demand per active tab (code splitting)
+// Room List (Landing Page after login for students)
+const RoomListView = lazy(() => import('./components/RoomListView'));
+
+// Lazy imports — room-scoped views loaded on demand (code splitting)
 const DashboardView = lazy(() => import('./components/DashboardView'));
 const EcoPediaView = lazy(() => import('./components/EcoPediaView'));
 const EcoLabView = lazy(() => import('./components/EcoLabView'));
-const EcoUpdateView = lazy(() => import('./components/EcoUpdateView'));
 const EcoCreationView = lazy(() => import('./components/EcoCreationView'));
 const EcoChallengeView = lazy(() => import('./components/EcoChallengeView'));
-const EcoContactView = lazy(() => import('./components/EcoContactView'));
-const SupportView = lazy(() => import('./components/SupportView'));
-
-
 
 // Lazy imports for Admin Panel
 const AdminSidebar = lazy(() => import('./components/admin/AdminSidebar'));
 const AdminDashboardView = lazy(() => import('./components/admin/AdminDashboardView'));
 const AdminUsersView = lazy(() => import('./components/admin/AdminUsersView'));
+const AdminRoomsView = lazy(() => import('./components/admin/AdminRoomsView'));
 const AdminEcopediaView = lazy(() => import('./components/admin/AdminEcopediaView'));
-const AdminEcoupdateView = lazy(() => import('./components/admin/AdminEcoupdateView'));
-const AdminEcocontactView = lazy(() => import('./components/admin/AdminEcocontactView'));
 const AdminEcolabView = lazy(() => import('./components/admin/AdminEcolabView'));
 const AdminEcochallengeView = lazy(() => import('./components/admin/AdminEcochallengeView'));
 const AdminEcocreationView = lazy(() => import('./components/admin/AdminEcocreationView'));
@@ -56,22 +53,43 @@ function AppContent() {
   } = useAuth();
   
   const [authPage, setAuthPage] = useState<AuthPage>('login');
-  const [activeTab, setActiveTab] = useState<string>('dashboard');
+
+  // ── Room State Machine ────────────────────────────────────────────
+  // null = show RoomList, Room object = inside that room
+  const [currentRoom, setCurrentRoom] = useState<Room | null>(null);
+  const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
 
-  // Set default tab based on user role when authenticated
+  // Admin active tab
+  const [adminTab, setAdminTab] = useState<string>('admin-dashboard');
+
+  // Reset when user changes / logs in
   useEffect(() => {
-    if (user) {
-      if (user.role === 'admin') {
-        setActiveTab('admin-dashboard');
-      } else {
-        setActiveTab('dashboard');
-      }
+    setCurrentRoom(null);
+    setActiveTab('dashboard');
+    setSearchQuery('');
+    setSelectedBookId(null);
+    if (user?.role === 'admin') {
+      setAdminTab('admin-dashboard');
     }
   }, [user]);
 
-  // 1. Splash Screen while loading session
+  const handleSelectRoom = (room: Room) => {
+    setCurrentRoom(room);
+    setActiveTab('dashboard');
+    setSearchQuery('');
+    setSelectedBookId(null);
+  };
+
+  const handleBackToRooms = () => {
+    setCurrentRoom(null);
+    setActiveTab('dashboard');
+    setSearchQuery('');
+    setSelectedBookId(null);
+  };
+
+  // ── 1. Splash Screen ─────────────────────────────────────────────
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#FFF7ED] flex flex-col items-center justify-center font-sans">
@@ -88,7 +106,7 @@ function AppContent() {
     );
   }
 
-  // 2. Auth pages if not logged in
+  // ── 2. Auth pages if not logged in ───────────────────────────────
   if (!isAuthenticated) {
     return (
       <AuthLayout>
@@ -115,55 +133,45 @@ function AppContent() {
     );
   }
 
-  // 3. Admin Layout
+  // ── 3. Admin Layout ───────────────────────────────────────────────
   if (user?.role === 'admin') {
     return (
       <div className="min-h-screen bg-slate-50 flex font-sans antialiased text-slate-800">
         <Suspense fallback={<TabFallback />}>
           <AdminSidebar 
-            activeTab={activeTab as any} 
-            setActiveTab={setActiveTab} 
+            activeTab={adminTab as any} 
+            setActiveTab={(tab: any) => setAdminTab(tab)} 
           />
         </Suspense>
 
         <div id="main-container-viewport" className="flex-1 lg:ml-64 transition-all duration-300 min-w-0">
           <Header 
-            activeTab={activeTab as any}
+            activeTab={adminTab as any}
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
           />
 
           <main className="pt-20 pb-12 px-4 md:px-6 lg:px-8 max-w-7xl mx-auto min-h-[calc(100vh-64px)]">
             <Suspense fallback={<TabFallback />}>
-              {activeTab === 'admin-dashboard' && (
-                <AdminDashboardView setActiveTab={setActiveTab} />
+              {adminTab === 'admin-dashboard' && (
+                <AdminDashboardView setActiveTab={(tab: any) => setAdminTab(tab)} />
               )}
-
-              {activeTab === 'admin-users' && (
+              {adminTab === 'admin-rooms' && (
+                <AdminRoomsView />
+              )}
+              {adminTab === 'admin-users' && (
                 <AdminUsersView />
               )}
-
-              {activeTab === 'admin-ecopedia' && (
+              {adminTab === 'admin-ecopedia' && (
                 <AdminEcopediaView />
               )}
-
-              {activeTab === 'admin-ecoupdate' && (
-                <AdminEcoupdateView />
-              )}
-
-              {activeTab === 'admin-ecocontact' && (
-                <AdminEcocontactView />
-              )}
-
-              {activeTab === 'admin-ecolab' && (
+              {adminTab === 'admin-ecolab' && (
                 <AdminEcolabView />
               )}
-
-              {activeTab === 'admin-ecochallenge' && (
+              {adminTab === 'admin-ecochallenge' && (
                 <AdminEcochallengeView />
               )}
-
-              {activeTab === 'admin-ecocreation' && (
+              {adminTab === 'admin-ecocreation' && (
                 <AdminEcocreationView />
               )}
             </Suspense>
@@ -173,34 +181,50 @@ function AppContent() {
     );
   }
 
+  // ── 4. Student: Room List (landing page) ──────────────────────────
+  if (!currentRoom) {
+    return (
+      <Suspense fallback={
+        <div className="min-h-screen bg-[#FFF7ED] flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-emerald-700 opacity-60" />
+        </div>
+      }>
+        <RoomListView onSelectRoom={handleSelectRoom} />
+      </Suspense>
+    );
+  }
 
-
-  // 5. Main student dashboard (Default)
+  // ── 5. Student: Inside a Room ─────────────────────────────────────
   return (
     <div className="min-h-screen bg-[#FFF7ED] flex font-sans antialiased text-gray-800">
       
       <Sidebar 
-        activeTab={activeTab as Tab} 
+        activeTab={activeTab} 
         setActiveTab={(tab) => {
           setActiveTab(tab);
           setSearchQuery('');
           setSelectedBookId(null);
-        }} 
+        }}
+        currentRoom={currentRoom}
+        onBackToRooms={handleBackToRooms}
       />
 
       <div id="main-container-viewport" className="flex-1 lg:ml-64 transition-all duration-300 min-w-0">
         
         <Header 
-          activeTab={activeTab as Tab}
+          activeTab={activeTab}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
+          currentRoom={currentRoom}
+          onBackToRooms={handleBackToRooms}
         />
 
         <main className="pt-20 pb-12 px-4 md:px-6 lg:px-8 max-w-7xl mx-auto min-h-[calc(100vh-64px)]">
           <Suspense fallback={<TabFallback />}>
             {activeTab === 'dashboard' && (
               <DashboardView 
-                setActiveTab={(tab) => setActiveTab(tab as string)} 
+                setActiveTab={(tab) => setActiveTab(tab as Tab)}
+                currentRoom={currentRoom}
               />
             )}
 
@@ -209,38 +233,29 @@ function AppContent() {
                 searchQuery={searchQuery} 
                 initialBookId={selectedBookId}
                 onClearInitialBook={() => setSelectedBookId(null)}
+                roomId={currentRoom.id}
               />
             )}
 
             {activeTab === 'ecolab' && (
               <EcoLabView 
-                setActiveTab={(tab) => setActiveTab(tab as string)} 
+                setActiveTab={(tab) => setActiveTab(tab as Tab)}
                 onSelectBook={setSelectedBookId}
-              />
-            )}
-
-            {activeTab === 'ecoupdate' && (
-              <EcoUpdateView 
-                searchQuery={searchQuery} 
+                roomId={currentRoom.id}
               />
             )}
 
             {activeTab === 'ecocreation' && (
               <EcoCreationView 
-                searchQuery={searchQuery} 
+                searchQuery={searchQuery}
+                roomId={currentRoom.id}
               />
             )}
 
             {activeTab === 'ecochallenge' && (
-              <EcoChallengeView />
-            )}
-
-            {activeTab === 'ecocontact' && (
-              <EcoContactView />
-            )}
-
-            {activeTab === 'support' && (
-              <SupportView />
+              <EcoChallengeView 
+                roomId={currentRoom.id}
+              />
             )}
           </Suspense>
         </main>

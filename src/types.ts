@@ -1,17 +1,43 @@
-export type Tab = 'dashboard' | 'ecopedia' | 'ecolab' | 'ecoupdate' | 'ecocreation' | 'ecochallenge' | 'ecocontact' | 'support';
+export type Tab = 'dashboard' | 'ecopedia' | 'ecolab' | 'ecocreation' | 'ecochallenge';
 
 export type AuthPage = 'login' | 'register' | 'forgot-password';
 
 export type AdminTab = 
   | 'admin-dashboard' 
+  | 'admin-rooms'
   | 'admin-users'
   | 'admin-ecopedia'
-  | 'admin-ecoupdate'
-  | 'admin-ecocontact'
   | 'admin-ecolab'
   | 'admin-ecochallenge'
   | 'admin-ecocreation';
 
+export interface Room {
+  id: number;
+  name: string;
+  description: string | null;
+  room_key: string;
+  cover_image: string | null;
+  created_by: number;
+  creator_name?: string;
+  gamification_enabled: number | boolean;
+  is_active: number | boolean;
+  members_count?: number;
+  materials_count?: number;
+  meetings_count?: number;
+  is_member?: number | boolean;
+  joined_at?: string;
+  created_at?: string;
+}
+
+export interface RoomMember {
+  id: number;
+  full_name: string;
+  email: string;
+  avatar_url: string | null;
+  eco_points: number;
+  streak: number;
+  joined_at: string;
+}
 
 export interface User {
   id: number;

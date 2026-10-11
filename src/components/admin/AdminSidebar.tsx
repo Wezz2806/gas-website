@@ -2,6 +2,7 @@ import React from 'react';
 import { AdminTab } from '../../types';
 import { 
   LayoutDashboard, 
+  DoorOpen,
   Users, 
   Leaf,
   LogOut,
@@ -24,13 +25,12 @@ export default function AdminSidebar({ activeTab, setActiveTab }: AdminSidebarPr
 
   const navItems = [
     { id: 'admin-dashboard' as AdminTab, label: 'Dashboard Admin', icon: LayoutDashboard },
+    { id: 'admin-rooms' as AdminTab, label: 'Kelola Kelas (Rooms)', icon: DoorOpen },
     { id: 'admin-users' as AdminTab, label: 'Manajemen Pengguna', icon: Users },
     { id: 'admin-ecopedia' as AdminTab, label: 'Kelola EcoPedia', icon: BookOpen },
     { id: 'admin-ecolab' as AdminTab, label: 'Kelola EcoLab', icon: FlaskConical },
     { id: 'admin-ecochallenge' as AdminTab, label: 'Kelola EcoChallenge', icon: ClipboardList },
     { id: 'admin-ecocreation' as AdminTab, label: 'Kelola EcoCreation', icon: Video },
-    { id: 'admin-ecoupdate' as AdminTab, label: 'Kelola EcoUpdate', icon: Newspaper },
-    { id: 'admin-ecocontact' as AdminTab, label: 'Kelola EcoContact', icon: PhoneCall },
   ];
 
   return (

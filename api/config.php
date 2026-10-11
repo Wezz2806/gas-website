@@ -22,6 +22,7 @@ $is_production = (
 $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
 $allowed_origins = [
     'http://localhost:5173',
+    'http://localhost:3000',
     'https://gas-website.netlify.app',
     'https://gaslearn.netlify.app',
     'https://gas-website-production-46db.up.railway.app',
@@ -349,6 +350,131 @@ try {
         $pdo->exec("ALTER TABLE student_submissions MODIFY meeting_id VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL");
     } catch (PDOException $e) {
         // Table might not exist yet during initial setup
+    }
+
+    // ── AUTO-MIGRATION: ROOMS SYSTEM ─────────────────────────────────────────
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS rooms (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(200) NOT NULL,
+            description TEXT,
+            room_key VARCHAR(50) NOT NULL UNIQUE,
+            cover_image VARCHAR(500) DEFAULT NULL,
+            created_by INT NOT NULL,
+            gamification_enabled TINYINT(1) NOT NULL DEFAULT 0,
+            is_active TINYINT(1) NOT NULL DEFAULT 1,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            INDEX idx_room_key (room_key),
+            INDEX idx_created_by (created_by),
+            INDEX idx_is_active (is_active)
+        ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    ");
+
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS room_members (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            room_id INT NOT NULL,
+            user_id INT NOT NULL,
+            joined_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE KEY unique_membership (room_id, user_id),
+            INDEX idx_room (room_id),
+            INDEX idx_user (user_id)
+        ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    ");
+
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS room_ecopedia (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            room_id INT NOT NULL,
+            title VARCHAR(300) NOT NULL,
+            category VARCHAR(100) DEFAULT 'Umum',
+            cover_url VARCHAR(500) DEFAULT '',
+            description TEXT,
+            content LONGTEXT,
+            pdf_url VARCHAR(500) DEFAULT '#',
+            flip_url VARCHAR(500) DEFAULT '',
+            sort_order INT NOT NULL DEFAULT 0,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_room (room_id)
+        ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    ");
+
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS room_meetings (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            room_id INT NOT NULL,
+            meeting_code VARCHAR(50) NOT NULL DEFAULT 'm1',
+            number INT NOT NULL DEFAULT 1,
+            title VARCHAR(300) NOT NULL,
+            description TEXT,
+            icon VARCHAR(50) DEFAULT 'science',
+            status VARCHAR(50) DEFAULT 'scheduled',
+            embed_url VARCHAR(500) DEFAULT '',
+            download_url VARCHAR(500) DEFAULT '',
+            updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            INDEX idx_room (room_id)
+        ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    ");
+
+    // Add room_id to existing tables safely
+    $tablesToAlter = [
+        'student_submissions',
+        'eco_creation_videos',
+        'eco_challenge_evaluations',
+        'eco_challenge_comments',
+        'eco_points_log',
+        'sustainability_journals',
+        'student_tests',
+        'student_surveys'
+    ];
+    foreach ($tablesToAlter as $tbl) {
+        try {
+            $pdo->exec("ALTER TABLE $tbl ADD COLUMN room_id INT DEFAULT NULL");
+        } catch (PDOException $ex) {
+            // Column already exists or table doesn't exist
+        }
+    }
+    // Seeding: Default room if no room exists
+    $checkRooms = $pdo->query("SELECT COUNT(*) FROM rooms")->fetchColumn();
+    if ($checkRooms == 0) {
+        $firstAdminId = $pdo->query("SELECT id FROM users WHERE role = 'admin' LIMIT 1")->fetchColumn();
+        if (!$firstAdminId) {
+            $firstAdminId = $pdo->query("SELECT id FROM users ORDER BY id ASC LIMIT 1")->fetchColumn() ?: 1;
+        }
+
+        $stmtRoom = $pdo->prepare("
+            INSERT INTO rooms (id, name, description, room_key, cover_image, created_by, gamification_enabled, is_active)
+            VALUES (1, 'Kelas Kimia Hijau & Ekoenzim', 'Kelas proyek pembelajaran fermentasi ekoenzim dan kimia hijau.', 'GAS-KIMIA1', 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=800&q=80', ?, 0, 1)
+        ");
+        $stmtRoom->execute([$firstAdminId]);
+
+        // Seed room_meetings for room 1
+        $pdo->exec("
+            INSERT IGNORE INTO room_meetings (room_id, meeting_code, number, title, description, icon, status, embed_url, download_url) VALUES
+            (1, 'm1', 1, 'Mengapa green chemistry penting?', 'Lembar Kerja Murid 1: Menganalisis urgensi dan prinsip dasar Green Chemistry.', 'groups', 'completed', 'https://drive.google.com/file/d/11an9PvFIlJnrJniqR2Z_k8W4hudX2yM_/preview', 'https://drive.google.com/file/d/11an9PvFIlJnrJniqR2Z_k8W4hudX2yM_/view?usp=sharing'),
+            (1, 'm2', 2, 'Integrasi Prinsip Green Chemistry dalam Masalah Lingkungan', 'Lembar Kerja Murid 2: Memahami integrasi Green Chemistry dalam penyelesaian isu lingkungan.', 'science', 'ongoing', 'https://drive.google.com/file/d/1leOTPkIbRbEH8Lsy28B1yCnoeykc9RaQ/preview', 'https://drive.google.com/file/d/1leOTPkIbRbEH8Lsy28B1yCnoeykc9RaQ/view?usp=sharing'),
+            (1, 'm3', 3, 'Aksi Nyata Berkelanjutan Berbasis Prinsip Green Chemistry', 'Lembar Kerja Murid 3: Merancang dan melaksanakan aksi nyata berkelanjutan berbasis kimia hijau.', 'biotech', 'scheduled', 'https://drive.google.com/file/d/18Y8klb4fEvTAy5AZL8--ihxX2df1rffg/preview', 'https://drive.google.com/file/d/18Y8klb4fEvTAy5AZL8--ihxX2df1rffg/view?usp=sharing'),
+            (1, 'm4', 4, 'Agents of Change: Sampah Organik menjadi Solusi Organik', 'Lembar Kerja Murid 4: Mengembangkan solusi organik dari pengolahan limbah sampah organik sekitar.', 'inventory', 'scheduled', 'https://drive.google.com/file/d/14bqlkq9CD9DXx7N2VmzjdDxluy0RFgO5/preview', 'https://drive.google.com/file/d/14bqlkq9CD9DXx7N2VmzjdDxluy0RFgO5/view?usp=sharing')
+        ");
+
+        // Seed room_ecopedia for room 1
+        $pdo->exec("
+            INSERT IGNORE INTO room_ecopedia (room_id, title, category, cover_url, description, content, pdf_url, flip_url, sort_order) VALUES
+            (1, 'Solusi Sat-Set untuk Penyelamatan Bumi: Green Chemistry dan Keberlanjutan Lingkungan', 'Kimia Hijau', './Cover Buku 1.png', '', 'Buku ini menyajikan 12 prinsip pokok Kimia Hijau (Green Chemistry) untuk mengurangi atau menonaktifkan penggunaan zat kimia berbahaya.', '#', 'https://online.fliphtml5.com/azzanuriahw/Buku-Ajar-1---Green-Chemistry/', 1),
+            (1, 'Bukan Sihir, Cuma Sains: Keajaiban Eco Enzyme yang Bikin Geleng Kepala', 'Ekoenzim', './Cover Buku 2.png', '', 'Panduan luar biasa ini menjelaskan langkah demi langkah untuk memfermentasi sisa kulit buah segar dan sayuran bersama gula merah/molase di air bersih dengan rasio emas 1:3:10.', '#', 'https://online.fliphtml5.com/azzanuriahw/Buku-Ajar-2---Ecoenzyme/', 2)
+        ");
+
+        // Enroll all existing students into room 1 as initial members
+        $pdo->exec("
+            INSERT IGNORE INTO room_members (room_id, user_id)
+            SELECT 1, id FROM users WHERE role = 'student'
+        ");
+
+        // Update existing submissions, videos, etc to room_id = 1
+        $pdo->exec("UPDATE student_submissions SET room_id = 1 WHERE room_id IS NULL");
+        $pdo->exec("UPDATE eco_creation_videos SET room_id = 1 WHERE room_id IS NULL");
+        $pdo->exec("UPDATE eco_challenge_comments SET room_id = 1 WHERE room_id IS NULL");
     }
 
     // Seeding: ecolab_meetings

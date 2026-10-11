@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Tab } from '../types';
+import { Tab, Room } from '../types';
 import { 
   UserCheck, 
   MapPin, 
@@ -19,10 +19,12 @@ import { submissionService } from '../services/submissionService';
 
 interface DashboardViewProps {
   setActiveTab: (tab: Tab) => void;
+  currentRoom?: Room | null;
 }
 
 export default function DashboardView({ 
-  setActiveTab
+  setActiveTab,
+  currentRoom
 }: DashboardViewProps) {
   const { user, updateUserStreak } = useAuth();
   const [hasCheckedInToday, setHasCheckedInToday] = useState(() => {
@@ -83,68 +85,117 @@ export default function DashboardView({
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-3 duration-300">
-      <section className="text-left bg-gradient-to-r from-emerald-50 to-[#F5F5DC] p-6 rounded-3xl border border-[#c2c9bb]/40">
+      <section className="text-left bg-gradient-to-r from-emerald-50 to-[#F5F5DC] p-6 sm:p-8 rounded-3xl border border-[#c2c9bb]/40">
         <div className="flex items-center gap-2">
           <span className="text-[#006e1c] font-bold text-xs uppercase tracking-widest bg-emerald-100 px-2.5 py-1 rounded-full">
-            Status Murid Aktif
+            {currentRoom ? `Ruang Kelas: ${currentRoom.name}` : 'Status Murid Aktif'}
           </span>
+          {currentRoom && (
+            <span className="text-stone-500 font-mono text-xs bg-stone-100 px-2.5 py-1 rounded-full border border-stone-200">
+              Kunci: {currentRoom.room_key}
+            </span>
+          )}
         </div>
         <h2 className="font-display font-black text-2xl md:text-3xl text-[#154212] mt-2 mb-1">
-          Halo, Sahabat GAS!
+          {currentRoom ? currentRoom.name : 'Halo, Sahabat GAS!'}
         </h2>
         <p className="font-sans text-sm text-[#42493e] leading-relaxed">
-          Selamat datang di ruang belajar kita hari ini. Semoga kamu dalam keadaan sehat, semangat, dan siap menemukan pengetahuan baru yang bermanfaat untuk diri sendiri, masyarakat, dan lingkungan. Yuk, mulai perjalanan belajarmu hari ini!
+          {currentRoom?.description || 'Selamat datang di ruang belajar kita hari ini. Pelajari materi Kimia Hijau dan Ekoenzim, selesaikan praktikum EcoLab, bagikan karya EcoCreation, dan berdiskusilah di EcoChallenge.'}
         </p>
       </section>
 
       {/* Bento Grid Layout */}
       <div className="grid grid-cols-12 gap-6">
-        {/* Check-in Section (The Focus Card) */}
-        <div className="col-span-12 lg:col-span-8 bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-gray-100 flex flex-col md:flex-row items-center gap-6 relative overflow-hidden transition-all hover:shadow-md">
-          <div className="absolute -right-16 -top-16 w-64 h-64 bg-[#91f78e] opacity-15 rounded-full blur-3xl"></div>
-          
-          <div className="z-10 shrink-0 flex flex-col items-center gap-3">
-            <button 
-              onClick={handleCheckIn}
-              disabled={hasCheckedInToday}
-              className={`w-full px-5 py-3 rounded-2xl font-bold text-xs transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer ${
-                hasCheckedInToday 
-                  ? 'bg-emerald-50 text-emerald-800 border border-emerald-250 cursor-default animate-none'
-                  : 'bg-[#006e1c] hover:bg-[#154212] text-white hover:scale-105 active:scale-95 animate-pulse'
-              }`}
-            >
-              <UserCheck className="w-4 h-4 shrink-0" />
-              <span>{hasCheckedInToday ? 'Presensi Tercatat' : 'Kirim Presensi Kehadiran'}</span>
-            </button>
+        {/* Check-in Section (Only shown if gamification enabled) */}
+        {Boolean(currentRoom?.gamification_enabled) ? (
+          <div className="col-span-12 lg:col-span-8 bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-gray-100 flex flex-col md:flex-row items-center gap-6 relative overflow-hidden transition-all hover:shadow-md">
+            <div className="absolute -right-16 -top-16 w-64 h-64 bg-[#91f78e] opacity-15 rounded-full blur-3xl"></div>
+            
+            <div className="z-10 shrink-0 flex flex-col items-center gap-3">
+              <button 
+                onClick={handleCheckIn}
+                disabled={hasCheckedInToday}
+                className={`w-full px-5 py-3 rounded-2xl font-bold text-xs transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer ${
+                  hasCheckedInToday 
+                    ? 'bg-emerald-50 text-emerald-800 border border-emerald-250 cursor-default animate-none'
+                    : 'bg-[#006e1c] hover:bg-[#154212] text-white hover:scale-105 active:scale-95 animate-pulse'
+                }`}
+              >
+                <UserCheck className="w-4 h-4 shrink-0" />
+                <span>{hasCheckedInToday ? 'Presensi Tercatat' : 'Kirim Presensi Kehadiran'}</span>
+              </button>
 
-            <div className="text-xs font-bold text-[#154212] bg-[#bcf0ae]/30 border border-[#9dd090]/40 px-3.5 py-1.5 rounded-full flex items-center gap-1.5 shadow-sm w-full justify-center">
-              <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
-              <span>Total Kehadiran: {user ? user.streak : 0} Hari</span>
+              <div className="text-xs font-bold text-[#154212] bg-[#bcf0ae]/30 border border-[#9dd090]/40 px-3.5 py-1.5 rounded-full flex items-center gap-1.5 shadow-sm w-full justify-center">
+                <span className="w-2 h-2 rounded-full bg-emerald-600 animate-pulse"></span>
+                <span>Total Kehadiran: {user ? user.streak : 0} Hari</span>
+              </div>
+            </div>
+
+            <div className="z-10 text-center md:text-left flex-1">
+              <h3 className="font-display font-bold text-lg md:text-xl text-[#154212] mb-1.5">
+                {hasCheckedInToday ? 'Anda sudah presensi hari ini!' : 'Siap belajar? Awali dengan mengisi absensi terlebih dahulu.'}
+              </h3>
+              <p className="font-sans text-xs md:sm text-[#42493e] mb-4">
+                {hasCheckedInToday 
+                  ? 'Kehadiran Anda telah tercatat untuk sesi pembelajaran kelas ini.'
+                  : 'Presensi harian memberikan bonus Eco-Points dan menjaga streak aktif Anda.'
+                }
+              </p>
             </div>
           </div>
+        ) : (
+          <div className="col-span-12 lg:col-span-8 bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-gray-100 flex flex-col justify-between relative overflow-hidden transition-all hover:shadow-md">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <Leaf className="w-5 h-5 text-emerald-600" />
+                <h3 className="font-display font-bold text-lg text-[#154212]">
+                  Ruang Belajar Kolaboratif
+                </h3>
+              </div>
+              <p className="text-xs text-stone-600 leading-relaxed mb-6">
+                Kelas ini difasilitasi untuk membimbing Anda memahami prinsip Kimia Hijau dan mengimplementasikan proyek pembuatan Ekoenzim. Pilih menu pembelajaran di bawah untuk memulai:
+              </p>
+            </div>
 
-          <div className="z-10 text-center md:text-left flex-1">
-            <h3 className="font-display font-bold text-lg md:text-xl text-[#154212] mb-1.5">
-              {hasCheckedInToday ? 'Anda sudah presensi hari ini!' : 'Siap belajar? Awali dengan mengisi absensi terlebih dahulu.'}
-            </h3>
-            <p className="font-sans text-xs md:sm text-[#42493e] mb-4">
-              {hasCheckedInToday 
-                ? 'Kehadiran Anda telah tercatat untuk Seminar Keberlanjutan pagi ini.'
-                : 'Guru ingin memastikan semua murid hebat sudah bergabung. Yuk, klik menu absensi sekarang!'
-              }
-            </p>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <button
+                onClick={() => setActiveTab('ecopedia')}
+                className="p-3.5 rounded-2xl bg-emerald-50 hover:bg-emerald-100/80 border border-emerald-100 text-left transition-all cursor-pointer group"
+              >
+                <BookOpen className="w-5 h-5 text-emerald-700 mb-2 group-hover:scale-110 transition-transform" />
+                <span className="block text-xs font-bold text-emerald-950">EcoPedia</span>
+                <span className="text-[10px] text-emerald-700/80">Buku & Modul</span>
+              </button>
 
+              <button
+                onClick={() => setActiveTab('ecolab')}
+                className="p-3.5 rounded-2xl bg-emerald-50 hover:bg-emerald-100/80 border border-emerald-100 text-left transition-all cursor-pointer group"
+              >
+                <Leaf className="w-5 h-5 text-emerald-700 mb-2 group-hover:scale-110 transition-transform" />
+                <span className="block text-xs font-bold text-emerald-950">EcoLab</span>
+                <span className="text-[10px] text-emerald-700/80">Praktikum LKM</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('ecocreation')}
+                className="p-3.5 rounded-2xl bg-emerald-50 hover:bg-emerald-100/80 border border-emerald-100 text-left transition-all cursor-pointer group"
+              >
+                <Award className="w-5 h-5 text-emerald-700 mb-2 group-hover:scale-110 transition-transform" />
+                <span className="block text-xs font-bold text-emerald-950">EcoCreation</span>
+                <span className="text-[10px] text-emerald-700/80">Galeri Video</span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab('ecochallenge')}
+                className="p-3.5 rounded-2xl bg-emerald-50 hover:bg-emerald-100/80 border border-emerald-100 text-left transition-all cursor-pointer group"
+              >
+                <TrendingUp className="w-5 h-5 text-emerald-700 mb-2 group-hover:scale-110 transition-transform" />
+                <span className="block text-xs font-bold text-emerald-950">EcoChallenge</span>
+                <span className="text-[10px] text-emerald-700/80">Test & Diskusi</span>
+              </button>
+            </div>
           </div>
-
-          <div className="ml-auto z-10 hidden md:block w-32 shrink-0">
-            <img 
-              alt="Sustainability Seedling" 
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuBFNzpArEJR6rxBIVU-inZ_WFUuSVcNLTRbQbNSufHW-yjok5m3xhNw3aNOcYeMTN1pFxtv-qwLnc2Iq6YoGlYOk__sqvwSYUT7KBmrp8cEERoM4sdpTGLz5gRm6ntIjX2TTNSguxiaAZ2kIqmAf2eL2diza-1YuPYC6KYQ2FTTStIk0XZfaNPSKQZqNSrbOp_bgpu4QHNUvVOG5U5ashfBNrpppIKHZ6tWb-9sBPP3u7dwgAHtsZ5p9LlGU_6ip-Yeal6tJwvXtR6V" 
-              referrerPolicy="no-referrer"
-              className="w-24 h-24 object-cover rounded-2xl shadow-md border-4 border-white transform rotate-3 hover:rotate-0 transition-transform duration-300"
-            />
-          </div>
-        </div>
+        )}
 
         {/* EcoLab Progress Card */}
         <div className="col-span-12 md:col-span-6 lg:col-span-4 bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex flex-col justify-between transition-all hover:shadow-md">

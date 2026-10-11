@@ -47,9 +47,19 @@ $target_file = $upload_dir . $new_filename;
 
 if (move_uploaded_file($file_tmp, $target_file)) {
     try {
-        // Check if user already submitted for this meeting
-        $stmt = $pdo->prepare("SELECT id, filename FROM student_submissions WHERE student_id = :student_id AND meeting_id = :meeting_id LIMIT 1");
-        $stmt->execute(['student_id' => $user_id, 'meeting_id' => $meeting_id]);
+        $roomId = isset($_POST['room_id']) ? (int)$_POST['room_id'] : null;
+        if ($roomId <= 0) {
+            $roomId = null;
+        }
+
+        // Check if user already submitted for this meeting and room
+        if ($roomId !== null) {
+            $stmt = $pdo->prepare("SELECT id, filename FROM student_submissions WHERE student_id = :student_id AND meeting_id = :meeting_id AND room_id = :room_id LIMIT 1");
+            $stmt->execute(['student_id' => $user_id, 'meeting_id' => $meeting_id, 'room_id' => $roomId]);
+        } else {
+            $stmt = $pdo->prepare("SELECT id, filename FROM student_submissions WHERE student_id = :student_id AND meeting_id = :meeting_id LIMIT 1");
+            $stmt->execute(['student_id' => $user_id, 'meeting_id' => $meeting_id]);
+        }
         $existing = $stmt->fetch();
 
         if ($existing) {
@@ -62,22 +72,24 @@ if (move_uploaded_file($file_tmp, $target_file)) {
             // Update
             $stmt = $pdo->prepare(
                 "UPDATE student_submissions 
-                 SET filename = :filename, original_name = :original_name, status = 'pending', submitted_at = CURRENT_TIMESTAMP
+                 SET filename = :filename, original_name = :original_name, room_id = :room_id, status = 'pending', submitted_at = CURRENT_TIMESTAMP
                  WHERE id = :id"
             );
             $stmt->execute([
                 'filename' => $new_filename,
                 'original_name' => $original_name,
+                'room_id' => $roomId,
                 'id' => $existing['id']
             ]);
         } else {
             // Insert
             $stmt = $pdo->prepare(
-                "INSERT INTO student_submissions (student_id, meeting_id, filename, original_name, status) 
-                 VALUES (:student_id, :meeting_id, :filename, :original_name, 'pending')"
+                "INSERT INTO student_submissions (student_id, room_id, meeting_id, filename, original_name, status) 
+                 VALUES (:student_id, :room_id, :meeting_id, :filename, :original_name, 'pending')"
             );
             $stmt->execute([
                 'student_id' => $user_id,
+                'room_id' => $roomId,
                 'meeting_id' => $meeting_id,
                 'filename' => $new_filename,
                 'original_name' => $original_name

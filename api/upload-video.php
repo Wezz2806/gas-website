@@ -50,13 +50,19 @@ $target_file = $upload_dir . $new_filename;
 
 if (move_uploaded_file($file_tmp, $target_file)) {
     try {
+        $roomId = isset($_POST['room_id']) ? (int)$_POST['room_id'] : null;
+        if ($roomId <= 0) {
+            $roomId = null;
+        }
+
         // Langsung set status = 'approved' (tanpa persetujuan guru) sesuai request user
         $stmt = $pdo->prepare(
-            "INSERT INTO eco_creation_videos (student_id, title, category, duration, filename, original_name, status, approved_at) 
-             VALUES (:student_id, :title, :category, :duration, :filename, :original_name, 'approved', CURRENT_TIMESTAMP)"
+            "INSERT INTO eco_creation_videos (student_id, room_id, title, category, duration, filename, original_name, status, approved_at) 
+             VALUES (:student_id, :room_id, :title, :category, :duration, :filename, :original_name, 'approved', CURRENT_TIMESTAMP)"
         );
         $stmt->execute([
             'student_id' => $user_id,
+            'room_id' => $roomId,
             'title' => $title,
             'category' => $category,
             'duration' => empty($duration) ? '00:00' : $duration,

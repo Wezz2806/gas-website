@@ -1,9 +1,18 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 
-export default defineConfig(() => {
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '');
+
+  // Ambil URL target backend dari .env.local / environment
+  // Contoh: VITE_BACKEND_URL=https://my-app.up.railway.app
+  // Atau VITE_API_BASE_URL=https://my-app.up.railway.app/api
+  const rawTarget = env.VITE_BACKEND_URL || env.VITE_API_TARGET || env.VITE_API_BASE_URL || 'http://localhost:80';
+  const backendHost = rawTarget.replace(/\/api\/?$/, '');
+  const isLocalXampp = backendHost.includes('localhost:80') || backendHost.includes('127.0.0.1:80');
+
   return {
     plugins: [
       react({
@@ -13,7 +22,9 @@ export default defineConfig(() => {
       tailwindcss(),
     ],
 
-    define: {
+    // Jika user mendefinisikan VITE_API_BASE_URL di .env.local, gunakan itu.
+    // Jika tidak, defaultkan ke '/api' agar melalui proxy Vite.
+    define: env.VITE_API_BASE_URL ? {} : {
       'import.meta.env.VITE_API_BASE_URL': JSON.stringify('/api'),
     },
 
@@ -29,14 +40,16 @@ export default defineConfig(() => {
       watch: process.env.DISABLE_HMR === 'true' ? null : {},
       proxy: {
         '/api': {
-          target: 'http://localhost:80',
+          target: backendHost,
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api/, '/GAS Website/api'),
+          secure: false,
+          rewrite: (path) => isLocalXampp ? path.replace(/^\/api/, '/GAS Website/api') : path,
         },
         '/uploads': {
-          target: 'http://localhost:80',
+          target: backendHost,
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/uploads/, '/GAS Website/uploads'),
+          secure: false,
+          rewrite: (path) => isLocalXampp ? path.replace(/^\/uploads/, '/GAS Website/uploads') : path,
         },
       },
     },

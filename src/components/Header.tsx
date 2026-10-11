@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Tab } from '../types';
+import { Tab, Room } from '../types';
 import { 
   Sparkles,
   HelpCircle,
@@ -20,18 +20,23 @@ const getImageUrl = (path: string | null) => {
 };
 
 
+
 interface HeaderProps {
   activeTab: Tab;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
   isTeacher?: boolean;
+  currentRoom?: Room | null;
+  onBackToRooms?: () => void;
 }
 
 export default function Header({ 
   activeTab, 
   searchQuery, 
   setSearchQuery, 
-  isTeacher = false
+  isTeacher = false,
+  currentRoom,
+  onBackToRooms
 }: HeaderProps) {
   const { user, logout, updateUserProfile } = useAuth();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -140,23 +145,15 @@ export default function Header({
       case 'dashboard': return 'Dashboard GAS';
       case 'ecopedia': return 'Ruang Belajar EcoPedia';
       case 'ecolab': return 'Proyek Aksi EcoLab';
-      case 'ecoupdate': return 'Portal Berita EcoUpdate';
       case 'ecocreation': return 'Galeri Video EcoCreation';
       case 'ecochallenge': return 'Evaluasi EcoChallenge';
-      case 'ecocontact': return 'Hubungi Guru — EcoContact';
-      case 'support': return 'Dukungan & FAQ';
-      // Teacher Panel tabs
-      case 'teacher-dashboard' as any: return 'Dashboard Guru — Teacher Panel';
-      case 'teacher-meetings' as any: return 'Manajemen Pertemuan';
-      case 'teacher-submissions' as any: return 'Review & Nilai LKM';
-      case 'teacher-quiz' as any: return 'Manajemen Kuis';
-      case 'teacher-progress' as any: return 'Laporan Kemajuan Kelas';
       // Admin Panel tabs
       case 'admin-dashboard' as any: return 'Pusat Kontrol Administrator';
+      case 'admin-rooms' as any: return 'Manajemen Ruang Kelas';
       case 'admin-users' as any: return 'Manajemen Pengguna';
       case 'admin-ecopedia' as any: return 'Kelola Pustaka EcoPedia';
-      case 'admin-ecoupdate' as any: return 'Kelola Portal EcoUpdate';
-      case 'admin-ecocontact' as any: return 'Kelola Personel EcoContact';
+      case 'admin-ecolab' as any: return 'Kelola Proyek EcoLab';
+      case 'admin-ecochallenge' as any: return 'Kelola Evaluasi EcoChallenge';
       case 'admin-ecocreation' as any: return 'Kelola Karya EcoCreation';
       default: return 'Green Action for Sustainability';
     }
@@ -164,11 +161,29 @@ export default function Header({
 
   return (
     <header className="fixed top-0 right-0 left-0 lg:left-64 h-16 bg-[#ffffff] border-b border-[#c2c9bb] flex justify-between items-center pl-16 pr-4 lg:px-6 z-40 shadow-sm">
-      {/* Page Title Label */}
+      {/* Page Title Label & Room Breadcrumb */}
       <div className="flex items-center gap-3">
-        <h2 className="font-display font-bold text-sm md:text-base lg:text-xl text-[#154212] tracking-tight line-clamp-1">
-          {getPageTitle()}
-        </h2>
+        {onBackToRooms && (
+          <button
+            onClick={onBackToRooms}
+            title="Kembali ke Daftar Kelas"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-bold transition-colors cursor-pointer border border-stone-200"
+          >
+            <span>← Kelas</span>
+          </button>
+        )}
+        <div>
+          <div className="flex items-center gap-2">
+            <h2 className="font-display font-bold text-sm md:text-base lg:text-lg text-[#154212] tracking-tight line-clamp-1">
+              {getPageTitle()}
+            </h2>
+            {currentRoom && (
+              <span className="hidden sm:inline-block text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200 truncate max-w-[200px]">
+                {currentRoom.name}
+              </span>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Center Title — hidden on small screens */}

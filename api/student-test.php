@@ -29,13 +29,26 @@ if ($method === 'GET') {
         }
 
         try {
-            $stmt = $pdo->query("
-                SELECT u.id, u.full_name AS name, u.email, p.updated_at as last_updated, p.current_step, p.submitted, p.grade
-                FROM users u
-                JOIN student_tests p ON u.id = p.student_id
-                WHERE u.role = 'student'
-                ORDER BY last_updated DESC
-            ");
+            $roomId = isset($_GET['room_id']) ? (int)$_GET['room_id'] : 0;
+            if ($roomId > 0) {
+                $stmt = $pdo->prepare("
+                    SELECT u.id, u.full_name AS name, u.email, p.updated_at as last_updated, p.current_step, p.submitted, p.grade
+                    FROM users u
+                    JOIN room_members rm ON u.id = rm.user_id AND rm.room_id = :room_id
+                    JOIN student_tests p ON u.id = p.student_id
+                    WHERE u.role = 'student'
+                    ORDER BY last_updated DESC
+                ");
+                $stmt->execute(['room_id' => $roomId]);
+            } else {
+                $stmt = $pdo->query("
+                    SELECT u.id, u.full_name AS name, u.email, p.updated_at as last_updated, p.current_step, p.submitted, p.grade
+                    FROM users u
+                    JOIN student_tests p ON u.id = p.student_id
+                    WHERE u.role = 'student'
+                    ORDER BY last_updated DESC
+                ");
+            }
             $students = $stmt->fetchAll();
             sendJson([
                 'success' => true,
@@ -82,9 +95,16 @@ if ($method === 'GET') {
         $studentId = (int)$_GET['student_id'];
     }
 
+    $roomId = isset($_GET['room_id']) ? (int)$_GET['room_id'] : 0;
+
     try {
-        $stmt = $pdo->prepare("SELECT * FROM student_tests WHERE student_id = :student_id");
-        $stmt->execute(['student_id' => $studentId]);
+        if ($roomId > 0) {
+            $stmt = $pdo->prepare("SELECT * FROM student_tests WHERE student_id = :student_id AND (room_id = :room_id OR room_id IS NULL) ORDER BY (room_id = :room_id) DESC LIMIT 1");
+            $stmt->execute(['student_id' => $studentId, 'room_id' => $roomId]);
+        } else {
+            $stmt = $pdo->prepare("SELECT * FROM student_tests WHERE student_id = :student_id LIMIT 1");
+            $stmt->execute(['student_id' => $studentId]);
+        }
         $test = $stmt->fetch();
 
         if ($test) {
@@ -346,10 +366,18 @@ if ($method === 'GET') {
     $studentId = $currentUser['id'];
     $answersJson = json_encode($answers);
 
+    $roomId = isset($body['room_id']) ? (int)$body['room_id'] : 0;
+    $roomIdVal = $roomId > 0 ? $roomId : null;
+
     try {
         // Double check if already submitted. Once submitted, lock it.
-        $checkStmt = $pdo->prepare("SELECT submitted FROM student_tests WHERE student_id = :student_id");
-        $checkStmt->execute(['student_id' => $studentId]);
+        if ($roomIdVal !== null) {
+            $checkStmt = $pdo->prepare("SELECT submitted FROM student_tests WHERE student_id = :student_id AND room_id = :room_id");
+            $checkStmt->execute(['student_id' => $studentId, 'room_id' => $roomIdVal]);
+        } else {
+            $checkStmt = $pdo->prepare("SELECT submitted FROM student_tests WHERE student_id = :student_id");
+            $checkStmt->execute(['student_id' => $studentId]);
+        }
         $existingSubmitted = $checkStmt->fetchColumn();
 
         if ($existingSubmitted == 1) {
@@ -360,15 +388,17 @@ if ($method === 'GET') {
         }
 
         $stmt = $pdo->prepare("
-            INSERT INTO student_tests (student_id, answers, current_step, submitted)
-            VALUES (:student_id, :answers, :current_step, :submitted)
+            INSERT INTO student_tests (student_id, room_id, answers, current_step, submitted)
+            VALUES (:student_id, :room_id, :answers, :current_step, :submitted)
             ON DUPLICATE KEY UPDATE
                 answers = VALUES(answers),
                 current_step = VALUES(current_step),
-                submitted = VALUES(submitted)
+                submitted = VALUES(submitted),
+                room_id = COALESCE(VALUES(room_id), room_id)
         ");
         $stmt->execute([
             'student_id' => $studentId,
+            'room_id' => $roomIdVal,
             'answers' => $answersJson,
             'current_step' => $currentStep,
             'submitted' => $submitted

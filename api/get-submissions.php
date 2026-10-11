@@ -12,12 +12,20 @@ if ($user_id === null) {
 }
 
 try {
-    $stmt = $pdo->prepare(
-        "SELECT id, meeting_id, filename, original_name, status, submitted_at 
-         FROM student_submissions 
-         WHERE student_id = :student_id"
-    );
-    $stmt->execute(['student_id' => $user_id]);
+    $roomId = isset($_GET['room_id']) ? (int)$_GET['room_id'] : 0;
+    
+    $query = "SELECT id, meeting_id, filename, original_name, status, submitted_at 
+              FROM student_submissions 
+              WHERE student_id = :student_id";
+    $params = ['student_id' => $user_id];
+    
+    if ($roomId > 0) {
+        $query .= " AND (room_id = :room_id OR room_id IS NULL)";
+        $params['room_id'] = $roomId;
+    }
+    
+    $stmt = $pdo->prepare($query);
+    $stmt->execute($params);
     $submissions = $stmt->fetchAll();
 
     // Map by meeting_id for easier consumption in React

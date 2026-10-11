@@ -11,8 +11,9 @@ export interface SubmissionInfo {
 }
 
 export const submissionService = {
-  async getSubmissions(): Promise<Record<string, SubmissionInfo>> {
-    const response = await fetch(`${API_BASE}/get-submissions.php`, {
+  async getSubmissions(roomId?: number): Promise<Record<string, SubmissionInfo>> {
+    const url = roomId ? `${API_BASE}/get-submissions.php?room_id=${roomId}` : `${API_BASE}/get-submissions.php`;
+    const response = await fetch(url, {
       method: 'GET',
       credentials: 'include',
       headers: {
@@ -26,10 +27,13 @@ export const submissionService = {
     return data.submissions || {};
   },
 
-  async uploadSubmission(meetingId: string, file: File): Promise<SubmissionInfo> {
+  async uploadSubmission(meetingId: string, file: File, roomId?: number): Promise<SubmissionInfo> {
     const formData = new FormData();
     formData.append('meeting_id', meetingId);
     formData.append('file', file);
+    if (roomId) {
+      formData.append('room_id', String(roomId));
+    }
 
     const response = await fetch(`${API_BASE}/upload-submission.php`, {
       method: 'POST',

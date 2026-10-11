@@ -37,6 +37,9 @@ async function apiRequest<T>(url: string, options: RequestInit = {}): Promise<T>
     }
 
     if (!response.ok) {
+      if (response.status === 500 && (!data.message || data.message === 'Terjadi kesalahan pada respon server.')) {
+        throw new Error('Server backend tidak dapat dihubungi. Pastikan URL backend di file .env.local sudah diisi dengan benar dan aktif.');
+      }
       throw new Error(data.message || `Request gagal dengan status ${response.status}`);
     }
 
@@ -132,6 +135,9 @@ export const authService = {
       }
 
       if (!response.ok) {
+        if (response.status === 500 && (!data.message || data.message === 'Terjadi kesalahan pada respon server.')) {
+          throw new Error('Server backend tidak dapat dihubungi. Pastikan URL backend di file .env.local sudah diisi dengan benar dan aktif.');
+        }
         throw new Error(data.message || `Request gagal dengan status ${response.status}`);
       }
 
