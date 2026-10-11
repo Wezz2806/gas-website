@@ -31,7 +31,7 @@ if ($method === 'GET') {
             ";
             $params = [];
             if ($roomId > 0) {
-                $query .= " AND (ss.room_id = :room_id OR ss.room_id IS NULL)";
+                $query .= " AND ss.room_id = :room_id";
                 $params['room_id'] = $roomId;
             }
             $query .= " ORDER BY ss.submitted_at DESC";

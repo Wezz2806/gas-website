@@ -85,3 +85,53 @@ ALTER TABLE student_surveys ADD COLUMN room_id INT DEFAULT NULL;
 CREATE INDEX idx_submission_room ON student_submissions(room_id);
 CREATE INDEX idx_video_room ON eco_creation_videos(room_id);
 CREATE INDEX idx_comment_room ON eco_challenge_comments(room_id);
+
+-- 7. Tabel Sesi & Catatan Absensi per Kelas
+CREATE TABLE IF NOT EXISTS room_attendance_sessions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    room_id INT NOT NULL,
+    meeting_id VARCHAR(50) DEFAULT NULL,
+    title VARCHAR(200) NOT NULL,
+    session_date DATE NOT NULL,
+    access_code VARCHAR(20) DEFAULT NULL,
+    status ENUM('open','closed') NOT NULL DEFAULT 'open',
+    opens_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    closes_at TIMESTAMP NULL DEFAULT NULL,
+    created_by INT DEFAULT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_att_room (room_id),
+    INDEX idx_att_date (session_date),
+    FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE
+) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS room_attendance_records (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    session_id INT NOT NULL,
+    student_id INT NOT NULL,
+    status ENUM('hadir','izin','sakit','alpa') NOT NULL DEFAULT 'hadir',
+    note VARCHAR(255) DEFAULT NULL,
+    marked_by ENUM('self','admin') NOT NULL DEFAULT 'self',
+    checked_in_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_att_record (session_id, student_id),
+    INDEX idx_att_student (student_id),
+    FOREIGN KEY (session_id) REFERENCES room_attendance_sessions(id) ON DELETE CASCADE,
+    FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- 8. Tabel EcoContact per Kelas
+CREATE TABLE IF NOT EXISTS room_contacts (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    room_id INT NOT NULL,
+    name VARCHAR(200) NOT NULL,
+    role VARCHAR(150) DEFAULT NULL,
+    instansi VARCHAR(200) DEFAULT NULL,
+    email VARCHAR(200) DEFAULT NULL,
+    phone VARCHAR(50) DEFAULT NULL,
+    office_hours VARCHAR(100) DEFAULT NULL,
+    avatar_url VARCHAR(500) DEFAULT NULL,
+    sort_order INT NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_contact_room (room_id),
+    FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE
+) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+

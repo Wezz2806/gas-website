@@ -23,16 +23,14 @@ const EcoPediaView = lazy(() => import('./components/EcoPediaView'));
 const EcoLabView = lazy(() => import('./components/EcoLabView'));
 const EcoCreationView = lazy(() => import('./components/EcoCreationView'));
 const EcoChallengeView = lazy(() => import('./components/EcoChallengeView'));
+const AttendanceView = lazy(() => import('./components/AttendanceView'));
+const EcoContactView = lazy(() => import('./components/EcoContactView'));
 
 // Lazy imports for Admin Panel
 const AdminSidebar = lazy(() => import('./components/admin/AdminSidebar'));
 const AdminDashboardView = lazy(() => import('./components/admin/AdminDashboardView'));
 const AdminUsersView = lazy(() => import('./components/admin/AdminUsersView'));
 const AdminRoomsView = lazy(() => import('./components/admin/AdminRoomsView'));
-const AdminEcopediaView = lazy(() => import('./components/admin/AdminEcopediaView'));
-const AdminEcolabView = lazy(() => import('./components/admin/AdminEcolabView'));
-const AdminEcochallengeView = lazy(() => import('./components/admin/AdminEcochallengeView'));
-const AdminEcocreationView = lazy(() => import('./components/admin/AdminEcocreationView'));
 
 // Shared fallback for lazy-loaded tabs
 function TabFallback() {
@@ -63,6 +61,7 @@ function AppContent() {
 
   // Admin active tab
   const [adminTab, setAdminTab] = useState<string>('admin-dashboard');
+  const [adminSelectedRoomId, setAdminSelectedRoomId] = useState<number | null>(null);
 
   // Reset when user changes / logs in
   useEffect(() => {
@@ -72,6 +71,7 @@ function AppContent() {
     setSelectedBookId(null);
     if (user?.role === 'admin') {
       setAdminTab('admin-dashboard');
+      setAdminSelectedRoomId(null);
     }
   }, [user]);
 
@@ -154,25 +154,22 @@ function AppContent() {
           <main className="pt-20 pb-12 px-4 md:px-6 lg:px-8 max-w-7xl mx-auto min-h-[calc(100vh-64px)]">
             <Suspense fallback={<TabFallback />}>
               {adminTab === 'admin-dashboard' && (
-                <AdminDashboardView setActiveTab={(tab: any) => setAdminTab(tab)} />
+                <AdminDashboardView 
+                  setActiveTab={(tab: any) => setAdminTab(tab)} 
+                  onSelectRoom={(roomId: number) => {
+                    setAdminSelectedRoomId(roomId);
+                    setAdminTab('admin-rooms');
+                  }}
+                />
               )}
               {adminTab === 'admin-rooms' && (
-                <AdminRoomsView />
+                <AdminRoomsView 
+                  initialSelectedRoomId={adminSelectedRoomId}
+                  onClearInitialRoom={() => setAdminSelectedRoomId(null)}
+                />
               )}
               {adminTab === 'admin-users' && (
                 <AdminUsersView />
-              )}
-              {adminTab === 'admin-ecopedia' && (
-                <AdminEcopediaView />
-              )}
-              {adminTab === 'admin-ecolab' && (
-                <AdminEcolabView />
-              )}
-              {adminTab === 'admin-ecochallenge' && (
-                <AdminEcochallengeView />
-              )}
-              {adminTab === 'admin-ecocreation' && (
-                <AdminEcocreationView />
               )}
             </Suspense>
           </main>
@@ -254,6 +251,18 @@ function AppContent() {
 
             {activeTab === 'ecochallenge' && (
               <EcoChallengeView 
+                roomId={currentRoom.id}
+              />
+            )}
+
+            {activeTab === 'absensi' && (
+              <AttendanceView 
+                roomId={currentRoom.id}
+              />
+            )}
+
+            {activeTab === 'ecocontact' && (
+              <EcoContactView 
                 roomId={currentRoom.id}
               />
             )}

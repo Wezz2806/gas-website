@@ -21,7 +21,7 @@ if ($method === 'GET') {
 
     try {
         $stmt = $pdo->prepare("
-            SELECT u.id, u.full_name, u.email, u.avatar_url, u.eco_points, u.streak, rm.joined_at
+            SELECT u.id, u.full_name, u.email, u.avatar_url, rm.joined_at
             FROM users u
             JOIN room_members rm ON u.id = rm.user_id
             WHERE rm.room_id = :room_id

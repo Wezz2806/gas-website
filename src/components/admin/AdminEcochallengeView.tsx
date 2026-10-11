@@ -2,12 +2,18 @@ import React, { useState, useEffect } from 'react';
 import { ClipboardList, Loader2, Eye, Download, Calendar, User, FileText, ArrowRight, Upload, Plus, Trash2, Save, File, Table, Image, BarChart3, ChevronUp, ChevronDown, Check, X, DoorOpen } from 'lucide-react';
 import { Meeting, JournalRow, Room } from '../../types';
 import { roomService } from '../../services/roomService';
-export default function AdminEcochallengeView() {
+interface AdminEcochallengeViewProps {
+  roomId?: number;
+}
+
+export default function AdminEcochallengeView({ roomId }: AdminEcochallengeViewProps = {}) {
   const [error, setError] = useState<string | null>(null);
   const [activeSubTab, setActiveSubTab] = useState<'survey' | 'test'>('survey');
   // Room filtering
   const [rooms, setRooms] = useState<Room[]>([]);
-  const [selectedRoomId, setSelectedRoomId] = useState<number>(0);
+  const [selectedRoomId, setSelectedRoomId] = useState<number>(roomId || 0);
+
+  const effectiveRoomId = roomId !== undefined ? roomId : selectedRoomId;
 
   // Survey admin states
   const [surveyStudents, setSurveyStudents] = useState<any[]>([]);
@@ -318,16 +324,18 @@ export default function AdminEcochallengeView() {
   };
   useEffect(() => {
     fetchTestCases();
-    roomService.getAdminRooms().then(data => setRooms(data)).catch(() => {});
-  }, []);
+    if (roomId === undefined) {
+      roomService.getAdminRooms().then(data => setRooms(data)).catch(() => {});
+    }
+  }, [roomId]);
 
   useEffect(() => {
     if (activeSubTab === 'survey') {
-      fetchSurveyStudents(selectedRoomId);
+      fetchSurveyStudents(effectiveRoomId);
     } else {
-      fetchTestStudents(selectedRoomId);
+      fetchTestStudents(effectiveRoomId);
     }
-  }, [activeSubTab, selectedRoomId]);
+  }, [activeSubTab, effectiveRoomId]);
 
   return (
     <div className="space-y-10 text-left">
@@ -375,21 +383,23 @@ export default function AdminEcochallengeView() {
           </button>
         </div>
 
-        {/* Room Filter Dropdown */}
-        <div className="flex items-center gap-2 pb-2 sm:pb-0">
-          <DoorOpen className="w-4 h-4 text-cyan-600 shrink-0" />
-          <span className="text-xs font-bold text-slate-500 shrink-0">Filter Kelas:</span>
-          <select
-            value={selectedRoomId}
-            onChange={(e) => setSelectedRoomId(Number(e.target.value))}
-            className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 shadow-2xs cursor-pointer"
-          >
-            <option value={0}>Semua Kelas ({rooms.length})</option>
-            {rooms.map(r => (
-              <option key={r.id} value={r.id}>{r.name} ({r.room_key})</option>
-            ))}
-          </select>
-        </div>
+        {/* Room Filter Dropdown (hanya bila mode global tanpa roomId) */}
+        {roomId === undefined && (
+          <div className="flex items-center gap-2 pb-2 sm:pb-0">
+            <DoorOpen className="w-4 h-4 text-cyan-600 shrink-0" />
+            <span className="text-xs font-bold text-slate-500 shrink-0">Filter Kelas:</span>
+            <select
+              value={selectedRoomId}
+              onChange={(e) => setSelectedRoomId(Number(e.target.value))}
+              className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 shadow-2xs cursor-pointer"
+            >
+              <option value={0}>Semua Kelas ({rooms.length})</option>
+              {rooms.map(r => (
+                <option key={r.id} value={r.id}>{r.name} ({r.room_key})</option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>      {activeSubTab === 'survey' && (() => {
         let totalYa = 0;
         let totalTidak = 0;

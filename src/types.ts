@@ -1,15 +1,48 @@
-export type Tab = 'dashboard' | 'ecopedia' | 'ecolab' | 'ecocreation' | 'ecochallenge';
+export type Tab = 'dashboard' | 'ecopedia' | 'ecolab' | 'ecocreation' | 'ecochallenge' | 'absensi' | 'ecocontact';
 
 export type AuthPage = 'login' | 'register' | 'forgot-password';
 
 export type AdminTab = 
   | 'admin-dashboard' 
   | 'admin-rooms'
-  | 'admin-users'
-  | 'admin-ecopedia'
-  | 'admin-ecolab'
-  | 'admin-ecochallenge'
-  | 'admin-ecocreation';
+  | 'admin-users';
+
+export type AttendanceStatus = 'hadir' | 'izin' | 'sakit' | 'alpa';
+
+export interface AttendanceSession {
+  id: number;
+  room_id: number;
+  meeting_id: string | null;
+  title: string;
+  session_date: string;
+  has_code: boolean;
+  access_code?: string | null;
+  status: 'open' | 'closed';
+  opens_at: string;
+  closes_at: string | null;
+  hadir_count?: number;
+  izin_count?: number;
+  sakit_count?: number;
+  alpa_count?: number;
+  total_members?: number;
+  my_status?: AttendanceStatus | null;
+  my_note?: string | null;
+  my_marked_by?: 'self' | 'admin' | null;
+  my_checked_in_at?: string | null;
+}
+
+export interface RoomContact {
+  id: number;
+  room_id: number;
+  name: string;
+  role: string | null;
+  instansi: string | null;
+  email: string | null;
+  phone: string | null;
+  office_hours: string | null;
+  avatar_url: string | null;
+  sort_order: number;
+}
 
 export interface Room {
   id: number;
@@ -19,7 +52,6 @@ export interface Room {
   cover_image: string | null;
   created_by: number;
   creator_name?: string;
-  gamification_enabled: number | boolean;
   is_active: number | boolean;
   members_count?: number;
   materials_count?: number;
@@ -34,8 +66,6 @@ export interface RoomMember {
   full_name: string;
   email: string;
   avatar_url: string | null;
-  eco_points: number;
-  streak: number;
   joined_at: string;
 }
 
@@ -45,9 +75,7 @@ export interface User {
   email: string;
   role: 'student' | 'admin';
   avatar_url: string | null;
-  streak: number;
   auth_provider: 'local' | 'google';
-  last_checkin?: string | null;
 }
 
 export interface Book {

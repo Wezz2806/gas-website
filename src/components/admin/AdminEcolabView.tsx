@@ -16,14 +16,20 @@ interface StudentSubmission {
   grade?: number | null;
 }
 
-export default function AdminEcolabView() {
+interface AdminEcolabViewProps {
+  roomId?: number;
+}
+
+export default function AdminEcolabView({ roomId }: AdminEcolabViewProps = {}) {
   const [rooms, setRooms] = useState<Room[]>([]);
-  const [selectedRoomId, setSelectedRoomId] = useState<number>(0);
+  const [selectedRoomId, setSelectedRoomId] = useState<number>(roomId || 0);
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [submissions, setSubmissions] = useState<StudentSubmission[]>([]);
   const [isLoadingMeetings, setIsLoadingMeetings] = useState(true);
   const [isLoadingSubmissions, setIsLoadingSubmissions] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const effectiveRoomId = roomId !== undefined ? roomId : selectedRoomId;
 
   // Manage Panel State
   const [selectedLkmId, setSelectedLkmId] = useState<string | null>(null);
@@ -138,6 +144,16 @@ export default function AdminEcolabView() {
   };
   const fetchMeetings = () => {
     setIsLoadingMeetings(true);
+    if (effectiveRoomId > 0) {
+      roomService.getRoomMeetings(effectiveRoomId)
+        .then(data => {
+          const sorted = [...data].sort((a, b) => a.number - b.number);
+          setMeetings(sorted);
+        })
+        .catch(() => setError('Gagal memuat pertemuan kelas.'))
+        .finally(() => setIsLoadingMeetings(false));
+      return;
+    }
     fetch(`${API_BASE}/ecolab.php`, { credentials: 'include' })
       .then(res => res.json())
       .then(data => {
@@ -157,11 +173,11 @@ export default function AdminEcolabView() {
       });
   };
 
-  const fetchSubmissions = (roomId: number = selectedRoomId) => {
+  const fetchSubmissions = (rId: number = effectiveRoomId) => {
     setIsLoadingSubmissions(true);
     setError(null);
-    const url = roomId > 0
-      ? `${API_BASE}/ecolab.php?action=get_submissions&room_id=${roomId}`
+    const url = rId > 0
+      ? `${API_BASE}/ecolab.php?action=get_submissions&room_id=${rId}`
       : `${API_BASE}/ecolab.php?action=get_submissions`;
     fetch(url, { credentials: 'include' })
       .then(async res => {
@@ -183,16 +199,18 @@ export default function AdminEcolabView() {
 
   useEffect(() => {
     fetchMeetings();
-    roomService.getAdminRooms().then(data => setRooms(data)).catch(() => {});
-  }, []);
+    if (roomId === undefined) {
+      roomService.getAdminRooms().then(data => setRooms(data)).catch(() => {});
+    }
+  }, [roomId, effectiveRoomId]);
 
   useEffect(() => {
     if (activeSubTab === 'lkm') {
-      fetchSubmissions(selectedRoomId);
+      fetchSubmissions(effectiveRoomId);
     } else {
-      fetchJournalStudents(selectedRoomId);
+      fetchJournalStudents(effectiveRoomId);
     }
-  }, [activeSubTab, selectedRoomId]);
+  }, [activeSubTab, effectiveRoomId]);
 
   // Filter submissions by the selected meeting_id
   const filteredSubmissions = submissions.filter(
@@ -253,21 +271,23 @@ export default function AdminEcolabView() {
           </button>
         </div>
 
-        {/* Room Filter Dropdown */}
-        <div className="flex items-center gap-2 pb-2 sm:pb-0">
-          <DoorOpen className="w-4 h-4 text-cyan-600 shrink-0" />
-          <span className="text-xs font-bold text-slate-500 shrink-0">Filter Kelas:</span>
-          <select
-            value={selectedRoomId}
-            onChange={(e) => setSelectedRoomId(Number(e.target.value))}
-            className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 shadow-2xs cursor-pointer"
-          >
-            <option value={0}>Semua Kelas ({rooms.length})</option>
-            {rooms.map(r => (
-              <option key={r.id} value={r.id}>{r.name} ({r.room_key})</option>
-            ))}
-          </select>
-        </div>
+        {/* Room Filter Dropdown (hanya bila mode global tanpa roomId) */}
+        {roomId === undefined && (
+          <div className="flex items-center gap-2 pb-2 sm:pb-0">
+            <DoorOpen className="w-4 h-4 text-cyan-600 shrink-0" />
+            <span className="text-xs font-bold text-slate-500 shrink-0">Filter Kelas:</span>
+            <select
+              value={selectedRoomId}
+              onChange={(e) => setSelectedRoomId(Number(e.target.value))}
+              className="text-xs font-semibold px-3 py-1.5 rounded-xl border border-slate-200 bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 shadow-2xs cursor-pointer"
+            >
+              <option value={0}>Semua Kelas ({rooms.length})</option>
+              {rooms.map(r => (
+                <option key={r.id} value={r.id}>{r.name} ({r.room_key})</option>
+              ))}
+            </select>
+          </div>
+        )}
       </div>      {activeSubTab === 'lkm' && (
         <>
           {/* SECTION 1: LKM Grid (4 Boxes) */}

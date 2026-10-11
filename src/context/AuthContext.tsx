@@ -9,7 +9,6 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (fullName: string, email: string, password: string, role: 'student' | 'admin') => Promise<void>;
   logout: () => Promise<void>;
-  updateUserStreak: (newStreak: number, lastCheckin?: string | null) => void;
   updateUserProfile: (formData: FormData) => Promise<void>;
 }
 
@@ -71,14 +70,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const updateUserStreak = useCallback((newStreak: number, lastCheckin?: string | null) => {
-    setUser(prev => prev ? { 
-      ...prev, 
-      streak: newStreak,
-      ...(lastCheckin !== undefined ? { last_checkin: lastCheckin } : {})
-    } : prev);
-  }, []);
-
   const updateUserProfile = useCallback(async (formData: FormData) => {
     const response = await authService.updateProfile(formData);
     if (response.success && response.user) {
@@ -94,7 +85,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     login,
     register,
     logout,
-    updateUserStreak,
     updateUserProfile,
   };
 

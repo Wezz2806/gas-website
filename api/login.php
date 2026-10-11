@@ -63,10 +63,7 @@ try {
         'email' => $user['email'],
         'role' => $user['role'],
         'avatar_url' => $user['avatar_url'],
-        'eco_points' => (int)$user['eco_points'],
-        'streak' => (int)$user['streak'],
         'auth_provider' => $user['auth_provider'],
-        'last_checkin' => $user['last_checkin']
     ];
     
     $_SESSION['user'] = $session_user;

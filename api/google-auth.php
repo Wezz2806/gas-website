@@ -116,8 +116,8 @@ try {
 
     // 3. User baru -> Lakukan Registrasi otomatis & Login
     $stmt = $pdo->prepare("
-        INSERT INTO users (full_name, email, password_hash, role, avatar_url, auth_provider, google_id, eco_points, streak) 
-        VALUES (:full_name, :email, NULL, 'student', :avatar_url, 'google', :google_id, 0, 0)
+        INSERT INTO users (full_name, email, password_hash, role, avatar_url, auth_provider, google_id) 
+        VALUES (:full_name, :email, NULL, 'student', :avatar_url, 'google', :google_id)
     ");
     $stmt->execute([
         'full_name' => $full_name,
@@ -155,10 +155,7 @@ function loginUserSession($user) {
         'email' => $user['email'],
         'role' => $user['role'],
         'avatar_url' => $user['avatar_url'],
-        'eco_points' => (int)$user['eco_points'],
-        'streak' => (int)$user['streak'],
         'auth_provider' => $user['auth_provider'],
-        'last_checkin' => $user['last_checkin']
     ];
     
     $_SESSION['user'] = $session_user;

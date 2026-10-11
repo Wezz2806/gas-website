@@ -26,7 +26,7 @@ if (isset($_SESSION['user']) && (time() - $cached_at) < $cache_ttl_seconds) {
 // ── SLOW PATH: Session expired — refresh from database ──────────────────────
 try {
     $stmt = $pdo->prepare(
-        "SELECT id, full_name, email, role, avatar_url, eco_points, streak, auth_provider, last_checkin
+        "SELECT id, full_name, email, role, avatar_url, auth_provider
            FROM users
           WHERE id = :id
           LIMIT 1"
@@ -47,10 +47,7 @@ try {
         'email'         => $user['email'],
         'role'          => $user['role'],
         'avatar_url'    => $user['avatar_url'],
-        'eco_points'    => (int) $user['eco_points'],
-        'streak'        => (int) $user['streak'],
         'auth_provider' => $user['auth_provider'],
-        'last_checkin'  => $user['last_checkin'],
     ];
 
     // Update session cache and timestamp

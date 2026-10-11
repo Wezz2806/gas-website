@@ -23,7 +23,7 @@ try {
     $search = isset($_GET['search']) ? trim($_GET['search']) : '';
     $role = isset($_GET['role']) ? trim($_GET['role']) : '';
     
-    $query = "SELECT id, full_name, email, role, avatar_url, eco_points, streak, auth_provider, last_login, created_at FROM users WHERE 1=1";
+    $query = "SELECT id, full_name, email, role, avatar_url, auth_provider, last_login, created_at FROM users WHERE 1=1";
     $params = [];
     
     if ($search !== '') {

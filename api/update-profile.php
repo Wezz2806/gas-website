@@ -177,7 +177,7 @@ try {
     }
 
     // Ambil data terbaru untuk disimpan di session
-    $stmt = $pdo->prepare("SELECT id, full_name, email, role, avatar_url, eco_points, streak, auth_provider, last_checkin FROM users WHERE id = :id LIMIT 1");
+    $stmt = $pdo->prepare("SELECT id, full_name, email, role, avatar_url, auth_provider FROM users WHERE id = :id LIMIT 1");
     $stmt->execute(['id' => $user_id]);
     $user = $stmt->fetch();
 
@@ -188,10 +188,7 @@ try {
             'email' => $user['email'],
             'role' => $user['role'],
             'avatar_url' => $user['avatar_url'],
-            'eco_points' => (int)$user['eco_points'],
-            'streak' => (int)$user['streak'],
             'auth_provider' => $user['auth_provider'],
-            'last_checkin' => $user['last_checkin']
         ];
         $_SESSION['user'] = $session_user;
 

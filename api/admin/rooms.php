@@ -45,7 +45,6 @@ if ($method === 'GET') {
         $description = isset($body['description']) ? trim($body['description']) : '';
         $roomKey = isset($body['room_key']) ? trim($body['room_key']) : '';
         $coverImage = isset($body['cover_image']) ? trim($body['cover_image']) : '';
-        $gamification = isset($body['gamification_enabled']) ? (int)$body['gamification_enabled'] : 0;
 
         if (empty($name) || empty($roomKey)) {
             sendJson(['success' => false, 'message' => 'Nama kelas dan kunci kelas wajib diisi.'], 400);
@@ -64,18 +63,27 @@ if ($method === 'GET') {
 
         try {
             $stmt = $pdo->prepare("
-                INSERT INTO rooms (name, description, room_key, cover_image, created_by, gamification_enabled, is_active)
-                VALUES (:name, :description, :room_key, :cover_image, :created_by, :gamification_enabled, 1)
+                INSERT INTO rooms (name, description, room_key, cover_image, created_by, is_active)
+                VALUES (:name, :description, :room_key, :cover_image, :created_by, 1)
             ");
             $stmt->execute([
                 'name' => $name,
                 'description' => $description,
                 'room_key' => $roomKey,
                 'cover_image' => $coverImage,
-                'created_by' => $adminId,
-                'gamification_enabled' => $gamification ? 1 : 0
+                'created_by' => $adminId
             ]);
             $newRoomId = (int)$pdo->lastInsertId();
+
+            // Salin kontak (EcoContact) dari kelas lain bila diminta; jika tidak, mulai kosong
+            $copyFrom = isset($body['copy_contacts_from']) ? (int)$body['copy_contacts_from'] : 0;
+            if ($copyFrom > 0) {
+                $pdo->prepare("
+                    INSERT INTO room_contacts (room_id, name, role, instansi, email, phone, office_hours, avatar_url, sort_order)
+                    SELECT ?, name, role, instansi, email, phone, office_hours, avatar_url, sort_order
+                    FROM room_contacts WHERE room_id = ?
+                ")->execute([$newRoomId, $copyFrom]);
+            }
 
             // Salin template materi & pertemuan default ke kelas baru
             $pdo->exec("
@@ -105,7 +113,6 @@ if ($method === 'GET') {
         $description = isset($body['description']) ? trim($body['description']) : '';
         $roomKey = isset($body['room_key']) ? trim($body['room_key']) : '';
         $coverImage = isset($body['cover_image']) ? trim($body['cover_image']) : '';
-        $gamification = isset($body['gamification_enabled']) ? (int)$body['gamification_enabled'] : 0;
         $isActive = isset($body['is_active']) ? (int)$body['is_active'] : 1;
 
         if ($id <= 0 || empty($name) || empty($roomKey)) {
@@ -126,7 +133,6 @@ if ($method === 'GET') {
                     description = :description,
                     room_key = :room_key,
                     cover_image = :cover_image,
-                    gamification_enabled = :gamification_enabled,
                     is_active = :is_active
                 WHERE id = :id
             ");
@@ -135,7 +141,6 @@ if ($method === 'GET') {
                 'description' => $description,
                 'room_key' => $roomKey,
                 'cover_image' => $coverImage,
-                'gamification_enabled' => $gamification ? 1 : 0,
                 'is_active' => $isActive ? 1 : 0,
                 'id' => $id
             ]);
@@ -155,6 +160,11 @@ if ($method === 'GET') {
         }
 
         try {
+            // Bersihkan data turunan kelas (tidak ada FK, jadi dihapus manual)
+            $pdo->prepare("DELETE r FROM room_attendance_records r JOIN room_attendance_sessions s ON r.session_id = s.id WHERE s.room_id = :id")->execute(['id' => $id]);
+            foreach (['room_attendance_sessions', 'room_contacts', 'room_members', 'room_meetings', 'room_ecopedia'] as $childTable) {
+                $pdo->prepare("DELETE FROM $childTable WHERE room_id = :id")->execute(['id' => $id]);
+            }
             $stmt = $pdo->prepare("DELETE FROM rooms WHERE id = :id");
             $stmt->execute(['id' => $id]);
 

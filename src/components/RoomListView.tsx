@@ -13,7 +13,6 @@ import {
   Loader2, 
   AlertCircle,
   CheckCircle2,
-  Trophy,
   Leaf,
   Plus
 } from 'lucide-react';
@@ -213,13 +212,6 @@ export default function RoomListView({ onSelectRoom }: RoomListViewProps) {
                           Kunci: {room.room_key}
                         </span>
                       </div>
-
-                      {Boolean(room.gamification_enabled) && (
-                        <div className="absolute top-3 right-3 flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-400/90 text-amber-950 font-bold text-[10px] backdrop-blur-xs shadow-xs">
-                          <Trophy className="w-3 h-3" />
-                          <span>Eco-Points On</span>
-                        </div>
-                      )}
 
                       <div className="absolute bottom-3 left-4 right-4">
                         <h3 className="text-lg font-bold text-white leading-snug drop-shadow-sm line-clamp-1">

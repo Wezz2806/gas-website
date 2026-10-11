@@ -64,8 +64,8 @@ try {
 
     // Insert user baru ke database
     $stmt = $pdo->prepare("
-        INSERT INTO users (full_name, email, password_hash, role, auth_provider, eco_points, streak) 
-        VALUES (:full_name, :email, :password_hash, :role, 'local', 0, 0)
+        INSERT INTO users (full_name, email, password_hash, role, auth_provider) 
+        VALUES (:full_name, :email, :password_hash, :role, 'local')
     ");
     
     $stmt->execute([

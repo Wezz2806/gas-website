@@ -91,35 +91,6 @@ if ($method === 'GET') {
             sendJson(['success' => false, 'message' => 'Gagal mengambil detail kelas.'], 500);
         }
     }
-
-    if ($action === 'leaderboard') {
-        $roomId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
-        if ($roomId <= 0) {
-            sendJson(['success' => false, 'message' => 'ID kelas tidak valid.'], 400);
-        }
-
-        try {
-            // Ambil data murid di kelas ini berurutan berdasarkan eco_points
-            $stmt = $pdo->prepare("
-                SELECT u.id, u.full_name, u.avatar_url, u.eco_points, u.streak
-                FROM users u
-                JOIN room_members rm ON u.id = rm.user_id
-                WHERE rm.room_id = :room_id AND u.role = 'student'
-                ORDER BY u.eco_points DESC, u.streak DESC
-                LIMIT 50
-            ");
-            $stmt->execute(['room_id' => $roomId]);
-            $leaderboard = $stmt->fetchAll();
-
-            sendJson([
-                'success' => true,
-                'leaderboard' => $leaderboard
-            ]);
-        } catch (PDOException $e) {
-            error_log('room leaderboard error: ' . $e->getMessage());
-            sendJson(['success' => false, 'message' => 'Gagal mengambil papan peringkat.'], 500);
-        }
-    }
 } elseif ($method === 'POST') {
     $body = getRequestBody();
     $postAction = isset($body['action']) ? trim($body['action']) : $action;

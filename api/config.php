@@ -454,6 +454,58 @@ try {
             // Column already exists or table doesn't exist
         }
     }
+
+    // -- AUTO-MIGRATION: ABSENSI & KONTAK PER KELAS --
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS room_attendance_sessions (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            room_id INT NOT NULL,
+            meeting_id VARCHAR(50) DEFAULT NULL,
+            title VARCHAR(200) NOT NULL,
+            session_date DATE NOT NULL,
+            access_code VARCHAR(20) DEFAULT NULL,
+            status ENUM('open','closed') NOT NULL DEFAULT 'open',
+            opens_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            closes_at TIMESTAMP NULL DEFAULT NULL,
+            created_by INT DEFAULT NULL,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_att_room (room_id),
+            INDEX idx_att_date (session_date)
+        ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    ");
+
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS room_attendance_records (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            session_id INT NOT NULL,
+            student_id INT NOT NULL,
+            status ENUM('hadir','izin','sakit','alpa') NOT NULL DEFAULT 'hadir',
+            note VARCHAR(255) DEFAULT NULL,
+            marked_by ENUM('self','admin') NOT NULL DEFAULT 'self',
+            checked_in_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE KEY unique_att_record (session_id, student_id),
+            INDEX idx_att_student (student_id)
+        ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    ");
+
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS room_contacts (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            room_id INT NOT NULL,
+            name VARCHAR(200) NOT NULL,
+            role VARCHAR(150) DEFAULT NULL,
+            instansi VARCHAR(200) DEFAULT NULL,
+            email VARCHAR(200) DEFAULT NULL,
+            phone VARCHAR(50) DEFAULT NULL,
+            office_hours VARCHAR(100) DEFAULT NULL,
+            avatar_url VARCHAR(500) DEFAULT NULL,
+            sort_order INT NOT NULL DEFAULT 0,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_contact_room (room_id)
+        ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    ");
+
+
     // Seeding: Default room if no room exists
     $checkRooms = $pdo->query("SELECT COUNT(*) FROM rooms")->fetchColumn();
     if ($checkRooms == 0) {
@@ -872,6 +924,18 @@ try {
             'Prof. Dr. Utiya Azizah, M.Pd.', 'Co-Promotor', '', 'Universitas Negeri Surabaya',
             '', '', '', './prof utiya.jpg', 2
         ]);
+    }
+
+    // Seeding: room_contacts (salin dari ecocontact_members ke kelas default bila belum ada kontak sama sekali)
+    $checkRoomContacts = $pdo->query("SELECT COUNT(*) FROM room_contacts")->fetchColumn();
+    if ($checkRoomContacts == 0) {
+        $firstRoomId = $pdo->query("SELECT id FROM rooms ORDER BY id ASC LIMIT 1")->fetchColumn();
+        if ($firstRoomId) {
+            $pdo->prepare("
+                INSERT INTO room_contacts (room_id, name, role, instansi, email, phone, office_hours, avatar_url, sort_order)
+                SELECT ?, name, role, instansi, email, phone, office_hours, avatar, sort_order FROM ecocontact_members
+            ")->execute([$firstRoomId]);
+        }
     }
 } catch (PDOException $e) {
     error_log('Failed to auto-migrate/seed database: ' . $e->getMessage());

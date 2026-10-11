@@ -7,6 +7,8 @@ import {
   Video, 
   HelpCircle, 
   Leaf,
+  CalendarCheck,
+  Contact,
   ArrowLeft,
   DoorOpen,
   Menu,
@@ -25,10 +27,12 @@ export default function Sidebar({ activeTab, setActiveTab, currentRoom, onBackTo
 
   const navItems = [
     { id: 'dashboard' as Tab, label: 'Dashboard Kelas', icon: LayoutDashboard },
-    { id: 'ecopedia' as Tab, label: 'EcoPedia', icon: BookOpen },
     { id: 'ecolab' as Tab, label: 'EcoLab', icon: FlaskConical },
+    { id: 'ecopedia' as Tab, label: 'EcoPedia', icon: BookOpen },
     { id: 'ecocreation' as Tab, label: 'EcoCreation', icon: Video },
     { id: 'ecochallenge' as Tab, label: 'EcoChallenge', icon: HelpCircle },
+    { id: 'absensi' as Tab, label: 'Absensi', icon: CalendarCheck },
+    { id: 'ecocontact' as Tab, label: 'EcoContact', icon: Contact },
   ];
 
   // Close mobile sidebar on route change

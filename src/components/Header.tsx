@@ -143,18 +143,16 @@ export default function Header({
   const getPageTitle = () => {
     switch (activeTab) {
       case 'dashboard': return 'Dashboard GAS';
-      case 'ecopedia': return 'Ruang Belajar EcoPedia';
       case 'ecolab': return 'Proyek Aksi EcoLab';
+      case 'ecopedia': return 'Ruang Belajar EcoPedia';
       case 'ecocreation': return 'Galeri Video EcoCreation';
       case 'ecochallenge': return 'Evaluasi EcoChallenge';
+      case 'absensi': return 'Presensi Kehadiran Kelas';
+      case 'ecocontact': return 'EcoContact Kelas';
       // Admin Panel tabs
       case 'admin-dashboard' as any: return 'Pusat Kontrol Administrator';
-      case 'admin-rooms' as any: return 'Manajemen Ruang Kelas';
+      case 'admin-rooms' as any: return 'Kelola Kelas';
       case 'admin-users' as any: return 'Manajemen Pengguna';
-      case 'admin-ecopedia' as any: return 'Kelola Pustaka EcoPedia';
-      case 'admin-ecolab' as any: return 'Kelola Proyek EcoLab';
-      case 'admin-ecochallenge' as any: return 'Kelola Evaluasi EcoChallenge';
-      case 'admin-ecocreation' as any: return 'Kelola Karya EcoCreation';
       default: return 'Green Action for Sustainability';
     }
   };

@@ -19,8 +19,6 @@ interface UserData {
   email: string;
   role: 'student' | 'admin';
   avatar_url: string | null;
-  eco_points: number;
-  streak: number;
   auth_provider: 'local' | 'google';
   last_login: string | null;
   created_at: string;
@@ -134,7 +132,7 @@ export default function AdminUsersView() {
   const adminUsers = users.filter(u => u.role === 'admin');
   const studentUsers = users.filter(u => u.role === 'student');
 
-  const renderUserRow = (item: UserData, showAttendance: boolean) => {
+  const renderUserRow = (item: UserData) => {
     const isSelf = currentUser?.id === item.id;
     return (
       <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
@@ -213,15 +211,12 @@ export default function AdminUsersView() {
           )}
         </td>
 
-        {/* Attendance (Only for Students, completely omitted for Admins) */}
-        {showAttendance && (
-          <td className="py-4 px-6 text-center">
-            <span className="font-extrabold text-slate-800">
-              🔥 {item.streak} Hari
-            </span>
-          </td>
-        )}
-
+        {/* Provider */}
+        <td className="py-4 px-6 text-center">
+          <span className="text-[11px] font-medium text-slate-600 bg-slate-100 px-2.5 py-1 rounded-full uppercase">
+            {item.auth_provider}
+          </span>
+        </td>
 
         {/* Action buttons */}
         <td className="py-4 px-6 text-center">
@@ -322,11 +317,12 @@ export default function AdminUsersView() {
                       <tr className="bg-slate-50/20 border-b border-gray-100 text-[10px] uppercase font-bold text-gray-400 tracking-wider">
                         <th className="py-4 px-6">Pengguna</th>
                         <th className="py-4 px-6">Peran (Role)</th>
+                        <th className="py-4 px-6 text-center">Metode Login</th>
                         <th className="py-4 px-6 text-center">Aksi</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50 text-xs text-gray-700">
-                      {adminUsers.map((item) => renderUserRow(item, false))}
+                      {adminUsers.map((item) => renderUserRow(item))}
                     </tbody>
                   </table>
                 </div>
@@ -358,12 +354,12 @@ export default function AdminUsersView() {
                       <tr className="bg-slate-50/20 border-b border-gray-100 text-[10px] uppercase font-bold text-gray-400 tracking-wider">
                         <th className="py-4 px-6">Pengguna</th>
                         <th className="py-4 px-6">Peran (Role)</th>
-                        <th className="py-4 px-6 text-center">Total Kehadiran</th>
+                        <th className="py-4 px-6 text-center">Metode Login</th>
                         <th className="py-4 px-6 text-center">Aksi</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50 text-xs text-gray-700">
-                      {studentUsers.map((item) => renderUserRow(item, true))}
+                      {studentUsers.map((item) => renderUserRow(item))}
                     </tbody>
                   </table>
                 </div>

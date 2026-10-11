@@ -64,19 +64,6 @@ export const roomService = {
     }
   },
 
-  async getRoomLeaderboard(roomId: number): Promise<any[]> {
-    const response = await fetch(`${API_BASE}/rooms.php?action=leaderboard&id=${roomId}`, {
-      method: 'GET',
-      credentials: 'include',
-      headers: { 'X-Requested-With': 'XMLHttpRequest' }
-    });
-    const data = await response.json();
-    if (!response.ok || !data.success) {
-      throw new Error(data.message || 'Gagal memuat leaderboard');
-    }
-    return data.leaderboard || [];
-  },
-
   // ── Admin Methods ───────────────────────────────────────────────
   async getAdminRooms(): Promise<Room[]> {
     const response = await fetch(`${API_BASE}/admin/rooms.php`, {
@@ -91,12 +78,25 @@ export const roomService = {
     return data.rooms || [];
   },
 
+  async getRoomStats(roomId: number): Promise<any> {
+    const response = await fetch(`${API_BASE}/admin/room-stats.php?room_id=${roomId}`, {
+      method: 'GET',
+      credentials: 'include',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' }
+    });
+    const data = await response.json();
+    if (!response.ok || !data.success) {
+      throw new Error(data.message || 'Gagal memuat statistik kelas');
+    }
+    return data;
+  },
+
   async createRoom(payload: {
     name: string;
     description: string;
     room_key: string;
     cover_image?: string;
-    gamification_enabled?: boolean | number;
+    copy_contacts_from?: number;
   }): Promise<{ room_id: number; message: string }> {
     const response = await fetch(`${API_BASE}/admin/rooms.php`, {
       method: 'POST',
@@ -107,8 +107,7 @@ export const roomService = {
       },
       body: JSON.stringify({
         action: 'create',
-        ...payload,
-        gamification_enabled: payload.gamification_enabled ? 1 : 0
+        ...payload
       })
     });
     const data = await response.json();
@@ -124,7 +123,6 @@ export const roomService = {
     description: string;
     room_key: string;
     cover_image?: string;
-    gamification_enabled?: boolean | number;
     is_active?: boolean | number;
   }): Promise<void> {
     const response = await fetch(`${API_BASE}/admin/rooms.php`, {
@@ -137,7 +135,6 @@ export const roomService = {
       body: JSON.stringify({
         action: 'update',
         ...payload,
-        gamification_enabled: payload.gamification_enabled ? 1 : 0,
         is_active: payload.is_active !== undefined ? (payload.is_active ? 1 : 0) : 1
       })
     });
