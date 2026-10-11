@@ -128,12 +128,12 @@ export default function EcoContactView({ roomId }: EcoContactViewProps) {
                 <div>
                   {/* Avatar & Header */}
                   <div className="flex items-start gap-4 mb-4">
-                    <div className="w-16 h-16 rounded-2xl overflow-hidden bg-stone-100 border-2 border-emerald-150 shrink-0 shadow-xs relative">
+                    <div className="w-20 h-20 rounded-2xl overflow-hidden bg-stone-100 border-2 border-emerald-100 shrink-0 shadow-xs relative">
                       {avatarSrc ? (
                         <img 
                           src={avatarSrc} 
                           alt={contact.name} 
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                          className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform"
                           onError={(e) => {
                             // Fallback jika file foto lokal 404
                             (e.target as HTMLElement).style.display = 'none';
@@ -141,20 +141,20 @@ export default function EcoContactView({ roomId }: EcoContactViewProps) {
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-stone-400 bg-emerald-50 text-emerald-700">
-                          <User className="w-7 h-7" />
+                          <User className="w-8 h-8" />
                         </div>
                       )}
                     </div>
 
-                    <div className="flex-1 min-w-0">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100/90 px-2.5 py-0.5 rounded-full inline-block mb-1">
+                    <div className="flex-1 min-w-0 pt-0.5">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 bg-emerald-100/90 px-2.5 py-0.5 rounded-full inline-block mb-1.5">
                         {contact.role || 'Pembimbing'}
                       </span>
                       <h3 className="font-display font-bold text-base text-stone-900 leading-snug line-clamp-2">
                         {contact.name}
                       </h3>
                       {contact.instansi && (
-                        <p className="text-xs text-stone-500 flex items-center gap-1 mt-1 truncate">
+                        <p className="text-xs text-stone-500 flex items-center gap-1.5 mt-1.5 truncate">
                           <Building2 className="w-3.5 h-3.5 text-stone-400 shrink-0" />
                           <span className="truncate">{contact.instansi}</span>
                         </p>
@@ -163,54 +163,63 @@ export default function EcoContactView({ roomId }: EcoContactViewProps) {
                   </div>
 
                   {/* Info Details */}
-                  <div className="space-y-2 py-3 border-t border-stone-100 text-xs text-stone-600">
-                    {contact.office_hours && (
-                      <div className="flex items-center gap-2">
-                        <Clock className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                        <span className="text-[11px] text-stone-500">Jam Konsultasi:</span>
-                        <span className="font-semibold text-stone-700 ml-auto">{contact.office_hours}</span>
-                      </div>
+                  {(contact.office_hours || contact.email || contact.phone) ? (
+                    <div className="space-y-2 py-3 border-t border-stone-100 text-xs text-stone-600">
+                      {contact.office_hours && (
+                        <div className="flex items-center gap-2">
+                          <Clock className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                          <span className="text-[11px] text-stone-500">Jam Konsultasi:</span>
+                          <span className="font-semibold text-stone-700 ml-auto">{contact.office_hours}</span>
+                        </div>
+                      )}
+                      {contact.email && (
+                        <div className="flex items-center gap-2 truncate">
+                          <Mail className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                          <span className="truncate text-stone-700">{contact.email}</span>
+                        </div>
+                      )}
+                      {contact.phone && (
+                        <div className="flex items-center gap-2">
+                          <Phone className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                          <span className="text-stone-700 font-mono text-[11px]">{contact.phone}</span>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="py-3 border-t border-stone-100 text-[11px] text-stone-400 italic flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400/60 shrink-0"></span>
+                      <span>Konsultasi melalui koordinator atau saat sesi tatap muka kelas</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Direct Action Buttons (hanya jika ada kontak aktif) */}
+                {((contact.phone && waNumber) || contact.email) && (
+                  <div className="pt-4 mt-2 border-t border-stone-100 flex items-center gap-2">
+                    {contact.phone && waNumber && (
+                      <a
+                        href={`https://wa.me/${waNumber}?text=Halo%20${encodeURIComponent(contact.name)},%20saya%20siswa%20GAS%20ingin%20berkonsultasi.`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs hover:shadow-md cursor-pointer"
+                      >
+                        <MessageSquare className="w-3.5 h-3.5" />
+                        <span>WhatsApp</span>
+                      </a>
                     )}
+
                     {contact.email && (
-                      <div className="flex items-center gap-2 truncate">
-                        <Mail className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                        <span className="truncate text-stone-700">{contact.email}</span>
-                      </div>
-                    )}
-                    {contact.phone && (
-                      <div className="flex items-center gap-2">
-                        <Phone className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                        <span className="text-stone-700 font-mono text-[11px]">{contact.phone}</span>
-                      </div>
+                      <a
+                        href={`mailto:${contact.email}?subject=Konsultasi%20Kelas%20GAS`}
+                        className="py-2.5 px-3 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+                        title="Kirim Email"
+                      >
+                        <Mail className="w-3.5 h-3.5" />
+                        <span className={contact.phone ? 'hidden sm:inline' : 'inline'}>Email</span>
+                      </a>
                     )}
                   </div>
-                </div>
-
-                {/* Direct Action Buttons */}
-                <div className="pt-4 mt-2 border-t border-stone-100 flex items-center gap-2">
-                  {contact.phone && waNumber && (
-                    <a
-                      href={`https://wa.me/${waNumber}?text=Halo%20${encodeURIComponent(contact.name)},%20saya%20siswa%20GAS%20ingin%20berkonsultasi.`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex-1 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs hover:shadow-md cursor-pointer"
-                    >
-                      <MessageSquare className="w-3.5 h-3.5" />
-                      <span>WhatsApp</span>
-                    </a>
-                  )}
-
-                  {contact.email && (
-                    <a
-                      href={`mailto:${contact.email}?subject=Konsultasi%20Kelas%20GAS`}
-                      className="py-2.5 px-3 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer"
-                      title="Kirim Email"
-                    >
-                      <Mail className="w-3.5 h-3.5" />
-                      <span className={contact.phone ? 'hidden sm:inline' : 'inline'}>Email</span>
-                    </a>
-                  )}
-                </div>
+                )}
               </div>
             );
           })}

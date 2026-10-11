@@ -1871,12 +1871,12 @@ function TabKontak({
             <div key={c.id} className="p-5 rounded-2xl bg-slate-50 border border-slate-200/80 flex flex-col justify-between gap-3">
               <div>
                 <div className="flex items-start gap-3">
-                  <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-200 shrink-0 border border-slate-300">
+                  <div className="w-14 h-14 rounded-xl overflow-hidden bg-slate-200 shrink-0 border border-slate-300">
                     {c.avatar_url ? (
-                      <img src={c.avatar_url.startsWith('./') ? c.avatar_url.substring(1) : c.avatar_url} alt={c.name} className="w-full h-full object-cover" />
+                      <img src={c.avatar_url.startsWith('./') ? c.avatar_url.substring(1) : c.avatar_url} alt={c.name} className="w-full h-full object-cover object-top" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-slate-400">
-                        <User className="w-5 h-5" />
+                        <User className="w-6 h-6" />
                       </div>
                     )}
                   </div>
