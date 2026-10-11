@@ -10,10 +10,12 @@ ini_set('display_startup_errors', 0);
 ini_set('log_errors', 1);
 error_reporting(E_ALL);
 
-// Detect environment — Railway otomatis set RAILWAY_ENVIRONMENT=production
+// Detect environment — Railway otomatis set RAILWAY_ENVIRONMENT / RAILWAY_ENVIRONMENT_NAME
 $is_production = (
     getenv('ENVIRONMENT') === 'production' ||
     getenv('RAILWAY_ENVIRONMENT') !== false ||
+    getenv('RAILWAY_ENVIRONMENT_NAME') !== false ||
+    getenv('RAILWAY_SERVICE_ID') !== false ||
     (isset($_SERVER['HTTP_HOST']) && strpos($_SERVER['HTTP_HOST'], 'localhost') === false && strpos($_SERVER['HTTP_HOST'], '127.0.0.1') === false) ||
     (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
 );
@@ -28,10 +30,18 @@ $allowed_origins = [
     'https://gas-website-production-46db.up.railway.app',
 ];
 
+$frontend_env = getenv('FRONTEND_URL');
+if ($frontend_env) {
+    $custom_origins = array_map('trim', explode(',', $frontend_env));
+    $allowed_origins = array_merge($allowed_origins, $custom_origins);
+}
+
 if (in_array($origin, $allowed_origins)) {
     $allowed_origin = $origin;
+} else if ($origin && (strpos($origin, 'netlify.app') !== false || strpos($origin, 'vercel.app') !== false || strpos($origin, 'railway.app') !== false)) {
+    $allowed_origin = $origin;
 } else {
-    $allowed_origin = getenv('FRONTEND_URL') ?: 'https://gaslearn.netlify.app';
+    $allowed_origin = $frontend_env ?: 'https://gaslearn.netlify.app';
 }
 header("Access-Control-Allow-Origin: $allowed_origin");
 header("Access-Control-Allow-Credentials: true");
@@ -59,13 +69,22 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 // ── DATABASE CONNECTION ──────────────────────────────────────────────────────
-// Development (XAMPP): nilai default localhost/root/etc.
-// Production (Railway): Railway inject otomatis MYSQLHOST, MYSQLUSER, dst.
-$db_host = getenv('MYSQLHOST')     ?: getenv('DB_HOST') ?: 'localhost';
-$db_name = getenv('MYSQLDATABASE') ?: getenv('DB_NAME') ?: 'gas_website';
-$db_user = getenv('MYSQLUSER')     ?: getenv('DB_USER') ?: 'root';
-$db_pass = getenv('MYSQLPASSWORD') ?: getenv('DB_PASS') ?: '';
-$db_port = getenv('MYSQLPORT')     ?: getenv('DB_PORT') ?: '3306';
+// Railway mendukung MYSQL_URL / DATABASE_URL atau variabel terpisah (MYSQLHOST, dsb.)
+$database_url = getenv('MYSQL_URL') ?: getenv('DATABASE_URL') ?: '';
+if ($database_url) {
+    $parsed_db = parse_url($database_url);
+    $db_host = $parsed_db['host'] ?? 'localhost';
+    $db_port = $parsed_db['port'] ?? 3306;
+    $db_user = $parsed_db['user'] ?? 'root';
+    $db_pass = $parsed_db['pass'] ?? '';
+    $db_name = ltrim($parsed_db['path'] ?? 'gas_website', '/');
+} else {
+    $db_host = getenv('MYSQLHOST')     ?: getenv('DB_HOST') ?: 'localhost';
+    $db_name = getenv('MYSQLDATABASE') ?: getenv('DB_NAME') ?: 'gas_website';
+    $db_user = getenv('MYSQLUSER')     ?: getenv('DB_USER') ?: 'root';
+    $db_pass = getenv('MYSQLPASSWORD') ?: getenv('DB_PASS') ?: '';
+    $db_port = getenv('MYSQLPORT')     ?: getenv('DB_PORT') ?: '3306';
+}
 
 try {
     $pdo = new PDO(
