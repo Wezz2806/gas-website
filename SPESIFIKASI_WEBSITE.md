@@ -53,10 +53,11 @@ flowchart TD
     subgraph Modul Murid
         RoomView --> EcoLab[1. EcoLab - Timeline Praktikum & LKM]
         RoomView --> EcoPedia[2. EcoPedia - Buku & Materi Interaktif]
-        RoomView --> EcoCreation[3. EcoCreation - Galeri Video Sains]
-        RoomView --> EcoChallenge[4. EcoChallenge - Pre/Post Test & Diskusi]
-        RoomView --> Absensi[5. Absensi - Kehadiran Pertemuan Sesi]
-        RoomView --> EcoContact[6. EcoContact - Narahubung Guru & Lab]
+        RoomView --> EcoUpdate[3. EcoUpdate - Portal Warta Lingkungan]
+        RoomView --> EcoCreation[4. EcoCreation - Galeri Video Sains]
+        RoomView --> EcoChallenge[5. EcoChallenge - Pre/Post Test & Diskusi]
+        RoomView --> Absensi[6. Absensi - Kehadiran Pertemuan Sesi]
+        RoomView --> EcoContact[7. EcoContact - Narahubung Guru & Lab]
     end
 
     Admin[Login Admin] --> AdminSidebar[Admin Navigation: 3 Menu Utama]
@@ -210,19 +211,24 @@ Navigasi bilah samping (Sidebar) murid disusun secara ergonomis dalam 7 modul:
    - Akses koleksi modul bacaan dan buku panduan digital per kelas.
    - Integrasi FlipHTML5 interaktif untuk membaca seperti buku fisik.
    - Tombol unduhan dokumen PDF pendukung.
-4. **EcoCreation (`EcoCreationView`)**:
+4. **EcoUpdate (`EcoUpdateView`)**:
+   - Portal berita dan warta sains lingkungan hidup, aksi keberlanjutan, dan riset kimia hijau.
+   - Kurasi berita lokal dan global dengan filter kategori instan.
+   - Integrasi penarik gambar sampul dinamis (metadata scraper) dari URL berita sumber.
+   - Pembaca ringkasan artikel di dalam aplikasi dan tautan langsung ke artikel sumber asli.
+5. **EcoCreation (`EcoCreationView`)**:
    - Galeri video inovasi sains yang diunggah oleh sesama rekan kelas.
    - Unggah karya video inovasi (MP4/MOV/AVI) dengan deteksi durasi otomatis.
    - Pemutar video di browser, tombol suka (like), dan kolom komentar diskusi video.
-5. **EcoChallenge (`EcoChallengeView`)**:
+6. **EcoChallenge (`EcoChallengeView`)**:
    - Evaluasi Pre-Test dan Post-Test berbasis studi kasus kimia hijau.
    - Pengisian Angket Respon Pembelajaran berbasis skala Likert.
    - Forum diskusi tanya-jawab antarmurid dalam kelas.
-6. **Absensi (`AttendanceView`)**:
+7. **Absensi (`AttendanceView`)**:
    - Kartu metrik kehadiran pribadi: Total Hadir, Izin, Sakit, Alpa, dan persentase kehadiran akumulatif.
    - Formulir check-in cepat untuk sesi yang sedang dibuka pengajar (dengan opsi input kode token kelas).
    - Riwayat kehadiran per pertemuan lengkap dengan catatan dan stempel waktu.
-7. **EcoContact (`EcoContactView`)**:
+8. **EcoContact (`EcoContactView`)**:
    - Kartu kontak pendamping kelas (Guru Kimia, Asisten Lab, Admin Teknis).
    - Tombol langsung untuk memulai obrolan WhatsApp atau mengirim email pengaduan/konsultasi.
    - Informasi jam ketersediaan konsultasi (*office hours*).

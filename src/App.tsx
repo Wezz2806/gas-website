@@ -25,6 +25,7 @@ const EcoCreationView = lazy(() => import('./components/EcoCreationView'));
 const EcoChallengeView = lazy(() => import('./components/EcoChallengeView'));
 const AttendanceView = lazy(() => import('./components/AttendanceView'));
 const EcoContactView = lazy(() => import('./components/EcoContactView'));
+const EcoUpdateView = lazy(() => import('./components/EcoUpdateView'));
 
 // Lazy imports for Admin Panel
 const AdminSidebar = lazy(() => import('./components/admin/AdminSidebar'));
@@ -239,6 +240,12 @@ function AppContent() {
                 setActiveTab={(tab) => setActiveTab(tab as Tab)}
                 onSelectBook={setSelectedBookId}
                 roomId={currentRoom.id}
+              />
+            )}
+
+            {activeTab === 'ecoupdate' && (
+              <EcoUpdateView 
+                searchQuery={searchQuery}
               />
             )}
 

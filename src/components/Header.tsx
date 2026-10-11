@@ -145,6 +145,7 @@ export default function Header({
       case 'dashboard': return 'Dashboard GAS';
       case 'ecolab': return 'Proyek Aksi EcoLab';
       case 'ecopedia': return 'Ruang Belajar EcoPedia';
+      case 'ecoupdate': return 'Warta Lingkungan EcoUpdate';
       case 'ecocreation': return 'Galeri Video EcoCreation';
       case 'ecochallenge': return 'Evaluasi EcoChallenge';
       case 'absensi': return 'Presensi Kehadiran Kelas';

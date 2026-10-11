@@ -1,4 +1,4 @@
-export type Tab = 'dashboard' | 'ecopedia' | 'ecolab' | 'ecocreation' | 'ecochallenge' | 'absensi' | 'ecocontact';
+export type Tab = 'dashboard' | 'ecolab' | 'ecopedia' | 'ecoupdate' | 'ecocreation' | 'ecochallenge' | 'absensi' | 'ecocontact';
 
 export type AuthPage = 'login' | 'register' | 'forgot-password';
 

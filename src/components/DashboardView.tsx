@@ -4,6 +4,7 @@ import {
   CalendarCheck, 
   ArrowRight, 
   BookOpen, 
+  Newspaper,
   ExternalLink,
   Leaf,
   FlaskConical,
@@ -64,6 +65,7 @@ export default function DashboardView({
   const navCards = [
     { id: 'ecolab' as Tab, label: 'EcoLab', desc: 'Praktikum & LKM Kimia Hijau', icon: FlaskConical, color: 'text-emerald-700 bg-emerald-50 border-emerald-100' },
     { id: 'ecopedia' as Tab, label: 'EcoPedia', desc: 'Buku Pembelajaran & Ekoenzim', icon: BookOpen, color: 'text-teal-700 bg-teal-50 border-teal-100' },
+    { id: 'ecoupdate' as Tab, label: 'EcoUpdate', desc: 'Warta Sains & Aksi Lingkungan', icon: Newspaper, color: 'text-lime-700 bg-lime-50 border-lime-100' },
     { id: 'ecocreation' as Tab, label: 'EcoCreation', desc: 'Video & Aksi Nyata Murid', icon: Video, color: 'text-blue-700 bg-blue-50 border-blue-100' },
     { id: 'ecochallenge' as Tab, label: 'EcoChallenge', desc: 'Evaluasi & Forum Diskusi', icon: HelpCircle, color: 'text-amber-700 bg-amber-50 border-amber-100' },
     { id: 'absensi' as Tab, label: 'Absensi', desc: 'Presensi Sesi Pembelajaran', icon: CalendarCheck, color: 'text-indigo-700 bg-indigo-50 border-indigo-100' },
