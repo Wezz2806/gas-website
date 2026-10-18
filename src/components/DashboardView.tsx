@@ -160,7 +160,7 @@ export default function DashboardView({
         </div>
       </section>
 
-      {/* ── BOX TUGAS & PENUGASAN KELAS ── */}
+      {/* ── BOX TUGAS & PERINTAH KELAS ── */}
       <section className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-stone-200/80 text-left space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-100 pb-5">
           <div className="flex items-start sm:items-center gap-3.5">
@@ -170,14 +170,14 @@ export default function DashboardView({
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="font-display font-bold text-base sm:text-lg text-[#154212]">
-                  Tugas & Penugasan Kelas
+                  Perintah & Tugas Siswa
                 </h3>
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
-                  {assignments.length} Tugas
+                  {assignments.length} Perintah / Tugas
                 </span>
               </div>
               <p className="text-xs text-stone-500 mt-0.5">
-                Pantau penugasan, serahkan lembar kerja/laporan, dan diskusikan materi bersama
+                Pantau perintah atau tugas kelas, serahkan berkas pekerjaan, dan diskusikan materi bersama
               </p>
             </div>
           </div>
@@ -188,7 +188,7 @@ export default function DashboardView({
               className="px-4 py-2.5 rounded-xl bg-[#006e1c] hover:bg-[#154212] text-white text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer shrink-0 self-start sm:self-auto hover:scale-102"
             >
               <Plus className="w-4 h-4" />
-              <span>Buat Tugas Baru</span>
+              <span>Tambah Tugas / Perintah</span>
             </button>
           )}
         </div>
@@ -197,7 +197,7 @@ export default function DashboardView({
         {isLoadingAssignments ? (
           <div className="py-12 flex flex-col items-center justify-center gap-3 text-stone-400">
             <Loader2 className="w-7 h-7 animate-spin text-[#006e1c]" />
-            <span className="text-xs font-semibold">Memuat daftar tugas kelas...</span>
+            <span className="text-xs font-semibold">Memuat daftar tugas & perintah...</span>
           </div>
         ) : assignments.length === 0 ? (
           <div className="py-10 px-6 rounded-2xl bg-stone-50/70 border border-dashed border-stone-200 text-center space-y-3">
@@ -205,9 +205,9 @@ export default function DashboardView({
               <ClipboardList className="w-6 h-6" />
             </div>
             <div className="max-w-md mx-auto space-y-1">
-              <h4 className="font-bold text-sm text-stone-800">Belum Ada Tugas Aktif</h4>
+              <h4 className="font-bold text-sm text-stone-800">Belum Ada Perintah atau Tugas Aktif</h4>
               <p className="text-xs text-stone-500 leading-relaxed">
-                Pengajar belum menerbitkan penugasan untuk kelas ini. Tugas baru dan instruksi pengumpulan akan tampil di sini.
+                Pengajar belum menerbitkan perintah atau penugasan untuk kelas ini. Tugas baru dan instruksi pengumpulan akan tampil di sini.
               </p>
             </div>
             {isAdmin && currentRoom && (
@@ -216,7 +216,7 @@ export default function DashboardView({
                 className="mt-2 px-4 py-2 rounded-xl bg-[#006e1c] text-white text-xs font-bold hover:bg-[#154212] transition-colors inline-flex items-center gap-1.5 cursor-pointer shadow-xs"
               >
                 <Plus className="w-3.5 h-3.5" />
-                <span>Terbitkan Tugas Pertama</span>
+                <span>Tambah Tugas / Perintah Pertama</span>
               </button>
             )}
           </div>

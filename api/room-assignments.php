@@ -113,17 +113,43 @@ if ($method === 'GET') {
                 sendJson(['success' => false, 'message' => 'Akses ditolak.'], 403);
             }
 
-            // Ambil komentar diskusi
+            // Ambil komentar diskusi kelas (Class Comments)
             $commStmt = $pdo->prepare("
-                SELECT c.id, c.assignment_id, c.user_id, c.content, c.created_at,
+                SELECT c.id, c.assignment_id, c.user_id, c.content, c.comment_type, c.target_student_id, c.created_at,
                        u.full_name AS author_name, u.role AS author_role, u.avatar_url AS author_avatar
                 FROM assignment_comments c
                 JOIN users u ON c.user_id = u.id
-                WHERE c.assignment_id = :aid
+                WHERE c.assignment_id = :aid AND (c.comment_type = 'class' OR c.comment_type IS NULL)
                 ORDER BY c.created_at ASC
             ");
             $commStmt->execute(['aid' => $assignmentId]);
             $comments = $commStmt->fetchAll(PDO::FETCH_ASSOC);
+
+            // Ambil komentar pribadi (Private Comments)
+            if ($isAdmin) {
+                $pcommStmt = $pdo->prepare("
+                    SELECT c.id, c.assignment_id, c.user_id, c.content, c.comment_type, c.target_student_id, c.created_at,
+                           u.full_name AS author_name, u.role AS author_role, u.avatar_url AS author_avatar
+                    FROM assignment_comments c
+                    JOIN users u ON c.user_id = u.id
+                    WHERE c.assignment_id = :aid AND c.comment_type = 'private'
+                    ORDER BY c.created_at ASC
+                ");
+                $pcommStmt->execute(['aid' => $assignmentId]);
+                $privateComments = $pcommStmt->fetchAll(PDO::FETCH_ASSOC);
+            } else {
+                $pcommStmt = $pdo->prepare("
+                    SELECT c.id, c.assignment_id, c.user_id, c.content, c.comment_type, c.target_student_id, c.created_at,
+                           u.full_name AS author_name, u.role AS author_role, u.avatar_url AS author_avatar
+                    FROM assignment_comments c
+                    JOIN users u ON c.user_id = u.id
+                    WHERE c.assignment_id = :aid AND c.comment_type = 'private'
+                      AND (c.user_id = :uid OR c.target_student_id = :tuid)
+                    ORDER BY c.created_at ASC
+                ");
+                $pcommStmt->execute(['aid' => $assignmentId, 'uid' => $userId, 'tuid' => $userId]);
+                $privateComments = $pcommStmt->fetchAll(PDO::FETCH_ASSOC);
+            }
 
             // Submisi
             $mySubmission = null;
@@ -167,6 +193,7 @@ if ($method === 'GET') {
                 'success' => true,
                 'assignment' => $assignment,
                 'comments' => $comments,
+                'private_comments' => $privateComments,
                 'my_submission' => $mySubmission,
                 'submissions' => $allSubmissions,
                 'members' => $members
@@ -512,13 +539,20 @@ if ($method === 'POST') {
         exit;
     }
 
-    // 7. SEMUA: TAMBAH KOMENTAR DISKUSI
+    // 7. SEMUA: TAMBAH KOMENTAR DISKUSI (KELAS ATAU PRIBADI)
     if ($action === 'add_comment') {
-        $assignmentId = isset($body['assignment_id']) ? (int)$body['assignment_id'] : 0;
-        $content      = isset($body['content']) ? trim($body['content']) : '';
+        $assignmentId    = isset($body['assignment_id']) ? (int)$body['assignment_id'] : 0;
+        $content         = isset($body['content']) ? trim($body['content']) : '';
+        $commentType     = isset($body['comment_type']) && in_array($body['comment_type'], ['class', 'private']) ? $body['comment_type'] : 'class';
+        $targetStudentId = isset($body['target_student_id']) && (int)$body['target_student_id'] > 0 ? (int)$body['target_student_id'] : null;
 
         if ($assignmentId <= 0 || $content === '') {
             sendJson(['success' => false, 'message' => 'Isi komentar tidak boleh kosong.'], 400);
+        }
+
+        // Jika murid membuat komentar pribadi, target_student_id otomatis adalah dirinya sendiri
+        if (!$isAdmin && $commentType === 'private') {
+            $targetStudentId = $userId;
         }
 
         // Cek room access
@@ -531,19 +565,21 @@ if ($method === 'POST') {
 
         try {
             $stmt = $pdo->prepare("
-                INSERT INTO assignment_comments (assignment_id, user_id, content)
-                VALUES (:aid, :uid, :content)
+                INSERT INTO assignment_comments (assignment_id, user_id, content, comment_type, target_student_id)
+                VALUES (:aid, :uid, :content, :ctype, :tsid)
             ");
             $stmt->execute([
                 'aid'     => $assignmentId,
                 'uid'     => $userId,
-                'content' => $content
+                'content' => $content,
+                'ctype'   => $commentType,
+                'tsid'    => $targetStudentId
             ]);
 
             $newCommentId = (int)$pdo->lastInsertId();
 
             $commStmt = $pdo->prepare("
-                SELECT c.id, c.assignment_id, c.user_id, c.content, c.created_at,
+                SELECT c.id, c.assignment_id, c.user_id, c.content, c.comment_type, c.target_student_id, c.created_at,
                        u.full_name AS author_name, u.role AS author_role, u.avatar_url AS author_avatar
                 FROM assignment_comments c
                 JOIN users u ON c.user_id = u.id

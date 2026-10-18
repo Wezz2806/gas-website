@@ -47,16 +47,20 @@ CREATE TABLE IF NOT EXISTS assignment_submissions (
     FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE
 ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
--- 3. Tabel Kolom Komentar / Diskusi Penugasan
+-- 3. Tabel Kolom Komentar / Diskusi Penugasan (Kelas & Pribadi)
 CREATE TABLE IF NOT EXISTS assignment_comments (
     id INT AUTO_INCREMENT PRIMARY KEY,
     assignment_id INT NOT NULL,
     user_id INT NOT NULL,
     content TEXT NOT NULL,
+    comment_type ENUM('class', 'private') NOT NULL DEFAULT 'class',
+    target_student_id INT DEFAULT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_acomm_assign (assignment_id),
     INDEX idx_acomm_user (user_id),
+    INDEX idx_acomm_type (comment_type),
+    INDEX idx_acomm_target (target_student_id),
     FOREIGN KEY (assignment_id) REFERENCES room_assignments(id) ON DELETE CASCADE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;

@@ -671,12 +671,29 @@ try {
             assignment_id INT NOT NULL,
             user_id INT NOT NULL,
             content TEXT NOT NULL,
+            comment_type ENUM('class', 'private') NOT NULL DEFAULT 'class',
+            target_student_id INT DEFAULT NULL,
             created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
             INDEX idx_acomm_assign (assignment_id),
-            INDEX idx_acomm_user (user_id)
+            INDEX idx_acomm_user (user_id),
+            INDEX idx_acomm_type (comment_type),
+            INDEX idx_acomm_target (target_student_id)
         ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     ");
+
+    try {
+        $pdo->exec("ALTER TABLE assignment_comments ADD COLUMN comment_type ENUM('class', 'private') NOT NULL DEFAULT 'class'");
+    } catch (Exception $e) {}
+    try {
+        $pdo->exec("ALTER TABLE assignment_comments ADD COLUMN target_student_id INT DEFAULT NULL");
+    } catch (Exception $e) {}
+    try {
+        $pdo->exec("ALTER TABLE assignment_comments ADD INDEX idx_acomm_type (comment_type)");
+    } catch (Exception $e) {}
+    try {
+        $pdo->exec("ALTER TABLE assignment_comments ADD INDEX idx_acomm_target (target_student_id)");
+    } catch (Exception $e) {}
 
     // Seed sample assignment if none exists and a room exists
     try {

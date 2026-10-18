@@ -7,6 +7,7 @@ export interface AssignmentDetailResponse {
   success: boolean;
   assignment: Assignment;
   comments: AssignmentComment[];
+  private_comments?: AssignmentComment[];
   my_submission?: AssignmentSubmission | null;
   submissions?: AssignmentSubmission[];
   members?: Array<{ id: number; full_name: string; email: string; avatar_url: string | null }>;
@@ -176,7 +177,12 @@ export const assignmentService = {
     }
   },
 
-  async addComment(assignmentId: number, content: string): Promise<AssignmentComment> {
+  async addComment(
+    assignmentId: number, 
+    content: string, 
+    commentType: 'class' | 'private' = 'class',
+    targetStudentId?: number | null
+  ): Promise<AssignmentComment> {
     const res = await fetch(`${API_BASE}/room-assignments.php`, {
       method: 'POST',
       credentials: 'include',
@@ -187,7 +193,9 @@ export const assignmentService = {
       body: JSON.stringify({
         action: 'add_comment',
         assignment_id: assignmentId,
-        content
+        content,
+        comment_type: commentType,
+        target_student_id: targetStudentId || null
       })
     });
 

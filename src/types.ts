@@ -217,6 +217,8 @@ export interface AssignmentComment {
   assignment_id: number;
   user_id: number;
   content: string;
+  comment_type?: 'class' | 'private';
+  target_student_id?: number | null;
   created_at: string;
   author_name: string;
   author_role: 'student' | 'admin';
