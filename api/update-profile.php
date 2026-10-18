@@ -191,11 +191,13 @@ try {
             'auth_provider' => $user['auth_provider'],
         ];
         $_SESSION['user'] = $session_user;
+        $token = generateAuthToken($session_user);
 
         sendJson([
             'success' => true,
             'message' => 'Profil berhasil diperbarui.',
-            'user' => $session_user
+            'user' => $session_user,
+            'token' => $token
         ]);
     } else {
         sendJson([

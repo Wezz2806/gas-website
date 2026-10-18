@@ -4,15 +4,8 @@
 require_once '../config.php';
 
 // Proteksi Sesi & Akses Admin
-if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
-    sendJson([
-        'success' => false,
-        'message' => 'Akses ditolak. Endpoint ini hanya untuk Administrator.'
-    ], 403);
-}
-
+$adminId = requireAdmin();
 $method = $_SERVER['REQUEST_METHOD'];
-$adminId = (int)$_SESSION['user']['id'];
 
 if ($method === 'GET') {
     try {

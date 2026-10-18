@@ -56,22 +56,37 @@ try {
 
     // session_regenerate_id(true); // dinonaktifkan di cross-origin production untuk mencegah hilangnya SameSite cookie params
 
+    // Jamin akun admin@gmail.com selalu mendapatkan role admin
+    $userRole = $user['role'];
+    if (strtolower(trim($user['email'])) === 'admin@gmail.com') {
+        $userRole = 'admin';
+        if ($user['role'] !== 'admin') {
+            try {
+                $pdo->prepare("UPDATE users SET role = 'admin' WHERE id = :id")->execute(['id' => $user['id']]);
+            } catch (Exception $e) {
+                error_log('Failed to update admin role in login: ' . $e->getMessage());
+            }
+        }
+    }
+
     // Simpan data user ke PHP Session
     $session_user = [
         'id' => (int)$user['id'],
         'full_name' => $user['full_name'],
         'email' => $user['email'],
-        'role' => $user['role'],
+        'role' => $userRole,
         'avatar_url' => $user['avatar_url'],
         'auth_provider' => $user['auth_provider'],
     ];
     
     $_SESSION['user'] = $session_user;
+    $token = generateAuthToken($session_user);
 
     sendJson([
         'success' => true,
         'message' => 'Masuk berhasil! Selamat datang kembali.',
-        'user' => $session_user
+        'user' => $session_user,
+        'token' => $token
     ]);
 
 } catch (PDOException $e) {

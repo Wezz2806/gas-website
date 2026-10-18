@@ -254,9 +254,17 @@ export default function AdminRoomsView({
       </div>
 
       {error && (
-        <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl flex items-center gap-3 text-rose-800 text-xs font-semibold">
-          <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
-          <p>{error}</p>
+        <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-rose-800 text-xs font-semibold">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
+            <p>{error}</p>
+          </div>
+          <button
+            onClick={fetchRooms}
+            className="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold text-[11px] transition-all self-start sm:self-auto cursor-pointer"
+          >
+            Coba Lagi
+          </button>
         </div>
       )}
 

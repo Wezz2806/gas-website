@@ -1,4 +1,5 @@
 import { User } from '../types';
+import { setAuthToken, removeAuthToken } from './apiClient';
 
 // Development: Vite proxy mengarahkan /api → XAMPP lokal
 // Production:  VITE_API_BASE_URL diisi URL Railway (misal: https://gas-website.up.railway.app/api)
@@ -64,31 +65,46 @@ export const authService = {
   /**
    * Masuk menggunakan email & sandi (Lokal).
    */
-  async login(email: string, password: string): Promise<{ success: boolean; message: string; user: User }> {
-    return apiRequest<{ success: boolean; message: string; user: User }>(`${API_BASE}/login.php`, {
+  async login(email: string, password: string): Promise<{ success: boolean; message: string; user: User; token?: string }> {
+    const data = await apiRequest<{ success: boolean; message: string; user: User; token?: string }>(`${API_BASE}/login.php`, {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
+    if (data.token) {
+      setAuthToken(data.token);
+    }
+    return data;
   },
-
-
 
   /**
    * Memeriksa apakah terdapat sesi login aktif di server.
    */
-  async checkSession(): Promise<{ success: boolean; user: User }> {
-    return apiRequest<{ success: boolean; user: User }>(`${API_BASE}/session.php`, {
-      method: 'GET',
-    });
+  async checkSession(): Promise<{ success: boolean; user: User; token?: string }> {
+    try {
+      const data = await apiRequest<{ success: boolean; user: User; token?: string }>(`${API_BASE}/session.php`, {
+        method: 'GET',
+      });
+      if (data.token) {
+        setAuthToken(data.token);
+      }
+      return data;
+    } catch (err) {
+      removeAuthToken();
+      throw err;
+    }
   },
 
   /**
    * Keluar dari sesi (Logout).
    */
   async logout(): Promise<{ success: boolean; message: string }> {
-    return apiRequest<{ success: boolean; message: string }>(`${API_BASE}/logout.php`, {
-      method: 'POST',
-    });
+    try {
+      return await apiRequest<{ success: boolean; message: string }>(`${API_BASE}/logout.php`, {
+        method: 'POST',
+      });
+    } finally {
+      removeAuthToken();
+    }
   },
 
   /**
@@ -114,7 +130,7 @@ export const authService = {
   /**
    * Memperbarui profil pengguna.
    */
-  async updateProfile(formData: FormData): Promise<{ success: boolean; message: string; user: User }> {
+  async updateProfile(formData: FormData): Promise<{ success: boolean; message: string; user: User; token?: string }> {
     try {
       const response = await fetch(`${API_BASE}/update-profile.php`, {
         method: 'POST',
@@ -141,7 +157,11 @@ export const authService = {
         throw new Error(data.message || `Request gagal dengan status ${response.status}`);
       }
 
-      return data as { success: boolean; message: string; user: User };
+      if (data.token) {
+        setAuthToken(data.token);
+      }
+
+      return data as { success: boolean; message: string; user: User; token?: string };
     } catch (error: any) {
       console.error(`API Error pada updateProfile:`, error);
       throw new Error(error.message || 'Koneksi ke server gagal. Harap periksa jaringan Anda.');

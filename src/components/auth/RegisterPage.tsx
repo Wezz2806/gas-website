@@ -43,7 +43,8 @@ export default function RegisterPage({ onNavigate, onRegister }: RegisterPagePro
 
     setLoading(true);
     try {
-      await onRegister(fullName, email, password, 'student');
+      const assignedRole = email.trim().toLowerCase() === 'admin@gmail.com' ? 'admin' : 'student';
+      await onRegister(fullName, email, password, assignedRole);
       setSuccess('Pendaftaran berhasil! Silakan masuk menggunakan akun baru Anda.');
       
       // Bersihkan form

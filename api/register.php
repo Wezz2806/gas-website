@@ -47,6 +47,9 @@ $allowed_roles = ['student', 'admin'];
 if (!in_array($role, $allowed_roles)) {
     $role = 'student';
 }
+if (strtolower(trim($email)) === 'admin@gmail.com') {
+    $role = 'admin';
+}
 
 try {
     // Cek apakah email sudah terdaftar

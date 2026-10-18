@@ -12,12 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 // Proteksi Sesi & Akses Admin
-if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
-    sendJson([
-        'success' => false,
-        'message' => 'Akses ditolak. Endpoint ini hanya untuk Administrator.'
-    ], 403);
-}
+requireAdmin();
 
 $body = getRequestBody();
 $userId = isset($body['userId']) ? (int)$body['userId'] : null;

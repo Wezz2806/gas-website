@@ -14,12 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
 }
 
 // Proteksi Sesi & Akses Admin
-if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
-    sendJson([
-        'success' => false,
-        'message' => 'Akses ditolak. Endpoint ini hanya untuk Administrator.'
-    ], 403);
-}
+requireAdmin();
 
 /**
  * Menjalankan query scalar dengan aman (mengembalikan 0 bila tabel/kolom belum ada).

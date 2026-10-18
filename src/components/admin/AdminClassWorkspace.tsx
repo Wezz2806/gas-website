@@ -6,6 +6,7 @@ import { contactService } from '../../services/contactService';
 import AdminEcolabView from './AdminEcolabView';
 import AdminEcocreationView from './AdminEcocreationView';
 import AdminEcochallengeView from './AdminEcochallengeView';
+import AdminAssignmentsView from './AdminAssignmentsView';
 import { 
   ArrowLeft, 
   LayoutDashboard, 
@@ -38,11 +39,13 @@ import {
   Building2,
   Phone,
   Mail,
-  User
+  User,
+  ClipboardList
 } from 'lucide-react';
 
 export type WorkspaceTab = 
   | 'ringkasan'
+  | 'tugas'
   | 'anggota'
   | 'ecolab'
   | 'ecopedia'
@@ -82,6 +85,7 @@ export default function AdminClassWorkspace({
 
   const tabItems = [
     { id: 'ringkasan' as WorkspaceTab, label: 'Ringkasan', icon: LayoutDashboard },
+    { id: 'tugas' as WorkspaceTab, label: 'Tugas', icon: ClipboardList },
     { id: 'anggota' as WorkspaceTab, label: 'Anggota', icon: Users },
     { id: 'ecolab' as WorkspaceTab, label: 'EcoLab', icon: FlaskConical },
     { id: 'ecopedia' as WorkspaceTab, label: 'EcoPedia', icon: BookOpen },
@@ -180,6 +184,10 @@ export default function AdminClassWorkspace({
             room={room} 
             setActiveTab={setActiveTab} 
           />
+        )}
+
+        {activeTab === 'tugas' && (
+          <AdminAssignmentsView room={room} />
         )}
 
         {activeTab === 'anggota' && (

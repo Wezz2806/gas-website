@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { User } from '../types';
 import { authService } from '../services/authService';
+import { removeAuthToken } from '../services/apiClient';
 
 interface AuthContextType {
   user: User | null;
@@ -36,6 +37,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
       .catch(() => {
         // Session not found / expired — keep unauthenticated state
+        removeAuthToken();
       })
       .finally(() => {
         setIsLoading(false);
@@ -65,6 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch {
       // Ignore — clear local state regardless
     } finally {
+      removeAuthToken();
       setUser(null);
       setIsAuthenticated(false);
     }

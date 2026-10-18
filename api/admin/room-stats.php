@@ -8,9 +8,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
     sendJson(['success' => false, 'message' => 'Metode request tidak diizinkan. Gunakan GET.'], 405);
 }
 
-if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
-    sendJson(['success' => false, 'message' => 'Akses ditolak. Endpoint ini hanya untuk Administrator.'], 403);
-}
+requireAdmin();
 
 $roomId = isset($_GET['room_id']) ? (int)$_GET['room_id'] : 0;
 if ($roomId <= 0) {

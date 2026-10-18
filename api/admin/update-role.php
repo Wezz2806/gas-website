@@ -12,12 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 // Proteksi Sesi & Akses Admin
-if (!isset($_SESSION['user']) || $_SESSION['user']['role'] !== 'admin') {
-    sendJson([
-        'success' => false,
-        'message' => 'Akses ditolak. Endpoint ini hanya untuk Administrator.'
-    ], 403);
-}
+requireAdmin();
 
 $body = getRequestBody();
 $userId = isset($body['userId']) ? (int)$body['userId'] : null;
@@ -40,7 +35,7 @@ if ($userId === (int)$_SESSION['user']['id']) {
 
 try {
     // Cek apakah user ada
-    $stmtCheck = $pdo->prepare("SELECT id, role FROM users WHERE id = :id LIMIT 1");
+    $stmtCheck = $pdo->prepare("SELECT id, email, role FROM users WHERE id = :id LIMIT 1");
     $stmtCheck->execute(['id' => $userId]);
     $user = $stmtCheck->fetch();
     
@@ -48,7 +43,14 @@ try {
         sendJson([
             'success' => false,
             'message' => 'Pengguna tidak ditemukan.'
-        ], 440);
+        ], 404);
+    }
+
+    if (strtolower(trim($user['email'])) === 'admin@gmail.com' && $newRole !== 'admin') {
+        sendJson([
+            'success' => false,
+            'message' => 'Akun admin@gmail.com adalah akun Administrator utama dan tidak dapat diubah ke student.'
+        ], 400);
     }
     
     // Update role

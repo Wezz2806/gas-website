@@ -45,7 +45,8 @@ if (in_array($origin, $allowed_origins)) {
 }
 header("Access-Control-Allow-Origin: $allowed_origin");
 header("Access-Control-Allow-Credentials: true");
-header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
+header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, X-Session-Token");
+header("Access-Control-Expose-Headers: Authorization, X-Session-Token");
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 
 // Handle preflight requests — return immediately, no DB needed
@@ -107,6 +108,123 @@ try {
     ], 503);
 }
 
+// ── TOKEN-BASED AUTH & SESSION HELPERS ───────────────────────────────────────
+
+/**
+ * Secret key for signing auth tokens (JWT HS256)
+ */
+function getAuthSecret(): string {
+    return getenv('AUTH_SECRET') ?: getenv('JWT_SECRET') ?: 'gas_jwt_secret_key_sustainability_2024_secure';
+}
+
+/**
+ * Base64 URL-safe encode
+ */
+function base64UrlEncode(string $data): string {
+    return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
+}
+
+/**
+ * Base64 URL-safe decode
+ */
+function base64UrlDecode(string $data): string {
+    return base64_decode(strtr($data, '-_', '+/'));
+}
+
+/**
+ * Generate a signed auth token for a user
+ */
+function generateAuthToken(array $user): string {
+    $header = json_encode(['typ' => 'JWT', 'alg' => 'HS256']);
+    $payload = json_encode([
+        'uid'   => (int)$user['id'],
+        'email' => $user['email'] ?? '',
+        'role'  => $user['role'] ?? 'student',
+        'iat'   => time(),
+        'exp'   => time() + (86400 * 14) // 14 hari
+    ]);
+
+    $base64UrlHeader = base64UrlEncode($header);
+    $base64UrlPayload = base64UrlEncode($payload);
+    $signature = hash_hmac('sha256', $base64UrlHeader . "." . $base64UrlPayload, getAuthSecret(), true);
+    $base64UrlSignature = base64UrlEncode($signature);
+
+    return $base64UrlHeader . "." . $base64UrlPayload . "." . $base64UrlSignature;
+}
+
+/**
+ * Verify and decode signed auth token
+ */
+function verifyAuthToken(string $token): ?array {
+    $parts = explode('.', $token);
+    if (count($parts) !== 3) {
+        return null;
+    }
+
+    list($base64UrlHeader, $base64UrlPayload, $base64UrlSignature) = $parts;
+
+    $signature = base64UrlDecode($base64UrlSignature);
+    $expectedSignature = hash_hmac('sha256', $base64UrlHeader . "." . $base64UrlPayload, getAuthSecret(), true);
+
+    if (!hash_equals($expectedSignature, $signature)) {
+        return null;
+    }
+
+    $payload = json_decode(base64UrlDecode($base64UrlPayload), true);
+    if (!is_array($payload) || !isset($payload['uid']) || !isset($payload['exp'])) {
+        return null;
+    }
+
+    if (time() > $payload['exp']) {
+        return null; // Expired
+    }
+
+    return $payload;
+}
+
+// ── TOKEN-BASED SESSION RESTORATION (FOR INCOGNITO / 3RD-PARTY COOKIE BLOCKS) ─
+// Modern browsers (termasuk Chrome Incognito & Safari) memblokir third-party cookie secara default.
+// Jika session cookie tidak terkirim, kita pulihkan session dari Authorization Bearer atau X-Session-Token.
+if (!isset($_SESSION['user']) || empty($_SESSION['user']['id'])) {
+    $incomingToken = null;
+    $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? $_SERVER['REDIRECT_HTTP_AUTHORIZATION'] ?? '';
+    if (preg_match('/Bearer\s+(\S+)/i', $authHeader, $matches)) {
+        $incomingToken = $matches[1];
+    } elseif (!empty($_SERVER['HTTP_X_SESSION_TOKEN'])) {
+        $incomingToken = trim($_SERVER['HTTP_X_SESSION_TOKEN']);
+    }
+
+    if ($incomingToken) {
+        $tokenPayload = verifyAuthToken($incomingToken);
+        if ($tokenPayload && isset($tokenPayload['uid'])) {
+            try {
+                $stmtAuth = $pdo->prepare("SELECT id, full_name, email, role, avatar_url, auth_provider FROM users WHERE id = :id LIMIT 1");
+                $stmtAuth->execute(['id' => (int)$tokenPayload['uid']]);
+                $authUser = $stmtAuth->fetch();
+                if ($authUser) {
+                    $userRole = (strtolower(trim($authUser['email'])) === 'admin@gmail.com') ? 'admin' : $authUser['role'];
+                    $_SESSION['user'] = [
+                        'id'            => (int)$authUser['id'],
+                        'full_name'     => $authUser['full_name'],
+                        'email'         => $authUser['email'],
+                        'role'          => $userRole,
+                        'avatar_url'    => $authUser['avatar_url'],
+                        'auth_provider' => $authUser['auth_provider'],
+                    ];
+                    $_SESSION['user_cached_at'] = time();
+                }
+            } catch (Exception $tokenEx) {
+                error_log('Token resolution DB error: ' . $tokenEx->getMessage());
+            }
+        }
+    }
+}
+
+// Jamin akun admin@gmail.com selalu memiliki role 'admin' di dalam sesi aktif
+if (isset($_SESSION['user']['email']) && strtolower(trim($_SESSION['user']['email'])) === 'admin@gmail.com') {
+    $_SESSION['user']['role'] = 'admin';
+}
+
 // Auto migration: Update schema constraints and tables
 try {
     // 1. Clean up legacy role values to prevent ALTER TABLE failure
@@ -114,6 +232,8 @@ try {
         $pdo->exec("DELETE FROM users WHERE role = 'teacher' AND id = 9999");
         $pdo->exec("UPDATE users SET role = 'student' WHERE role = 'teacher'");
         $pdo->exec("ALTER TABLE users MODIFY COLUMN role ENUM('student', 'admin') NOT NULL DEFAULT 'student'");
+        // Pastikan akun admin@gmail.com selalu memiliki role 'admin'
+        $pdo->exec("UPDATE users SET role = 'admin' WHERE LOWER(email) = 'admin@gmail.com'");
     } catch (PDOException $ex) {
         error_log('Users role migration failed: ' . $ex->getMessage());
     }
@@ -504,6 +624,88 @@ try {
             INDEX idx_contact_room (room_id)
         ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     ");
+
+    // -- AUTO-MIGRATION: TUGAS KELAS (ROOM ASSIGNMENTS), PENGUMPULAN & DISKUSI --
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS room_assignments (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            room_id INT NOT NULL,
+            title VARCHAR(255) NOT NULL,
+            description LONGTEXT,
+            due_date DATETIME NULL,
+            max_points INT NOT NULL DEFAULT 100,
+            attachment_path VARCHAR(500) DEFAULT NULL,
+            attachment_name VARCHAR(255) DEFAULT NULL,
+            created_by INT NOT NULL,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            INDEX idx_assign_room (room_id),
+            INDEX idx_assign_due (due_date)
+        ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    ");
+
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS assignment_submissions (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            assignment_id INT NOT NULL,
+            room_id INT NOT NULL,
+            student_id INT NOT NULL,
+            filename VARCHAR(255) NOT NULL,
+            original_name VARCHAR(255) NOT NULL,
+            notes TEXT DEFAULT NULL,
+            status ENUM('submitted','graded') NOT NULL DEFAULT 'submitted',
+            grade INT DEFAULT NULL,
+            feedback TEXT DEFAULT NULL,
+            submitted_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            graded_at TIMESTAMP NULL DEFAULT NULL,
+            UNIQUE KEY unique_assign_student (assignment_id, student_id),
+            INDEX idx_asub_assign (assignment_id),
+            INDEX idx_asub_student (student_id),
+            INDEX idx_asub_room (room_id)
+        ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    ");
+
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS assignment_comments (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            assignment_id INT NOT NULL,
+            user_id INT NOT NULL,
+            content TEXT NOT NULL,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+            INDEX idx_acomm_assign (assignment_id),
+            INDEX idx_acomm_user (user_id)
+        ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    ");
+
+    // Seed sample assignment if none exists and a room exists
+    try {
+        $assignCount = $pdo->query("SELECT COUNT(*) FROM room_assignments")->fetchColumn();
+        if ($assignCount == 0) {
+            $sampleRoomId = $pdo->query("SELECT id FROM rooms ORDER BY id ASC LIMIT 1")->fetchColumn();
+            $adminUser = $pdo->query("SELECT id FROM users WHERE role = 'admin' ORDER BY id ASC LIMIT 1")->fetchColumn() ?: 1;
+            if ($sampleRoomId) {
+                $sampleDueDate = date('Y-m-d 23:59:59', strtotime('+7 days'));
+                $stmtSample = $pdo->prepare("
+                    INSERT INTO room_assignments (room_id, title, description, due_date, max_points, created_by)
+                    VALUES (?, ?, ?, ?, 100, ?)
+                ");
+                $descSample = "Halo Sahabat GAS!\n\nPada tugas ini, silakan buat laporan analisis singkat (1-2 halaman) mengenai penerapan 12 Prinsip Kimia Hijau pada proses pembuatan Ekoenzim di kelompok masing-masing.\n\nKetentuan:\n1. Berkas dalam format PDF atau DOCX.\n2. Cantumkan nama kelompok, anggota, dan dokumentasi foto proses fermentasi.\n3. Jelaskan minimal 3 prinsip kimia hijau yang terimplementasi dalam fermentasi ekoenzim.\n\nJika ada pertanyaan mengenai tugas ini, silakan tanyakan pada kolom diskusi di bawah ini!";
+                $stmtSample->execute([$sampleRoomId, 'Tugas Analisis: Penerapan Prinsip Kimia Hijau pada Ekoenzim', $descSample, $sampleDueDate, $adminUser]);
+                $sampleAssignId = $pdo->lastInsertId();
+
+                if ($sampleAssignId) {
+                    $stmtComment = $pdo->prepare("
+                        INSERT INTO assignment_comments (assignment_id, user_id, content)
+                        VALUES (?, ?, ?)
+                    ");
+                    $stmtComment->execute([$sampleAssignId, $adminUser, 'Selamat mengerjakan penugasan! Jika ada kendala terkait format dokumen atau materi, tanyakan langsung di forum diskusi ini ya. Semangat!']);
+                }
+            }
+        }
+    } catch (Exception $e) {
+        error_log('Failed seeding sample assignment: ' . $e->getMessage());
+    }
 
 
     // Seeding: Default room if no room exists
@@ -981,6 +1183,23 @@ function requireAuth(): int {
             'success' => false,
             'message' => 'Sesi tidak aktif. Silakan masuk terlebih dahulu.',
         ], 401);
+    }
+    return $uid;
+}
+
+/**
+ * Requires admin role — sends 401 if not logged in or 403 if not admin.
+ */
+function requireAdmin(): int {
+    $uid = requireAuth();
+    if (isset($_SESSION['user']['email']) && strtolower(trim($_SESSION['user']['email'])) === 'admin@gmail.com') {
+        $_SESSION['user']['role'] = 'admin';
+    }
+    if (($_SESSION['user']['role'] ?? '') !== 'admin') {
+        sendJson([
+            'success' => false,
+            'message' => 'Akses ditolak. Endpoint ini hanya untuk Administrator.'
+        ], 403);
     }
     return $uid;
 }

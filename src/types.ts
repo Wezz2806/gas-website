@@ -175,3 +175,51 @@ export interface JournalRow {
   alasan: string;
   solusi: string;
 }
+
+export interface Assignment {
+  id: number;
+  room_id: number;
+  title: string;
+  description: string;
+  due_date: string | null;
+  max_points: number;
+  attachment_path?: string | null;
+  attachment_name?: string | null;
+  created_by: number;
+  creator_name?: string;
+  created_at: string;
+  comments_count?: number;
+  submissions_count?: number;
+  graded_count?: number;
+  my_submission?: AssignmentSubmission | null;
+}
+
+export interface AssignmentSubmission {
+  id: number;
+  assignment_id: number;
+  room_id: number;
+  student_id: number;
+  filename: string;
+  original_name: string;
+  notes?: string | null;
+  status: 'submitted' | 'graded';
+  grade?: number | null;
+  feedback?: string | null;
+  submitted_at: string;
+  graded_at?: string | null;
+  student_name?: string;
+  student_email?: string;
+  student_avatar?: string | null;
+}
+
+export interface AssignmentComment {
+  id: number;
+  assignment_id: number;
+  user_id: number;
+  content: string;
+  created_at: string;
+  author_name: string;
+  author_role: 'student' | 'admin';
+  author_avatar?: string | null;
+}
+

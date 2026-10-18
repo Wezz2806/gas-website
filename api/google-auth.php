@@ -115,13 +115,15 @@ try {
     }
 
     // 3. User baru -> Lakukan Registrasi otomatis & Login
+    $assignedRole = (strtolower(trim($email)) === 'admin@gmail.com') ? 'admin' : 'student';
     $stmt = $pdo->prepare("
         INSERT INTO users (full_name, email, password_hash, role, avatar_url, auth_provider, google_id) 
-        VALUES (:full_name, :email, NULL, 'student', :avatar_url, 'google', :google_id)
+        VALUES (:full_name, :email, NULL, :role, :avatar_url, 'google', :google_id)
     ");
     $stmt->execute([
         'full_name' => $full_name,
         'email' => $email,
+        'role' => $assignedRole,
         'avatar_url' => $avatar_url,
         'google_id' => $google_id
     ]);
@@ -147,22 +149,35 @@ try {
  * @param array $user
  */
 function loginUserSession($user) {
+    global $pdo;
     // session_regenerate_id(true); // dinonaktifkan di cross-origin production untuk mencegah hilangnya SameSite cookie params
+
+    $userRole = $user['role'];
+    if (strtolower(trim($user['email'])) === 'admin@gmail.com') {
+        $userRole = 'admin';
+        if (($user['role'] ?? '') !== 'admin' && isset($pdo)) {
+            try {
+                $pdo->prepare("UPDATE users SET role = 'admin' WHERE id = :id")->execute(['id' => $user['id']]);
+            } catch (Exception $e) {}
+        }
+    }
 
     $session_user = [
         'id' => (int)$user['id'],
         'full_name' => $user['full_name'],
         'email' => $user['email'],
-        'role' => $user['role'],
+        'role' => $userRole,
         'avatar_url' => $user['avatar_url'],
         'auth_provider' => $user['auth_provider'],
     ];
     
     $_SESSION['user'] = $session_user;
+    $token = generateAuthToken($session_user);
 
     sendJson([
         'success' => true,
         'message' => 'Masuk dengan Google berhasil!',
-        'user' => $session_user
+        'user' => $session_user,
+        'token' => $token
     ]);
 }

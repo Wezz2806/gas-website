@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Tab, Room } from '../types';
+import { Tab, Room, Assignment } from '../types';
 import { 
   CalendarCheck, 
   ArrowRight, 
@@ -14,11 +14,20 @@ import {
   Sun,
   Clock,
   Sparkles,
-  CheckCircle2
+  CheckCircle2,
+  ClipboardList,
+  Plus,
+  MessageSquare,
+  Award,
+  Calendar,
+  Loader2
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { submissionService } from '../services/submissionService';
 import { attendanceService } from '../services/attendanceService';
+import { assignmentService } from '../services/assignmentService';
+import AssignmentModal from './assignment/AssignmentModal';
+import AssignmentFormModal from './assignment/AssignmentFormModal';
 
 interface DashboardViewProps {
   setActiveTab: (tab: Tab) => void;
@@ -30,9 +39,34 @@ export default function DashboardView({
   currentRoom
 }: DashboardViewProps) {
   const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
+
   const [progress, setProgress] = useState(0);
   const [activeSession, setActiveSession] = useState<any | null>(null);
   const [attendanceSummary, setAttendanceSummary] = useState<any | null>(null);
+
+  // Assignments state
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [isLoadingAssignments, setIsLoadingAssignments] = useState(false);
+  const [selectedAssignmentId, setSelectedAssignmentId] = useState<number | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+
+  const fetchAssignments = async () => {
+    if (!currentRoom?.id) return;
+    try {
+      setIsLoadingAssignments(true);
+      const res = await assignmentService.getAssignments(currentRoom.id);
+      setAssignments(res.assignments);
+    } catch (err) {
+      console.error('Failed to fetch assignments:', err);
+    } finally {
+      setIsLoadingAssignments(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAssignments();
+  }, [currentRoom?.id]);
 
   useEffect(() => {
     const fetchProgress = async () => {
@@ -72,6 +106,30 @@ export default function DashboardView({
     { id: 'ecocontact' as Tab, label: 'EcoContact', desc: 'Kontak Dosen, Guru & Mentor', icon: Contact, color: 'text-emerald-700 bg-emerald-50 border-emerald-100' },
   ];
 
+  const getDueBadge = (dateStr: string | null) => {
+    if (!dateStr) return { text: 'Tanpa batas waktu', className: 'bg-stone-100 text-stone-600' };
+    const due = new Date(dateStr);
+    const now = new Date();
+    const isOverdue = due < now;
+    const diffHours = (due.getTime() - now.getTime()) / (1000 * 60 * 60);
+    const isNear = diffHours > 0 && diffHours <= 24;
+
+    const formatted = due.toLocaleDateString('id-ID', {
+      day: 'numeric',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    if (isOverdue) {
+      return { text: `Lewat: ${formatted}`, className: 'bg-rose-50 text-rose-700 border border-rose-200' };
+    }
+    if (isNear) {
+      return { text: `Segera: ${formatted}`, className: 'bg-amber-50 text-amber-700 border border-amber-200 animate-pulse' };
+    }
+    return { text: `Tenggat: ${formatted}`, className: 'bg-stone-100 text-stone-700 border border-stone-200' };
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-3 duration-300">
       {/* Banner Utama Kelas */}
@@ -102,7 +160,149 @@ export default function DashboardView({
         </div>
       </section>
 
+      {/* ── BOX TUGAS & PENUGASAN KELAS ── */}
+      <section className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-stone-200/80 text-left space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-stone-100 pb-5">
+          <div className="flex items-start sm:items-center gap-3.5">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#154212] to-[#006e1c] flex items-center justify-center text-[#91f78e] shadow-xs shrink-0">
+              <ClipboardList className="w-6 h-6" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-display font-bold text-base sm:text-lg text-[#154212]">
+                  Tugas & Penugasan Kelas
+                </h3>
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800">
+                  {assignments.length} Tugas
+                </span>
+              </div>
+              <p className="text-xs text-stone-500 mt-0.5">
+                Pantau penugasan, serahkan lembar kerja/laporan, dan diskusikan materi bersama
+              </p>
+            </div>
+          </div>
+
+          {isAdmin && currentRoom && (
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="px-4 py-2.5 rounded-xl bg-[#006e1c] hover:bg-[#154212] text-white text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer shrink-0 self-start sm:self-auto hover:scale-102"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Buat Tugas Baru</span>
+            </button>
+          )}
+        </div>
+
+        {/* List / Grid of Assignments */}
+        {isLoadingAssignments ? (
+          <div className="py-12 flex flex-col items-center justify-center gap-3 text-stone-400">
+            <Loader2 className="w-7 h-7 animate-spin text-[#006e1c]" />
+            <span className="text-xs font-semibold">Memuat daftar tugas kelas...</span>
+          </div>
+        ) : assignments.length === 0 ? (
+          <div className="py-10 px-6 rounded-2xl bg-stone-50/70 border border-dashed border-stone-200 text-center space-y-3">
+            <div className="w-12 h-12 rounded-2xl bg-stone-100 text-stone-400 flex items-center justify-center mx-auto">
+              <ClipboardList className="w-6 h-6" />
+            </div>
+            <div className="max-w-md mx-auto space-y-1">
+              <h4 className="font-bold text-sm text-stone-800">Belum Ada Tugas Aktif</h4>
+              <p className="text-xs text-stone-500 leading-relaxed">
+                Pengajar belum menerbitkan penugasan untuk kelas ini. Tugas baru dan instruksi pengumpulan akan tampil di sini.
+              </p>
+            </div>
+            {isAdmin && currentRoom && (
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="mt-2 px-4 py-2 rounded-xl bg-[#006e1c] text-white text-xs font-bold hover:bg-[#154212] transition-colors inline-flex items-center gap-1.5 cursor-pointer shadow-xs"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Terbitkan Tugas Pertama</span>
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {assignments.map((assign) => {
+              const due = getDueBadge(assign.due_date);
+              const sub = assign.my_submission;
+
+              return (
+                <div
+                  key={assign.id}
+                  onClick={() => setSelectedAssignmentId(assign.id)}
+                  className="p-5 rounded-2xl bg-gradient-to-b from-[#fcfdfa] to-white border border-stone-200/90 hover:border-[#006e1c]/40 hover:shadow-md transition-all duration-200 cursor-pointer flex flex-col justify-between group space-y-4"
+                >
+                  <div className="space-y-2.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${due.className}`}>
+                        {due.text}
+                      </span>
+                      <span className="text-[10px] font-bold text-stone-400 flex items-center gap-1">
+                        <Award className="w-3 h-3 text-emerald-700" />
+                        {assign.max_points} Poin
+                      </span>
+                    </div>
+
+                    <h4 className="font-display font-bold text-sm text-[#154212] group-hover:text-[#006e1c] transition-colors line-clamp-2 leading-snug">
+                      {assign.title}
+                    </h4>
+
+                    <p className="text-xs text-stone-500 line-clamp-2 leading-relaxed font-sans">
+                      {assign.description || 'Klik untuk membuka rincian petunjuk tugas dan ruang diskusi.'}
+                    </p>
+                  </div>
+
+                  <div className="pt-3 border-t border-stone-100 flex items-center justify-between gap-2 text-xs">
+                    <div className="flex items-center gap-2 overflow-hidden">
+                      {/* Status Badges */}
+                      {!isAdmin ? (
+                        sub ? (
+                          sub.status === 'graded' ? (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 truncate">
+                              Nilai: {sub.grade}/{assign.max_points}
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 flex items-center gap-1">
+                              <CheckCircle2 className="w-3 h-3" />
+                              <span>Diserahkan</span>
+                            </span>
+                          )
+                        ) : (
+                          <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            <span>Belum Diserahkan</span>
+                          </span>
+                        )
+                      ) : (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                          {assign.submissions_count || 0} Terkumpul
+                        </span>
+                      )}
+
+                      {/* Discussion count */}
+                      <span className="text-[10px] text-stone-400 flex items-center gap-1 shrink-0">
+                        <MessageSquare className="w-3 h-3 text-stone-400" />
+                        <span>{assign.comments_count || 0}</span>
+                      </span>
+                    </div>
+
+                    <button
+                      type="button"
+                      className="px-3 py-1.5 rounded-xl bg-stone-50 group-hover:bg-[#006e1c] group-hover:text-white text-stone-700 text-[11px] font-bold transition-all flex items-center gap-1 shrink-0"
+                    >
+                      <span>Buka Tugas</span>
+                      <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
       {/* Grid Informasi Utama */}
+
       <div className="grid grid-cols-12 gap-6">
         {/* Sesi Absensi & Status Kehadiran */}
         <div className="col-span-12 lg:col-span-8 bg-white rounded-3xl p-6 md:p-8 shadow-sm border border-gray-100 flex flex-col justify-between relative overflow-hidden">
@@ -249,6 +449,36 @@ export default function DashboardView({
           </div>
         </div>
       </div>
+
+      {/* Detail & Submission Assignment Modal */}
+      {selectedAssignmentId && (
+        <AssignmentModal
+          assignmentId={selectedAssignmentId}
+          roomName={currentRoom?.name || 'Ruang Kelas'}
+          onClose={() => setSelectedAssignmentId(null)}
+          onAssignmentDeleted={() => {
+            setSelectedAssignmentId(null);
+            fetchAssignments();
+          }}
+          onAssignmentUpdated={() => {
+            fetchAssignments();
+          }}
+        />
+      )}
+
+      {/* Create Assignment Modal for Admin */}
+      {showCreateModal && currentRoom && (
+        <AssignmentFormModal
+          roomId={currentRoom.id}
+          roomName={currentRoom.name}
+          onClose={() => setShowCreateModal(false)}
+          onSuccess={() => {
+            setShowCreateModal(false);
+            fetchAssignments();
+          }}
+        />
+      )}
     </div>
   );
 }
+
