@@ -304,10 +304,21 @@ if ($method === 'POST') {
             $title     = isset($body['title']) ? trim($body['title']) : '';
             $date      = isset($body['session_date']) ? trim($body['session_date']) : '';
             $code      = isset($body['access_code']) ? strtoupper(trim($body['access_code'])) : '';
+            $status    = isset($body['status']) && in_array($body['status'], ['open', 'closed'], true) ? $body['status'] : null;
+
             if ($sessionId <= 0 || $title === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
                 sendJson(['success' => false, 'message' => 'Data sesi tidak valid.'], 400);
             }
-            $stmt = $pdo->prepare("UPDATE room_attendance_sessions SET title = :t, session_date = :d, access_code = :c WHERE id = :id");
+
+            if ($status !== null) {
+                if ($status === 'open') {
+                    $stmt = $pdo->prepare("UPDATE room_attendance_sessions SET title = :t, session_date = :d, access_code = :c, status = 'open', closes_at = NULL WHERE id = :id");
+                } else {
+                    $stmt = $pdo->prepare("UPDATE room_attendance_sessions SET title = :t, session_date = :d, access_code = :c, status = 'closed', closes_at = IFNULL(closes_at, NOW()) WHERE id = :id");
+                }
+            } else {
+                $stmt = $pdo->prepare("UPDATE room_attendance_sessions SET title = :t, session_date = :d, access_code = :c WHERE id = :id");
+            }
             $stmt->execute(['t' => $title, 'd' => $date, 'c' => $code !== '' ? $code : null, 'id' => $sessionId]);
             sendJson(['success' => true, 'message' => 'Sesi absensi diperbarui.']);
         }
@@ -315,17 +326,42 @@ if ($method === 'POST') {
         if ($action === 'set_status') {
             $sessionId = isset($body['session_id']) ? (int)$body['session_id'] : 0;
             $status    = isset($body['status']) ? trim($body['status']) : '';
+            $markAlpa  = !empty($body['mark_unrecorded_alpa']);
+
             if ($sessionId <= 0 || !in_array($status, ['open', 'closed'], true)) {
                 sendJson(['success' => false, 'message' => 'Parameter tidak valid.'], 400);
             }
             if ($status === 'open') {
                 // Buka kembali: hapus batas waktu lama agar benar-benar terbuka
                 $stmt = $pdo->prepare("UPDATE room_attendance_sessions SET status = 'open', closes_at = NULL WHERE id = :id");
+                $stmt->execute(['id' => $sessionId]);
             } else {
                 $stmt = $pdo->prepare("UPDATE room_attendance_sessions SET status = 'closed', closes_at = NOW() WHERE id = :id");
+                $stmt->execute(['id' => $sessionId]);
+
+                if ($markAlpa) {
+                    $sStmt = $pdo->prepare("SELECT room_id FROM room_attendance_sessions WHERE id = :id LIMIT 1");
+                    $sStmt->execute(['id' => $sessionId]);
+                    $sessRow = $sStmt->fetch();
+                    if ($sessRow) {
+                        $roomId = (int)$sessRow['room_id'];
+                        $sql = "
+                            INSERT INTO room_attendance_records (session_id, user_id, status, marked_by)
+                            SELECT :sid, rm.user_id, 'alpa', 'admin'
+                            FROM room_members rm
+                            JOIN users u ON u.id = rm.user_id
+                            WHERE rm.room_id = :rid AND u.role = 'student'
+                              AND rm.user_id NOT IN (
+                                  SELECT user_id FROM room_attendance_records WHERE session_id = :sid2
+                              )
+                            ON DUPLICATE KEY UPDATE status = 'alpa', marked_by = 'admin'
+                        ";
+                        $mStmt = $pdo->prepare($sql);
+                        $mStmt->execute(['sid' => $sessionId, 'rid' => $roomId, 'sid2' => $sessionId]);
+                    }
+                }
             }
-            $stmt->execute(['id' => $sessionId]);
-            sendJson(['success' => true, 'message' => $status === 'open' ? 'Sesi dibuka kembali.' : 'Sesi ditutup.']);
+            sendJson(['success' => true, 'message' => $status === 'open' ? 'Sesi dibuka kembali.' : 'Sesi berhasil ditutup.']);
         }
 
         if ($action === 'delete_session') {

@@ -98,6 +98,7 @@ export const attendanceService = {
     title: string;
     session_date: string;
     access_code?: string;
+    status?: 'open' | 'closed';
   }): Promise<void> {
     const res = await fetch(`${API_BASE}/room-attendance.php`, {
       method: 'POST',
@@ -111,12 +112,17 @@ export const attendanceService = {
     }
   },
 
-  async setStatus(sessionId: number, status: 'open' | 'closed'): Promise<void> {
+  async setStatus(sessionId: number, status: 'open' | 'closed', markUnrecordedAlpa?: boolean): Promise<void> {
     const res = await fetch(`${API_BASE}/room-attendance.php`, {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-      body: JSON.stringify({ action: 'set_status', session_id: sessionId, status })
+      body: JSON.stringify({
+        action: 'set_status',
+        session_id: sessionId,
+        status,
+        mark_unrecorded_alpa: markUnrecordedAlpa
+      })
     });
     const data = await res.json();
     if (!res.ok || !data.success) {

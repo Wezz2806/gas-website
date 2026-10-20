@@ -40,7 +40,9 @@ import {
   Phone,
   Mail,
   User,
-  ClipboardList
+  ClipboardList,
+  Lock,
+  Unlock
 } from 'lucide-react';
 
 export type WorkspaceTab = 
@@ -1139,6 +1141,12 @@ function TabAbsensi({ roomId, showToast }: { roomId: number; showToast: (m: stri
   const [sDate, setSDate] = useState(() => new Date().toISOString().split('T')[0]);
   const [sCode, setSCode] = useState('');
   const [sDuration, setSDuration] = useState(0);
+  const [sStatus, setSStatus] = useState<'open' | 'closed'>('open');
+
+  // Modal Konfirmasi Tutup Sesi
+  const [closingSession, setClosingSession] = useState<AttendanceSession | null>(null);
+  const [markUnrecordedAlpa, setMarkUnrecordedAlpa] = useState(true);
+  const [submittingClose, setSubmittingClose] = useState(false);
 
   // Modal Detail / Koreksi Kehadiran Sesi
   const [detailSession, setDetailSession] = useState<AttendanceSession | null>(null);
@@ -1171,6 +1179,7 @@ function TabAbsensi({ roomId, showToast }: { roomId: number; showToast: (m: stri
     setSDate(new Date().toISOString().split('T')[0]);
     setSCode('');
     setSDuration(90);
+    setSStatus('open');
     setShowSessionModal(true);
   };
 
@@ -1180,6 +1189,7 @@ function TabAbsensi({ roomId, showToast }: { roomId: number; showToast: (m: stri
     setSDate(s.session_date);
     setSCode(s.access_code || '');
     setSDuration(0);
+    setSStatus(s.status);
     setShowSessionModal(true);
   };
 
@@ -1195,7 +1205,8 @@ function TabAbsensi({ roomId, showToast }: { roomId: number; showToast: (m: stri
           session_id: editingSession.id,
           title: sTitle,
           session_date: sDate,
-          access_code: sCode
+          access_code: sCode,
+          status: sStatus
         });
         showToast('Sesi absensi diperbarui.');
       } else {
@@ -1215,14 +1226,46 @@ function TabAbsensi({ roomId, showToast }: { roomId: number; showToast: (m: stri
     }
   };
 
-  const handleToggleStatus = async (s: AttendanceSession) => {
-    const nextStatus = s.status === 'open' ? 'closed' : 'open';
+  const handleOpenCloseModal = (s: AttendanceSession) => {
+    setClosingSession(s);
+    setMarkUnrecordedAlpa(true);
+  };
+
+  const handleConfirmClose = async () => {
+    if (!closingSession) return;
+    setSubmittingClose(true);
     try {
-      await attendanceService.setStatus(s.id, nextStatus);
-      showToast(nextStatus === 'open' ? 'Sesi dibuka kembali.' : 'Sesi ditutup.');
+      await attendanceService.setStatus(closingSession.id, 'closed', markUnrecordedAlpa);
+      showToast(`Sesi "${closingSession.title}" berhasil ditutup.`);
+      setClosingSession(null);
+      if (detailSession && detailSession.id === closingSession.id) {
+        setDetailSession({ ...detailSession, status: 'closed' });
+        if (markUnrecordedAlpa) {
+          const det = await attendanceService.getSessionDetail(roomId, closingSession.id);
+          setDetailStudents(det.students || []);
+        }
+      }
       loadSessions();
     } catch (err: any) {
-      showToast(err.message || 'Gagal mengubah status sesi', 'error');
+      showToast(err.message || 'Gagal menutup sesi absensi', 'error');
+    } finally {
+      setSubmittingClose(false);
+    }
+  };
+
+  const handleReopenSession = async (s: AttendanceSession) => {
+    if (!window.confirm(`Buka kembali sesi absensi "${s.title}"?\n\nMurid di kelas ini akan dapat melakukan presensi kembali di dashboard mereka.`)) {
+      return;
+    }
+    try {
+      await attendanceService.setStatus(s.id, 'open');
+      showToast(`Sesi "${s.title}" dibuka kembali.`);
+      if (detailSession && detailSession.id === s.id) {
+        setDetailSession({ ...detailSession, status: 'open' });
+      }
+      loadSessions();
+    } catch (err: any) {
+      showToast(err.message || 'Gagal membuka kembali sesi', 'error');
     }
   };
 
@@ -1393,14 +1436,25 @@ function TabAbsensi({ roomId, showToast }: { roomId: number; showToast: (m: stri
                       <span className="text-[10px] font-bold font-mono px-2 py-0.5 rounded-md bg-slate-200 text-slate-700">
                         {s.session_date}
                       </span>
-                      <button
-                        onClick={() => handleToggleStatus(s)}
-                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full cursor-pointer transition-colors ${
-                          isOpen ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200' : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+                      <span
+                        className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${
+                          isOpen
+                            ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                            : 'bg-slate-200 text-slate-600 border-slate-300'
                         }`}
                       >
-                        {isOpen ? '● Sesi Terbuka' : 'Sesi Ditutup'}
-                      </button>
+                        {isOpen ? (
+                          <>
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                            <span>Sesi Aktif (Buka)</span>
+                          </>
+                        ) : (
+                          <>
+                            <Lock className="w-3 h-3 text-slate-500" />
+                            <span>Sesi Ditutup</span>
+                          </>
+                        )}
+                      </span>
                       {s.access_code && (
                         <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 border border-amber-200 flex items-center gap-1">
                           <KeyRound className="w-3 h-3 text-amber-600" />
@@ -1417,10 +1471,31 @@ function TabAbsensi({ roomId, showToast }: { roomId: number; showToast: (m: stri
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
+                  <div className="flex flex-wrap items-center gap-2 shrink-0">
+                    {/* Tombol Tutup Sesi / Buka Sesi */}
+                    {isOpen ? (
+                      <button
+                        onClick={() => handleOpenCloseModal(s)}
+                        className="px-3 py-1.5 rounded-xl border border-rose-300 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                        title="Tutup sesi absensi agar murid tidak bisa absen lagi"
+                      >
+                        <Lock className="w-3.5 h-3.5 text-rose-600" />
+                        <span>Tutup Sesi</span>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => handleReopenSession(s)}
+                        className="px-3 py-1.5 rounded-xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                        title="Buka kembali sesi absensi agar murid bisa absen"
+                      >
+                        <Unlock className="w-3.5 h-3.5 text-emerald-600" />
+                        <span>Buka Sesi</span>
+                      </button>
+                    )}
+
                     <button
                       onClick={() => handleOpenDetail(s)}
-                      className="px-3 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs transition-colors cursor-pointer"
+                      className="px-3 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs transition-colors cursor-pointer shadow-2xs"
                     >
                       Koreksi & Presensi Murid
                     </button>
@@ -1590,6 +1665,43 @@ function TabAbsensi({ roomId, showToast }: { roomId: number; showToast: (m: stri
                 </div>
               )}
 
+              {editingSession && (
+                <div>
+                  <label className="text-xs font-bold text-slate-700 block mb-1">Status Sesi</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setSStatus('open')}
+                      className={`py-2 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                        sStatus === 'open'
+                          ? 'bg-emerald-50 border-emerald-500 text-emerald-800 ring-2 ring-emerald-200'
+                          : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                      }`}
+                    >
+                      <Unlock className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>Buka (Aktif)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSStatus('closed')}
+                      className={`py-2 px-3 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                        sStatus === 'closed'
+                          ? 'bg-rose-50 border-rose-500 text-rose-800 ring-2 ring-rose-200'
+                          : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100'
+                      }`}
+                    >
+                      <Lock className="w-3.5 h-3.5 text-rose-600" />
+                      <span>Tutup (Selesai)</span>
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-slate-400 mt-1">
+                    {sStatus === 'open'
+                      ? 'Sesi aktif dan murid dapat presensi mandiri di dashboard.'
+                      : 'Sesi ditutup, murid tidak dapat presensi mandiri.'}
+                  </p>
+                </div>
+              )}
+
               <div className="pt-3 border-t border-slate-100 flex justify-end gap-2">
                 <button
                   type="button"
@@ -1614,22 +1726,82 @@ function TabAbsensi({ roomId, showToast }: { roomId: number; showToast: (m: stri
       {detailSession && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
           <div className="bg-white rounded-3xl p-6 sm:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto space-y-4 text-left shadow-2xl">
-            <div className="flex justify-between items-start">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
               <div>
-                <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-800 bg-cyan-100 px-2 py-0.5 rounded-md">
-                  Presensi: {detailSession.session_date}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-cyan-800 bg-cyan-100 px-2 py-0.5 rounded-md">
+                    Presensi: {detailSession.session_date}
+                  </span>
+                  <span
+                    className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                      detailSession.status === 'open'
+                        ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                        : 'bg-slate-150 text-slate-600 border-slate-300'
+                    }`}
+                  >
+                    {detailSession.status === 'open' ? (
+                      <>
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                        <span>Sesi Terbuka (Aktif)</span>
+                      </>
+                    ) : (
+                      <>
+                        <Lock className="w-3 h-3 text-slate-500" />
+                        <span>Sesi Ditutup</span>
+                      </>
+                    )}
+                  </span>
+                </div>
                 <h3 className="font-display font-bold text-lg text-slate-800 mt-1">
                   {detailSession.title}
                 </h3>
               </div>
-              <button
-                onClick={() => setDetailSession(null)}
-                className="text-slate-400 hover:text-slate-700 p-1 font-bold text-lg cursor-pointer"
-              >
-                ✕
-              </button>
+
+              <div className="flex items-center gap-2 self-end sm:self-center">
+                {detailSession.status === 'open' ? (
+                  <button
+                    onClick={() => handleOpenCloseModal(detailSession)}
+                    className="px-3.5 py-1.5 rounded-xl border border-rose-300 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                    title="Tutup sesi absensi sekarang"
+                  >
+                    <Lock className="w-3.5 h-3.5 text-rose-600" />
+                    <span>Tutup Sesi</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => handleReopenSession(detailSession)}
+                    className="px-3.5 py-1.5 rounded-xl border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer shadow-2xs"
+                    title="Buka kembali sesi absensi ini"
+                  >
+                    <Unlock className="w-3.5 h-3.5 text-emerald-600" />
+                    <span>Buka Sesi Kembali</span>
+                  </button>
+                )}
+                <button
+                  onClick={() => setDetailSession(null)}
+                  className="text-slate-400 hover:text-slate-700 p-1.5 rounded-xl hover:bg-slate-100 font-bold text-lg cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
+
+            {/* Banner info bila sesi ditutup */}
+            {detailSession.status === 'closed' && (
+              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-600 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2">
+                  <Lock className="w-4 h-4 text-slate-400 shrink-0" />
+                  <span>Sesi ini <strong>telah ditutup</strong>. Murid tidak dapat mengisi presensi mandiri di dashboard.</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleReopenSession(detailSession)}
+                  className="text-[11px] font-bold text-cyan-700 hover:text-cyan-800 underline shrink-0 cursor-pointer"
+                >
+                  Buka kembali
+                </button>
+              </div>
+            )}
 
             {/* Quick Bulk Action */}
             <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200/80 flex flex-wrap items-center justify-between gap-2">
@@ -1696,6 +1868,91 @@ function TabAbsensi({ roomId, showToast }: { roomId: number; showToast: (m: stri
                 ))}
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Modal Konfirmasi Tutup Sesi */}
+      {closingSession && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-xs">
+          <div className="bg-white rounded-3xl p-6 sm:p-7 max-w-md w-full space-y-4 text-left shadow-2xl">
+            <div className="flex items-start gap-3.5">
+              <div className="p-3 rounded-2xl bg-rose-100 text-rose-700 shrink-0">
+                <Lock className="w-6 h-6" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-display font-bold text-lg text-slate-800">
+                  Tutup Sesi Absensi
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Anda akan menutup: <strong className="text-slate-800">{closingSession.title}</strong>
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setClosingSession(null)}
+                className="text-slate-400 hover:text-slate-600 p-1 font-bold text-lg cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-3.5 rounded-2xl bg-amber-50/80 border border-amber-200/80 text-xs text-amber-900 space-y-1.5">
+              <div className="flex items-center gap-1.5 font-bold text-amber-950">
+                <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />
+                <span>Setelah Sesi Ditutup:</span>
+              </div>
+              <ul className="list-disc pl-5 space-y-0.5 text-amber-800">
+                <li>Sesi tidak akan muncul lagi di banner aktif dashboard murid.</li>
+                <li>Murid tidak dapat lagi melakukan presensi mandiri (Hadir/Izin/Sakit).</li>
+                <li>Anda tetap dapat mengoreksi kehadiran murid secara manual kapan pun.</li>
+              </ul>
+            </div>
+
+            {/* Opsi Auto-Mark Alpa */}
+            <label className="flex items-start gap-3 p-3.5 rounded-2xl border border-slate-200 bg-slate-50/70 hover:bg-slate-50 cursor-pointer transition-colors">
+              <input
+                type="checkbox"
+                checked={markUnrecordedAlpa}
+                onChange={(e) => setMarkUnrecordedAlpa(e.target.checked)}
+                className="mt-0.5 w-4 h-4 text-rose-600 rounded-md border-slate-300 focus:ring-rose-500 cursor-pointer"
+              />
+              <div className="text-xs">
+                <span className="font-bold text-slate-800 block">Tandai Alpa Murid Belum Tercatat</span>
+                <span className="text-slate-500 text-[11px] leading-relaxed block mt-0.5">
+                  Otomatis mencatat murid yang belum hadir/izin/sakit sebagai <strong>Alpa</strong> agar rekap kelas akurat.
+                </span>
+              </div>
+            </label>
+
+            <div className="pt-2 flex justify-end gap-2">
+              <button
+                type="button"
+                disabled={submittingClose}
+                onClick={() => setClosingSession(null)}
+                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs cursor-pointer transition-colors"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                disabled={submittingClose}
+                onClick={handleConfirmClose}
+                className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center gap-1.5 cursor-pointer transition-all shadow-sm disabled:opacity-50"
+              >
+                {submittingClose ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Menutup...</span>
+                  </>
+                ) : (
+                  <>
+                    <Lock className="w-3.5 h-3.5" />
+                    <span>Ya, Tutup Sesi Sekarang</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}
