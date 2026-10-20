@@ -13,7 +13,8 @@ import {
   Calendar,
   UserCheck,
   ShieldCheck,
-  Info
+  Info,
+  Send
 } from 'lucide-react';
 
 interface AttendanceViewProps {
@@ -33,6 +34,8 @@ export default function AttendanceView({ roomId }: AttendanceViewProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [codeInputs, setCodeInputs] = useState<Record<number, string>>({});
+  const [statusSelections, setStatusSelections] = useState<Record<number, AttendanceStatus>>({});
+  const [noteInputs, setNoteInputs] = useState<Record<number, string>>({});
   const [submittingId, setSubmittingId] = useState<number | null>(null);
   const [feedback, setFeedback] = useState<{ id: number; success: boolean; message: string } | null>(null);
 
@@ -60,18 +63,30 @@ export default function AttendanceView({ roomId }: AttendanceViewProps) {
   }, [roomId]);
 
   const handleCheckIn = async (sessionId: number, requiresCode: boolean) => {
+    const status = statusSelections[sessionId] || 'hadir';
     const code = codeInputs[sessionId] || '';
-    if (requiresCode && !code.trim()) {
+    const note = noteInputs[sessionId] || '';
+
+    if (status === 'hadir' && requiresCode && !code.trim()) {
       setFeedback({ id: sessionId, success: false, message: 'Masukkan kode akses absensi yang diberikan guru.' });
+      return;
+    }
+
+    if ((status === 'izin' || status === 'sakit') && !note.trim()) {
+      const label = status === 'izin' ? 'izin' : 'sakit';
+      setFeedback({ id: sessionId, success: false, message: `Mohon sertakan alasan/keterangan ${label} Anda.` });
       return;
     }
 
     setSubmittingId(sessionId);
     setFeedback(null);
     try {
-      const msg = await attendanceService.checkIn(sessionId, code.trim());
+      const msg = await attendanceService.checkIn(sessionId, code.trim(), status, note.trim());
       setFeedback({ id: sessionId, success: true, message: msg });
-      // Reload to get updated status
+      // Reset input fields for this session
+      setCodeInputs(prev => ({ ...prev, [sessionId]: '' }));
+      setNoteInputs(prev => ({ ...prev, [sessionId]: '' }));
+      // Reload to get updated status and summary
       await loadSessions();
     } catch (err: any) {
       setFeedback({ id: sessionId, success: false, message: err.message || 'Gagal melakukan absensi.' });
@@ -255,48 +270,147 @@ export default function AttendanceView({ roomId }: AttendanceViewProps) {
                     )}
 
                     {session.my_note && (
-                      <p className="text-xs text-stone-600 bg-stone-50 p-2 rounded-xl mt-1 italic">
-                        Catatan: "{session.my_note}"
+                      <p className="text-xs text-stone-600 bg-stone-50 p-2.5 rounded-xl mt-1 border border-stone-200/50 flex items-start gap-1.5">
+                        <Info className="w-3.5 h-3.5 text-stone-400 shrink-0 mt-0.5" />
+                        <span>Keterangan: "{session.my_note}"</span>
                       </p>
                     )}
                   </div>
 
-                  {/* Status / Aksi Presensi */}
-                  <div className="shrink-0 flex flex-col sm:flex-row sm:items-center gap-3">
-                    <div className="sm:text-right">
-                      <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider block mb-1">Status Kehadiran</span>
-                      {getStatusBadge(session.my_status, session.status)}
-                    </div>
-
-                    {canCheckIn && (
-                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 sm:border-l sm:pl-3 border-stone-100">
-                        {session.has_code && (
-                          <input
-                            type="text"
-                            placeholder="Kode Presensi"
-                            maxLength={10}
-                            value={codeInputs[session.id] || ''}
-                            onChange={(e) => setCodeInputs({ ...codeInputs, [session.id]: e.target.value.toUpperCase() })}
-                            className="px-3 py-2 border border-stone-200 rounded-xl text-xs font-mono uppercase font-bold tracking-wider text-center focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 outline-none w-32"
-                          />
-                        )}
-
-                        <button
-                          onClick={() => handleCheckIn(session.id, session.has_code)}
-                          disabled={isSubmitting}
-                          className="px-4 py-2 rounded-xl bg-[#006e1c] hover:bg-[#154212] text-white text-xs font-bold transition-all shadow-sm hover:scale-105 active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
-                        >
-                          {isSubmitting ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            <UserCheck className="w-4 h-4" />
-                          )}
-                          <span>Hadir Sekarang</span>
-                        </button>
-                      </div>
-                    )}
+                  {/* Status Kehadiran Saat Ini */}
+                  <div className="shrink-0 md:text-right">
+                    <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider block mb-1">Status Kehadiran</span>
+                    {getStatusBadge(session.my_status, session.status)}
                   </div>
                 </div>
+
+                {/* Form Aksi Presensi Siswa (Hadir / Izin / Sakit) */}
+                {canCheckIn && (
+                  <div className="mt-5 pt-4 border-t border-stone-100 space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                      <span className="text-xs font-bold text-stone-700 flex items-center gap-1.5">
+                        <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                        Pilih Status Kehadiran Anda:
+                      </span>
+
+                      {/* Segmented Option Buttons: Hadir | Izin | Sakit */}
+                      <div className="inline-flex p-1 bg-stone-100 rounded-2xl gap-1 self-start sm:self-auto border border-stone-200/60">
+                        <button
+                          type="button"
+                          onClick={() => setStatusSelections(prev => ({ ...prev, [session.id]: 'hadir' }))}
+                          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                            (statusSelections[session.id] || 'hadir') === 'hadir'
+                              ? 'bg-emerald-600 text-white shadow-xs'
+                              : 'text-stone-600 hover:text-emerald-800 hover:bg-white/70'
+                          }`}
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>Hadir</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setStatusSelections(prev => ({ ...prev, [session.id]: 'izin' }))}
+                          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                            statusSelections[session.id] === 'izin'
+                              ? 'bg-blue-600 text-white shadow-xs'
+                              : 'text-stone-600 hover:text-blue-800 hover:bg-white/70'
+                          }`}
+                        >
+                          <Info className="w-3.5 h-3.5" />
+                          <span>Izin</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setStatusSelections(prev => ({ ...prev, [session.id]: 'sakit' }))}
+                          className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                            statusSelections[session.id] === 'sakit'
+                              ? 'bg-amber-600 text-white shadow-xs'
+                              : 'text-stone-600 hover:text-amber-800 hover:bg-white/70'
+                          }`}
+                        >
+                          <AlertCircle className="w-3.5 h-3.5" />
+                          <span>Sakit</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Dynamic Action Fields */}
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                      {(statusSelections[session.id] || 'hadir') === 'hadir' ? (
+                        <>
+                          {session.has_code ? (
+                            <div className="relative flex-1 sm:max-w-xs">
+                              <KeyRound className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                              <input
+                                type="text"
+                                placeholder="Ketik Kode Presensi Guru"
+                                maxLength={10}
+                                value={codeInputs[session.id] || ''}
+                                onChange={(e) => setCodeInputs(prev => ({ ...prev, [session.id]: e.target.value.toUpperCase() }))}
+                                className="w-full pl-9 pr-3 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs font-mono uppercase font-bold tracking-wider focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 outline-none transition-all placeholder:font-sans placeholder:normal-case placeholder:font-normal placeholder:text-stone-400"
+                              />
+                            </div>
+                          ) : (
+                            <div className="text-xs text-stone-500 flex-1 py-1 italic">
+                              Sesi ini terbuka tanpa kode akses. Klik tombol konfirmasi untuk mencatat kehadiran.
+                            </div>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={() => handleCheckIn(session.id, session.has_code)}
+                            disabled={isSubmitting}
+                            className="px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                          >
+                            {isSubmitting ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <UserCheck className="w-4 h-4" />
+                            )}
+                            <span>Konfirmasi Hadir</span>
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <div className="relative flex-1">
+                            <input
+                              type="text"
+                              placeholder={
+                                statusSelections[session.id] === 'izin'
+                                  ? "Tuliskan alasan izin (contoh: Mengikuti lomba OSN, ada urusan keluarga)..."
+                                  : "Tuliskan keterangan sakit (contoh: Demam & flu, istirahat dokter)..."
+                              }
+                              maxLength={200}
+                              value={noteInputs[session.id] || ''}
+                              onChange={(e) => setNoteInputs(prev => ({ ...prev, [session.id]: e.target.value }))}
+                              className="w-full px-3.5 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-xs text-stone-700 focus:bg-white focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 outline-none transition-all placeholder:text-stone-400"
+                            />
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => handleCheckIn(session.id, false)}
+                            disabled={isSubmitting}
+                            className={`px-5 py-2.5 rounded-xl text-white text-xs font-bold transition-all shadow-xs active:scale-95 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 ${
+                              statusSelections[session.id] === 'izin'
+                                ? 'bg-blue-600 hover:bg-blue-700'
+                                : 'bg-amber-600 hover:bg-amber-700'
+                            }`}
+                          >
+                            {isSubmitting ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Send className="w-4 h-4" />
+                            )}
+                            <span>Kirim Keterangan {statusSelections[session.id] === 'izin' ? 'Izin' : 'Sakit'}</span>
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {currentFeedback && (
                   <div className={`mt-3 p-3 rounded-xl text-xs font-semibold flex items-center gap-2 ${

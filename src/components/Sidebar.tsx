@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Tab, Room } from '../types';
+import { attendanceService } from '../services/attendanceService';
 import { 
   LayoutDashboard, 
   BookOpen, 
@@ -25,6 +26,17 @@ interface SidebarProps {
 
 export default function Sidebar({ activeTab, setActiveTab, currentRoom, onBackToRooms }: SidebarProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [hasOpenAttendance, setHasOpenAttendance] = useState(false);
+
+  useEffect(() => {
+    if (!currentRoom?.id) return;
+    attendanceService.getSessions(currentRoom.id)
+      .then(res => {
+        const open = res.sessions?.some(s => s.status === 'open' && (!s.my_status || s.my_status === 'alpa'));
+        setHasOpenAttendance(Boolean(open));
+      })
+      .catch(() => {});
+  }, [currentRoom?.id, activeTab]);
 
   const navItems = [
     { id: 'dashboard' as Tab, label: 'Dashboard Kelas', icon: LayoutDashboard },
@@ -111,7 +123,16 @@ export default function Sidebar({ activeTab, setActiveTab, currentRoom, onBackTo
               }`}
             >
               <Icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-[#006e1c] fill-[#91f78e]' : ''}`} />
-              {!compact && <span>{item.label}</span>}
+              {!compact && (
+                <span className="flex-1 flex items-center justify-between">
+                  <span>{item.label}</span>
+                  {item.id === 'absensi' && hasOpenAttendance && (
+                    <span className="flex items-center gap-1 bg-amber-400 text-amber-950 font-black text-[9px] px-2 py-0.5 rounded-full uppercase tracking-wider animate-pulse">
+                      Buka
+                    </span>
+                  )}
+                </span>
+              )}
             </button>
           );
         })}

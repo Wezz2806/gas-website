@@ -207,10 +207,16 @@ if ($method === 'POST') {
     $action = isset($body['action']) ? trim($body['action']) : '';
 
     try {
-        // ── Siswa: check-in Hadir ─────────────────────────────────────
+        // ── Siswa: check-in (Hadir / Izin / Sakit) ────────────────────
         if ($action === 'check_in') {
             $sessionId = isset($body['session_id']) ? (int)$body['session_id'] : 0;
             $code      = isset($body['access_code']) ? strtoupper(trim($body['access_code'])) : '';
+            $status    = isset($body['status']) ? strtolower(trim($body['status'])) : 'hadir';
+            $note      = isset($body['note']) && trim($body['note']) !== '' ? trim($body['note']) : null;
+
+            if (!in_array($status, ['hadir', 'izin', 'sakit'])) {
+                $status = 'hadir';
+            }
 
             $session = attGetSession($pdo, $sessionId);
             if (!$session) {
@@ -222,8 +228,16 @@ if ($method === 'POST') {
             if ($session['effective_status'] !== 'open') {
                 sendJson(['success' => false, 'message' => 'Sesi absensi sudah ditutup.'], 400);
             }
-            if (!empty($session['access_code']) && strtoupper($session['access_code']) !== $code) {
-                sendJson(['success' => false, 'message' => 'Kode absensi salah.'], 400);
+
+            // Kode absensi wajib jika status Hadir dan sesi memiliki kode akses
+            if ($status === 'hadir' && !empty($session['access_code']) && strtoupper($session['access_code']) !== $code) {
+                sendJson(['success' => false, 'message' => 'Kode absensi salah atau belum diisi.'], 400);
+            }
+
+            // Jika status izin atau sakit, keterangan/alasan wajib diisi
+            if (($status === 'izin' || $status === 'sakit') && empty($note)) {
+                $label = $status === 'izin' ? 'Izin' : 'Sakit';
+                sendJson(['success' => false, 'message' => "Mohon sertakan alasan/keterangan {$label} Anda."], 400);
             }
 
             $stmt = $pdo->prepare("SELECT status, marked_by FROM room_attendance_records WHERE session_id = :sid AND student_id = :uid");
@@ -231,18 +245,24 @@ if ($method === 'POST') {
             $existing = $stmt->fetch();
             if ($existing) {
                 $msg = $existing['marked_by'] === 'admin'
-                    ? 'Kehadiran Anda sudah dicatat oleh guru (' . $existing['status'] . ').'
-                    : 'Anda sudah melakukan absensi pada sesi ini.';
+                    ? 'Kehadiran Anda sudah dicatat oleh guru (' . ucfirst($existing['status']) . ').'
+                    : 'Anda sudah melakukan absensi pada sesi ini (' . ucfirst($existing['status']) . ').';
                 sendJson(['success' => false, 'message' => $msg], 400);
             }
 
             $stmt = $pdo->prepare("
-                INSERT INTO room_attendance_records (session_id, student_id, status, marked_by)
-                VALUES (:sid, :uid, 'hadir', 'self')
+                INSERT INTO room_attendance_records (session_id, student_id, status, note, marked_by)
+                VALUES (:sid, :uid, :status, :note, 'self')
             ");
-            $stmt->execute(['sid' => $sessionId, 'uid' => $userId]);
+            $stmt->execute([
+                'sid' => $sessionId,
+                'uid' => $userId,
+                'status' => $status,
+                'note' => $note
+            ]);
 
-            sendJson(['success' => true, 'message' => 'Absensi berhasil. Anda tercatat Hadir.']);
+            $label = $status === 'hadir' ? 'Hadir' : ($status === 'izin' ? 'Izin' : 'Sakit');
+            sendJson(['success' => true, 'message' => "Absensi berhasil. Anda tercatat {$label}."]);
         }
 
         // ── Aksi admin ────────────────────────────────────────────────

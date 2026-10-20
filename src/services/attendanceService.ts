@@ -46,7 +46,12 @@ export const attendanceService = {
     return data;
   },
 
-  async checkIn(sessionId: number, accessCode?: string): Promise<string> {
+  async checkIn(
+    sessionId: number,
+    accessCode?: string,
+    status: AttendanceStatus = 'hadir',
+    note?: string
+  ): Promise<string> {
     const res = await fetch(`${API_BASE}/room-attendance.php`, {
       method: 'POST',
       credentials: 'include',
@@ -54,7 +59,9 @@ export const attendanceService = {
       body: JSON.stringify({
         action: 'check_in',
         session_id: sessionId,
-        access_code: accessCode || ''
+        access_code: accessCode || '',
+        status,
+        note: note || ''
       })
     });
     const data = await res.json();

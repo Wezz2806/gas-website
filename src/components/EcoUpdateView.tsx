@@ -26,6 +26,12 @@ function NewsCoverImage({ articleUrl, fallbackUrl, alt, className }: NewsCoverIm
   const [imgSrc, setImgSrc] = useState<string>(fallbackUrl);
 
   useEffect(() => {
+    // Jika fallbackUrl sudah merupakan URL gambar valid, gunakan langsung tanpa scraping
+    if (fallbackUrl && (fallbackUrl.startsWith('http') || fallbackUrl.startsWith('/'))) {
+      setImgSrc(fallbackUrl);
+      return;
+    }
+
     if (!articleUrl) return;
 
     // Simple session cache to avoid duplicate fetches
@@ -57,12 +63,16 @@ function NewsCoverImage({ articleUrl, fallbackUrl, alt, className }: NewsCoverIm
   return (
     <img 
       alt={alt} 
-      src={imgSrc} 
+      src={imgSrc || 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=800&q=80'} 
       referrerPolicy="no-referrer"
+      loading="lazy"
+      decoding="async"
       className={className}
       onError={() => {
-        if (imgSrc !== fallbackUrl) {
+        if (imgSrc !== fallbackUrl && fallbackUrl) {
           setImgSrc(fallbackUrl);
+        } else {
+          setImgSrc('https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=800&q=80');
         }
       }}
     />

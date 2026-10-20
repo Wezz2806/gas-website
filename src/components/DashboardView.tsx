@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Tab, Room, Assignment } from '../types';
+import { Tab, Room, Assignment, AttendanceStatus } from '../types';
 import { 
   CalendarCheck, 
   ArrowRight, 
@@ -20,7 +20,12 @@ import {
   MessageSquare,
   Award,
   Calendar,
-  Loader2
+  Loader2,
+  Send,
+  Info,
+  AlertCircle,
+  KeyRound,
+  UserCheck
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { submissionService } from '../services/submissionService';
@@ -83,7 +88,14 @@ export default function DashboardView({
     fetchProgress();
   }, []);
 
-  useEffect(() => {
+  // Quick attendance check-in states for student dashboard
+  const [quickStatus, setQuickStatus] = useState<AttendanceStatus>('hadir');
+  const [quickCode, setQuickCode] = useState('');
+  const [quickNote, setQuickNote] = useState('');
+  const [isSubmittingQuickAtt, setIsSubmittingQuickAtt] = useState(false);
+  const [quickAttFeedback, setQuickAttFeedback] = useState<{ success: boolean; message: string } | null>(null);
+
+  const fetchAttendance = () => {
     if (!currentRoom?.id) return;
     attendanceService.getSessions(currentRoom.id)
       .then(res => {
@@ -94,7 +106,39 @@ export default function DashboardView({
       .catch(err => {
         console.error('Failed to fetch attendance for dashboard:', err);
       });
+  };
+
+  useEffect(() => {
+    fetchAttendance();
   }, [currentRoom?.id]);
+
+  const handleQuickCheckIn = async (sessionId: number, requiresCode: boolean) => {
+    if (quickStatus === 'hadir' && requiresCode && !quickCode.trim()) {
+      setQuickAttFeedback({ success: false, message: 'Masukkan kode akses presensi yang diberikan guru.' });
+      return;
+    }
+    if ((quickStatus === 'izin' || quickStatus === 'sakit') && !quickNote.trim()) {
+      const label = quickStatus === 'izin' ? 'izin' : 'sakit';
+      setQuickAttFeedback({ success: false, message: `Mohon tuliskan keterangan/alasan ${label} Anda.` });
+      return;
+    }
+
+    try {
+      setIsSubmittingQuickAtt(true);
+      setQuickAttFeedback(null);
+      const msg = await attendanceService.checkIn(sessionId, quickCode.trim(), quickStatus, quickNote.trim());
+      setQuickAttFeedback({ success: true, message: msg });
+      setQuickCode('');
+      setQuickNote('');
+      fetchAttendance();
+    } catch (err: any) {
+      setQuickAttFeedback({ success: false, message: err.message || 'Gagal mengirim presensi.' });
+    } finally {
+      setIsSubmittingQuickAtt(false);
+    }
+  };
+
+  const hasCheckedIn = Boolean(activeSession?.my_status && activeSession.my_status !== 'alpa');
 
   const navCards = [
     { id: 'ecolab' as Tab, label: 'EcoLab', desc: 'Praktikum & LKM Kimia Hijau', icon: FlaskConical, color: 'text-emerald-700 bg-emerald-50 border-emerald-100' },
@@ -159,6 +203,223 @@ export default function DashboardView({
           </p>
         </div>
       </section>
+
+      {/* ── BANNER PERINGATAN SESI ABSENSI AKTIF ── */}
+      {activeSession && (
+        <section className={`rounded-3xl p-5 sm:p-7 text-left transition-all shadow-sm border ${
+          hasCheckedIn
+            ? 'bg-gradient-to-r from-emerald-50/90 via-teal-50/50 to-white border-emerald-200'
+            : 'bg-gradient-to-r from-amber-50/95 via-orange-50/60 to-white border-amber-300 ring-2 ring-amber-400/20'
+        }`}>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="space-y-1.5 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className={`text-[10px] uppercase font-black tracking-widest px-3 py-1 rounded-full flex items-center gap-1.5 ${
+                  hasCheckedIn
+                    ? 'bg-emerald-100 text-emerald-800'
+                    : 'bg-amber-100 text-amber-900'
+                }`}>
+                  <span className={`w-2 h-2 rounded-full ${hasCheckedIn ? 'bg-emerald-600' : 'bg-amber-600 animate-ping'}`} />
+                  {hasCheckedIn ? 'Sesi Presensi Diikuti' : 'Sesi Presensi Sedang Berlangsung!'}
+                </span>
+
+                <span className="text-[11px] font-bold text-stone-500 bg-white/80 px-2.5 py-0.5 rounded-lg border border-stone-200/60 flex items-center gap-1">
+                  <Calendar className="w-3 h-3 text-stone-400" />
+                  {activeSession.session_date}
+                </span>
+
+                {activeSession.has_code && !hasCheckedIn && (
+                  <span className="text-[10px] font-bold text-amber-800 bg-amber-100/80 px-2.5 py-0.5 rounded-lg flex items-center gap-1">
+                    <KeyRound className="w-3 h-3 text-amber-600" />
+                    Memerlukan Kode Guru
+                  </span>
+                )}
+              </div>
+
+              <h3 className="font-display font-black text-lg md:text-xl text-stone-800">
+                {activeSession.title}
+              </h3>
+
+              {hasCheckedIn ? (
+                <div className="flex flex-wrap items-center gap-2 text-xs text-stone-600 pt-1">
+                  <span className="inline-flex items-center gap-1 font-bold text-emerald-700 bg-emerald-100/80 px-2.5 py-0.5 rounded-full">
+                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                    Status Anda: {activeSession.my_status === 'hadir' ? 'Hadir' : (activeSession.my_status === 'izin' ? 'Izin' : 'Sakit')}
+                  </span>
+                  {activeSession.my_checked_in_at && (
+                    <span className="text-stone-400">
+                      Tercatat pukul {new Date(activeSession.my_checked_in_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB
+                    </span>
+                  )}
+                  {activeSession.my_note && (
+                    <span className="text-stone-500 italic">
+                      ("{activeSession.my_note}")
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <p className="text-xs text-stone-600 max-w-2xl leading-relaxed">
+                  Guru telah membuka sesi presensi pertemuan kelas. Silakan pilih status kehadiran Anda (<strong>Hadir</strong>, <strong>Izin</strong>, atau <strong>Sakit</strong>) di bawah ini sebelum sesi berakhir.
+                </p>
+              )}
+            </div>
+
+            <div className="shrink-0 flex items-center gap-2 self-start md:self-auto">
+              <button
+                type="button"
+                onClick={() => setActiveTab('absensi')}
+                className="px-4 py-2.5 rounded-xl bg-white hover:bg-stone-50 border border-stone-200 text-stone-700 text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+              >
+                <span>Menu Absensi</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Quick Check-in Controls jika murid belum mengisi */}
+          {!hasCheckedIn && !isAdmin && (
+            <div className="mt-4 pt-4 border-t border-amber-200/60 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                <span className="text-xs font-bold text-stone-700 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                  Presensi Cepat dari Dashboard:
+                </span>
+
+                {/* Segmented Buttons: Hadir | Izin | Sakit */}
+                <div className="inline-flex p-1 bg-white/90 rounded-2xl gap-1 self-start sm:self-auto border border-stone-200">
+                  <button
+                    type="button"
+                    onClick={() => setQuickStatus('hadir')}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                      quickStatus === 'hadir'
+                        ? 'bg-emerald-600 text-white shadow-xs'
+                        : 'text-stone-600 hover:text-emerald-800'
+                    }`}
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Hadir</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setQuickStatus('izin')}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                      quickStatus === 'izin'
+                        ? 'bg-blue-600 text-white shadow-xs'
+                        : 'text-stone-600 hover:text-blue-800'
+                    }`}
+                  >
+                    <Info className="w-3.5 h-3.5" />
+                    <span>Izin</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setQuickStatus('sakit')}
+                    className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                      quickStatus === 'sakit'
+                        ? 'bg-amber-600 text-white shadow-xs'
+                        : 'text-stone-600 hover:text-amber-800'
+                    }`}
+                  >
+                    <AlertCircle className="w-3.5 h-3.5" />
+                    <span>Sakit</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Input & Tombol Submit */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+                {quickStatus === 'hadir' ? (
+                  <>
+                    {activeSession.has_code ? (
+                      <div className="relative flex-1 sm:max-w-xs">
+                        <KeyRound className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                        <input
+                          type="text"
+                          placeholder="Ketik Kode Presensi Guru"
+                          maxLength={10}
+                          value={quickCode}
+                          onChange={(e) => setQuickCode(e.target.value.toUpperCase())}
+                          className="w-full pl-9 pr-3 py-2.5 bg-white border border-stone-200 rounded-xl text-xs font-mono uppercase font-bold tracking-wider focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 outline-none transition-all placeholder:font-sans placeholder:normal-case placeholder:font-normal placeholder:text-stone-400"
+                        />
+                      </div>
+                    ) : (
+                      <div className="text-xs text-stone-500 flex-1 py-1 italic">
+                        Sesi terbuka tanpa kode akses. Klik tombol untuk konfirmasi kehadiran.
+                      </div>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => handleQuickCheckIn(activeSession.id, activeSession.has_code)}
+                      disabled={isSubmittingQuickAtt}
+                      className="px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                    >
+                      {isSubmittingQuickAtt ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <UserCheck className="w-4 h-4" />
+                      )}
+                      <span>Konfirmasi Hadir</span>
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <div className="relative flex-1">
+                      <input
+                        type="text"
+                        placeholder={
+                          quickStatus === 'izin'
+                            ? "Tuliskan alasan izin (contoh: Mengikuti lomba OSN, ada keperluan keluarga)..."
+                            : "Tuliskan keterangan sakit (contoh: Demam & flu, istirahat dokter)..."
+                        }
+                        maxLength={200}
+                        value={quickNote}
+                        onChange={(e) => setQuickNote(e.target.value)}
+                        className="w-full px-3.5 py-2.5 bg-white border border-stone-200 rounded-xl text-xs text-stone-700 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 outline-none transition-all placeholder:text-stone-400"
+                      />
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleQuickCheckIn(activeSession.id, false)}
+                      disabled={isSubmittingQuickAtt}
+                      className={`px-5 py-2.5 rounded-xl text-white text-xs font-bold transition-all shadow-xs active:scale-95 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 ${
+                        quickStatus === 'izin'
+                          ? 'bg-blue-600 hover:bg-blue-700'
+                          : 'bg-amber-600 hover:bg-amber-700'
+                      }`}
+                    >
+                      {isSubmittingQuickAtt ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Send className="w-4 h-4" />
+                      )}
+                      <span>Kirim Keterangan {quickStatus === 'izin' ? 'Izin' : 'Sakit'}</span>
+                    </button>
+                  </>
+                )}
+              </div>
+
+              {quickAttFeedback && (
+                <div className={`p-3 rounded-xl text-xs font-semibold flex items-center gap-2 ${
+                  quickAttFeedback.success 
+                    ? 'bg-emerald-100 text-emerald-900 border border-emerald-200' 
+                    : 'bg-rose-100 text-rose-900 border border-rose-200'
+                }`}>
+                  {quickAttFeedback.success ? (
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  ) : (
+                    <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                  )}
+                  <span>{quickAttFeedback.message}</span>
+                </div>
+              )}
+            </div>
+          )}
+        </section>
+      )}
 
       {/* ── BOX TUGAS & PERINTAH KELAS ── */}
       <section className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-stone-200/80 text-left space-y-6">
@@ -330,23 +591,46 @@ export default function DashboardView({
           </div>
 
           {activeSession ? (
-            <div className="p-4 rounded-2xl bg-emerald-50/80 border border-emerald-200/60 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-left">
+            <div className={`p-4 sm:p-5 rounded-2xl border mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 text-left ${
+              hasCheckedIn
+                ? 'bg-emerald-50/80 border-emerald-200/80'
+                : 'bg-amber-50/90 border-amber-200'
+            }`}>
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="w-2 h-2 rounded-full bg-emerald-600 animate-ping"></span>
-                  <span className="text-[10px] uppercase font-bold text-emerald-800 tracking-wider">Sesi Terbuka Sekarang</span>
+                  <span className={`w-2 h-2 rounded-full ${hasCheckedIn ? 'bg-emerald-600' : 'bg-amber-600 animate-ping'}`} />
+                  <span className={`text-[10px] uppercase font-bold tracking-wider ${hasCheckedIn ? 'text-emerald-800' : 'text-amber-800'}`}>
+                    {hasCheckedIn ? 'Sesi Presensi Diikuti' : 'Sesi Terbuka — Belum Mengisi'}
+                  </span>
                 </div>
-                <h4 className="font-bold text-sm text-emerald-950">{activeSession.title}</h4>
-                <p className="text-xs text-emerald-800/80 flex items-center gap-1.5 mt-0.5">
-                  <Clock className="w-3.5 h-3.5" />
-                  Tanggal: {activeSession.session_date} {activeSession.has_code ? '• Memerlukan Kode Sesi' : ''}
-                </p>
+                <h4 className="font-bold text-sm text-stone-900">{activeSession.title}</h4>
+                <div className="flex flex-wrap items-center gap-2 text-xs text-stone-600 mt-1">
+                  <span className="flex items-center gap-1 text-stone-500">
+                    <Clock className="w-3.5 h-3.5" />
+                    {activeSession.session_date}
+                  </span>
+                  {hasCheckedIn && (
+                    <span className="px-2.5 py-0.5 rounded-full font-bold text-[10px] bg-emerald-100 text-emerald-800 flex items-center gap-1">
+                      <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                      Status: {activeSession.my_status === 'hadir' ? 'Hadir' : (activeSession.my_status === 'izin' ? 'Izin' : 'Sakit')}
+                    </span>
+                  )}
+                  {activeSession.has_code && !hasCheckedIn && (
+                    <span className="text-[10px] text-amber-700 bg-amber-100/70 px-2 py-0.5 rounded-md font-semibold">
+                      Kunci: Kode Guru
+                    </span>
+                  )}
+                </div>
               </div>
               <button
                 onClick={() => setActiveTab('absensi')}
-                className="px-4 py-2.5 rounded-xl bg-[#006e1c] hover:bg-[#154212] text-white text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer shrink-0"
+                className={`px-4 py-2.5 rounded-xl text-white text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer shrink-0 ${
+                  hasCheckedIn
+                    ? 'bg-[#006e1c] hover:bg-[#154212]'
+                    : 'bg-amber-600 hover:bg-amber-700'
+                }`}
               >
-                <span>Buka Presensi</span>
+                <span>{hasCheckedIn ? 'Rincian Absensi' : 'Isi Presensi Sekarang'}</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>

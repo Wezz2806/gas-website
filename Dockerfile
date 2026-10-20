@@ -15,5 +15,9 @@ COPY . /app/
 # Buat folder uploads dan subdirektori terkait
 RUN mkdir -p /app/uploads/videos /app/uploads/submissions /app/uploads/avatars /app/uploads/test && chmod -R 777 /app/uploads
 
+# Enable concurrent worker processes for PHP built-in server (PHP 7.4+)
+# Handles parallel requests without serial queuing/blocking
+ENV PHP_CLI_SERVER_WORKERS=8
+
 # Jalankan PHP built-in server di port yang Railway tentukan dengan limit upload 100MB
 CMD php -d upload_max_filesize=100M -d post_max_size=110M -d memory_limit=256M -S 0.0.0.0:${PORT:-80} -t /app
