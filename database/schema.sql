@@ -123,9 +123,10 @@ CREATE TABLE IF NOT EXISTS eco_challenge_comments (
 CREATE TABLE IF NOT EXISTS eco_creation_videos (
     id            INT          AUTO_INCREMENT PRIMARY KEY,
     student_id    INT          NOT NULL,
+    room_id       INT          DEFAULT NULL,
     title         VARCHAR(300) NOT NULL,
     category      VARCHAR(100) NOT NULL DEFAULT 'Umum',
-    duration      VARCHAR(10)  DEFAULT NULL,               -- format MM:SS
+    duration      VARCHAR(20)  DEFAULT '00:00',
     filename      VARCHAR(255) NOT NULL,                    -- nama file di server
     original_name VARCHAR(255) NOT NULL,
     status        ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',

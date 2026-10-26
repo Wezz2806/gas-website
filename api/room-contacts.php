@@ -90,7 +90,8 @@ if ($method === 'POST') {
                 ");
             }
             $stmt->execute($params);
-            sendJson(['success' => true, 'message' => 'Kontak berhasil disimpan.']);
+            $contactId = $id > 0 ? $id : (int)$pdo->lastInsertId();
+            sendJson(['success' => true, 'message' => 'Kontak berhasil disimpan.', 'id' => $contactId]);
         }
 
         if ($action === 'delete') {

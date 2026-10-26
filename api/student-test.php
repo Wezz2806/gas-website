@@ -99,7 +99,7 @@ if ($method === 'GET') {
 
     try {
         if ($roomId > 0) {
-            $stmt = $pdo->prepare("SELECT * FROM student_tests WHERE student_id = :student_id AND (room_id = :room_id OR room_id IS NULL) ORDER BY (room_id = :room_id) DESC LIMIT 1");
+            $stmt = $pdo->prepare("SELECT * FROM student_tests WHERE student_id = :student_id AND (room_id = :room_id OR room_id IS NULL) ORDER BY room_id DESC LIMIT 1");
             $stmt->execute(['student_id' => $studentId, 'room_id' => $roomId]);
         } else {
             $stmt = $pdo->prepare("SELECT * FROM student_tests WHERE student_id = :student_id LIMIT 1");

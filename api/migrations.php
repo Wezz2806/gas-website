@@ -352,6 +352,10 @@ try {
         }
     }
 
+    try {
+        $pdo->exec("ALTER TABLE eco_creation_videos MODIFY COLUMN duration VARCHAR(20) DEFAULT '00:00'");
+    } catch (PDOException $ex) {}
+
     // -- AUTO-MIGRATION: ABSENSI & KONTAK PER KELAS --
     $pdo->exec("
         CREATE TABLE IF NOT EXISTS room_attendance_sessions (

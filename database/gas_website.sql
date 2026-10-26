@@ -89,9 +89,10 @@ CREATE TABLE `eco_contact_messages` (
 CREATE TABLE `eco_creation_videos` (
   `id` int(11) NOT NULL,
   `student_id` int(11) NOT NULL,
+  `room_id` int(11) DEFAULT NULL,
   `title` varchar(300) NOT NULL,
   `category` varchar(100) NOT NULL DEFAULT 'Umum',
-  `duration` varchar(10) DEFAULT NULL,
+  `duration` varchar(20) DEFAULT '00:00',
   `filename` varchar(255) NOT NULL,
   `original_name` varchar(255) NOT NULL,
   `status` enum('pending','approved','rejected') NOT NULL DEFAULT 'pending',

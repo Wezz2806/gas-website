@@ -72,7 +72,7 @@ if ($method === 'GET') {
 
     try {
         if ($roomId > 0) {
-            $stmt = $pdo->prepare("SELECT * FROM student_surveys WHERE student_id = :student_id AND (room_id = :room_id OR room_id IS NULL) ORDER BY (room_id = :room_id) DESC LIMIT 1");
+            $stmt = $pdo->prepare("SELECT * FROM student_surveys WHERE student_id = :student_id AND (room_id = :room_id OR room_id IS NULL) ORDER BY room_id DESC LIMIT 1");
             $stmt->execute(['student_id' => $studentId, 'room_id' => $roomId]);
         } else {
             $stmt = $pdo->prepare("SELECT * FROM student_surveys WHERE student_id = :student_id LIMIT 1");
@@ -142,6 +142,9 @@ if ($method === 'GET') {
             'message' => 'Jawaban kuisioner tidak valid.'
         ], 400);
     }
+
+    $studentId = (int)$currentUser['id'];
+    $answersJson = json_encode($answers, JSON_UNESCAPED_UNICODE);
 
     $roomId = isset($body['room_id']) ? (int)$body['room_id'] : 0;
     $roomIdVal = $roomId > 0 ? $roomId : null;

@@ -290,7 +290,7 @@ if ($method === 'POST') {
             sendJson(['success' => false, 'message' => 'Hanya admin yang dapat mengedit tugas.'], 403);
         }
 
-        $id          = isset($body['id']) ? (int)$body['id'] : 0;
+        $id          = isset($body['id']) ? (int)$body['id'] : (isset($body['assignment_id']) ? (int)$body['assignment_id'] : 0);
         $title       = isset($body['title']) ? trim($body['title']) : '';
         $description = isset($body['description']) ? trim($body['description']) : '';
         $dueDate     = !empty($body['due_date']) ? trim($body['due_date']) : null;
@@ -328,7 +328,7 @@ if ($method === 'POST') {
             sendJson(['success' => false, 'message' => 'Hanya admin yang dapat menghapus tugas.'], 403);
         }
 
-        $id = isset($body['id']) ? (int)$body['id'] : 0;
+        $id = isset($body['id']) ? (int)$body['id'] : (isset($body['assignment_id']) ? (int)$body['assignment_id'] : 0);
         if ($id <= 0) {
             sendJson(['success' => false, 'message' => 'ID tugas tidak valid.'], 400);
         }
@@ -542,7 +542,7 @@ if ($method === 'POST') {
     // 7. SEMUA: TAMBAH KOMENTAR DISKUSI (KELAS ATAU PRIBADI)
     if ($action === 'add_comment') {
         $assignmentId    = isset($body['assignment_id']) ? (int)$body['assignment_id'] : 0;
-        $content         = isset($body['content']) ? trim($body['content']) : '';
+        $content         = isset($body['content']) ? trim($body['content']) : (isset($body['comment']) ? trim($body['comment']) : '');
         $commentType     = isset($body['comment_type']) && in_array($body['comment_type'], ['class', 'private']) ? $body['comment_type'] : 'class';
         $targetStudentId = isset($body['target_student_id']) && (int)$body['target_student_id'] > 0 ? (int)$body['target_student_id'] : null;
 

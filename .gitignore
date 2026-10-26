@@ -8,7 +8,9 @@ coverage/
 !.env.example
 !.env.netlify.example
 vendor/
-uploads/
-api/uploads/
+uploads/*
+!uploads/**/.gitkeep
+api/uploads/*
+!api/uploads/**/.gitkeep
 brain/
 

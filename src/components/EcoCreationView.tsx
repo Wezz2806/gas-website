@@ -196,33 +196,55 @@ export default function EcoCreationView({ searchQuery, roomId }: EcoCreationView
   };
 
   const calculateDuration = (file: File, callback: (durStr: string) => void) => {
-    const videoEl = document.createElement('video');
-    videoEl.preload = 'metadata';
-    videoEl.onloadedmetadata = () => {
-      window.URL.revokeObjectURL(videoEl.src);
-      const durationSecs = videoEl.duration;
-      if (!isNaN(durationSecs)) {
-        const minutes = Math.floor(durationSecs / 60);
-        const seconds = Math.floor(durationSecs % 60);
-        callback(`${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
-      } else {
-        callback('00:00');
+    let resolved = false;
+    const finish = (val: string) => {
+      if (!resolved) {
+        resolved = true;
+        callback(val);
       }
     };
-    videoEl.onerror = () => {
-      callback('00:00');
-    };
-    videoEl.src = URL.createObjectURL(file);
+
+    // Safety timeout: jika browser lambat memproses metadata video, jangan kunci tombol submit
+    const timer = setTimeout(() => {
+      finish('00:00');
+    }, 2500);
+
+    try {
+      const videoEl = document.createElement('video');
+      videoEl.preload = 'metadata';
+      videoEl.onloadedmetadata = () => {
+        clearTimeout(timer);
+        try {
+          window.URL.revokeObjectURL(videoEl.src);
+        } catch {}
+        const durationSecs = videoEl.duration;
+        if (!isNaN(durationSecs) && durationSecs > 0) {
+          const minutes = Math.floor(durationSecs / 60);
+          const seconds = Math.floor(durationSecs % 60);
+          finish(`${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`);
+        } else {
+          finish('00:00');
+        }
+      };
+      videoEl.onerror = () => {
+        clearTimeout(timer);
+        finish('00:00');
+      };
+      videoEl.src = URL.createObjectURL(file);
+    } catch {
+      clearTimeout(timer);
+      finish('00:00');
+    }
   };
 
   const handleFileSelection = (file: File) => {
     if (!file.type.startsWith('video/')) {
-      setUploadError('File harus berupa video (MP4, MOV, dll.)');
+      setUploadError('File harus berupa video (MP4, MOV, WEBM, AVI, MKV).');
       setSelectedFile(null);
       return;
     }
     if (file.size > 50 * 1024 * 1024) {
-      setUploadError('Ukuran file maksimal adalah 50MB.');
+      setUploadError('Ukuran file video maksimal adalah 50MB. Harap kompresi video Anda.');
       setSelectedFile(null);
       return;
     }
@@ -244,12 +266,12 @@ export default function EcoCreationView({ searchQuery, roomId }: EcoCreationView
 
   const handleEditFileSelection = (file: File) => {
     if (!file.type.startsWith('video/')) {
-      setEditError('File harus berupa video (MP4, MOV, dll.)');
+      setEditError('File harus berupa video (MP4, MOV, WEBM, AVI, MKV).');
       setNewFileToUpload(null);
       return;
     }
     if (file.size > 50 * 1024 * 1024) {
-      setEditError('Ukuran file maksimal adalah 50MB.');
+      setEditError('Ukuran file video maksimal adalah 50MB. Harap kompresi video Anda.');
       setNewFileToUpload(null);
       return;
     }
@@ -282,36 +304,28 @@ export default function EcoCreationView({ searchQuery, roomId }: EcoCreationView
 
     try {
       setUploadError(null);
-      setUploadProgress(10);
-      
-      const progressInterval = setInterval(() => {
-        setUploadProgress(prev => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return 90;
-          }
-          return prev + 10;
-        });
-      }, 300);
+      setUploadProgress(0);
 
-      const finalDuration = uploadDuration === 'Calculating...' ? '00:00' : uploadDuration;
+      const finalDuration = (uploadDuration === 'Calculating...' || !uploadDuration) ? '00:00' : uploadDuration;
 
       const newVideo = await videoService.uploadVideo(
-        uploadTitle,
+        uploadTitle.trim(),
         'Umum',
-        finalDuration || '00:00',
+        finalDuration,
         selectedFile,
-        roomId
+        roomId,
+        (percent) => {
+          setUploadProgress(percent);
+        }
       );
 
-      clearInterval(progressInterval);
       setUploadProgress(100);
-
       setVideos(prev => [newVideo, ...prev]);
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 5000);
       closeUploadModal();
     } catch (err: any) {
+      console.error('Upload video error:', err);
       setUploadProgress(-1);
       setUploadError(err.message || 'Gagal mengunggah video ke server.');
     }
@@ -344,30 +358,20 @@ export default function EcoCreationView({ searchQuery, roomId }: EcoCreationView
     try {
       setIsEditing(true);
       setEditError(null);
-      setEditProgress(10);
+      setEditProgress(newFileToUpload ? 0 : -1);
 
-      const progressInterval = setInterval(() => {
-        setEditProgress(prev => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return 90;
-          }
-          return prev + 10;
-        });
-      }, 300);
-
-      const finalDuration = editDuration === 'Calculating...' ? '00:00' : editDuration;
+      const finalDuration = (editDuration === 'Calculating...' || !editDuration) ? '00:00' : editDuration;
 
       const updatedVideo = await videoService.editVideo(
         editingVideo.id,
-        editTitle,
+        editTitle.trim(),
         'Umum',
         oldFileDeleted && newFileToUpload ? finalDuration : undefined,
-        oldFileDeleted && newFileToUpload ? newFileToUpload : undefined
+        oldFileDeleted && newFileToUpload ? newFileToUpload : undefined,
+        (percent) => {
+          setEditProgress(percent);
+        }
       );
-
-      clearInterval(progressInterval);
-      setEditProgress(100);
 
       // Update state locally
       setVideos(prev => 
@@ -383,6 +387,7 @@ export default function EcoCreationView({ searchQuery, roomId }: EcoCreationView
 
       closeEditModal();
     } catch (err: any) {
+      console.error('Edit video error:', err);
       setEditProgress(-1);
       setEditError(err.message || 'Gagal memperbarui video.');
     } finally {
