@@ -15,8 +15,79 @@ if (!isset($_SESSION['user'])) {
 
 $currentUser = $_SESSION['user'];
 
+function getDefaultSurveyQuestionsList() {
+    return [
+        ['id' => 1, 'order' => 1, 'text' => "Apakah kegiatan awal pembelajaran membantu anda memahami tujuan dan permasalahan yang akan dipelajari?"],
+        ['id' => 2, 'order' => 2, 'text' => "Apakah kasus permasalahan lingkungan yang disajikan menarik perhatian anda untuk belajar?"],
+        ['id' => 3, 'order' => 3, 'text' => "Apakah dengan bekerja secara berkelompok membantu anda bekerja sama dengan anggota kelompok secara efektif?"],
+        ['id' => 5, 'order' => 4, 'text' => "Apakah anda lebih mudah mengidentifikasi masalah yang terdapat dalam kasus?"],
+        ['id' => 6, 'order' => 5, 'text' => "Apakah anda lebih mudah menemukan penyebab masalah lingkungan yang dibahas?"],
+        ['id' => 7, 'order' => 6, 'text' => "Apakah data dan informasi yang tersedia pada GAS website membantu anda menganalisis kasus?"],
+        ['id' => 8, 'order' => 7, 'text' => "Apakah anda dapat merancang alternatif solusi terhadap masalah yang diberikan?"],
+        ['id' => 9, 'order' => 8, 'text' => "Apakah anda memilih solusi yang paling tepat berdasarkan data dan fakta?"],
+        ['id' => 10, 'order' => 9, 'text' => "Apakah anda menerapkan solusi dalam bentuk tindakan nyata?"],
+        ['id' => 11, 'order' => 10, 'text' => "Apakah kegiatan mengkomunasikan hasil dalam bentuk video membantu anda mengomunikasikan hasil pemecahan masalah dengan lebih baik?"],
+        ['id' => 12, 'order' => 11, 'text' => "Apakah GAS website mudah digunakan selama kegiatan pembelajaran?"],
+        ['id' => 13, 'order' => 12, 'text' => "Apakah tampilan GAS website menarik dan mudah dipahami?"],
+        ['id' => 14, 'order' => 13, 'text' => "Apakah fitur-fitur pada GAS website membantu anda memperoleh informasi yang dibutuhkan?"],
+        ['id' => 15, 'order' => 14, 'text' => "Apakah GAS website membantu anda belajar secara mandiri?"],
+        ['id' => 16, 'order' => 15, 'text' => "Apakah GAS website membantu anda mengikuti setiap tahapan pembelajaran CASUAL dengan lebih baik?"],
+        ['id' => 17, 'order' => 16, 'text' => "Apakah pembelajaran ini membantu anda memahami hubungan antara aktivitas manusia dan lingkungan?"],
+        ['id' => 18, 'order' => 17, 'text' => "Apakah pembelajaran ini meningkatkan kepedulian anda terhadap masalah lingkungan?"],
+        ['id' => 19, 'order' => 18, 'text' => "Apakah pembelajaran ini mendorong anda melakukan tindakan yang lebih ramah lingkungan dalam kehidupan sehari-hari?"],
+        ['id' => 20, 'order' => 19, 'text' => "Apakah anda mengevaluasi kembali solusi berupa aksi nyata yang telah dibuat?"],
+        ['id' => 21, 'order' => 20, 'text' => "Apakah anda terbantu dalam memperbaiki kesalahan dalam proses pemecahan masalah?"],
+        ['id' => 22, 'order' => 21, 'text' => "Apakah pembelajaran ini meningkatkan kemampuan anda dalam memecahkan masalah secara sistematis?"],
+        ['id' => 23, 'order' => 22, 'text' => "Apakah bahan ajar yang digunakan mudah dipahami?"],
+        ['id' => 24, 'order' => 23, 'text' => "Apakah bahan ajar membantu anda memahami materi yang dipelajari?"],
+        ['id' => 25, 'order' => 24, 'text' => "Apakah lembar kerja murid (LKM) membantu anda menyelesaikan tugas pembelajaran?"],
+        ['id' => 26, 'order' => 25, 'text' => "Apakah suasana kelas selama pembelajaran membuat anda aktif berdiskusi?"],
+        ['id' => 27, 'order' => 26, 'text' => "Apakah cara guru menyajikan materi membantu anda memahami pembelajaran dengan baik?"]
+    ];
+}
+
 if ($method === 'GET') {
     $action = isset($_GET['action']) ? trim($_GET['action']) : '';
+
+    // Ambil daftar pertanyaan angket
+    if ($action === 'get_questions') {
+        try {
+            $pdo->exec("
+                CREATE TABLE IF NOT EXISTS survey_questions (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    question_order INT NOT NULL DEFAULT 1,
+                    text TEXT NOT NULL,
+                    is_active TINYINT(1) NOT NULL DEFAULT 1,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+            ");
+
+            $stmt = $pdo->query("SELECT id, question_order, text, is_active FROM survey_questions WHERE is_active = 1 ORDER BY question_order ASC, id ASC");
+            $questions = $stmt->fetchAll();
+
+            if (empty($questions)) {
+                $defaults = getDefaultSurveyQuestionsList();
+                $ins = $pdo->prepare("INSERT INTO survey_questions (id, question_order, text) VALUES (?, ?, ?)");
+                foreach ($defaults as $dq) {
+                    $ins->execute([$dq['id'], $dq['order'], $dq['text']]);
+                }
+                $stmt = $pdo->query("SELECT id, question_order, text, is_active FROM survey_questions WHERE is_active = 1 ORDER BY question_order ASC, id ASC");
+                $questions = $stmt->fetchAll();
+            }
+
+            sendJson([
+                'success' => true,
+                'questions' => $questions
+            ]);
+        } catch (PDOException $e) {
+            sendJson([
+                'success' => false,
+                'message' => 'Gagal mengambil data pertanyaan angket: ' . $e->getMessage()
+            ], 500);
+        }
+        exit;
+    }
 
     if ($action === 'get_students') {
         // ADMIN ONLY: get list of students who submitted surveys
@@ -119,6 +190,96 @@ if ($method === 'GET') {
             sendJson(['success' => true, 'message' => 'Data angket murid berhasil dihapus.']);
         } catch (PDOException $e) {
             sendJson(['success' => false, 'message' => 'Gagal menghapus data angket: ' . $e->getMessage()], 500);
+        }
+        exit;
+    }
+
+    // ADMIN: Simpan daftar butir pertanyaan angket
+    if ($action === 'save_questions') {
+        if ($currentUser['role'] !== 'admin') {
+            sendJson(['success' => false, 'message' => 'Akses ditolak.'], 403);
+        }
+        $questions = $body['questions'] ?? [];
+        if (!is_array($questions)) {
+            sendJson(['success' => false, 'message' => 'Format data pertanyaan tidak valid.'], 400);
+        }
+
+        $pdo->beginTransaction();
+        try {
+            $preservedIds = [];
+            $order = 1;
+
+            $insertStmt = $pdo->prepare("INSERT INTO survey_questions (question_order, text, is_active) VALUES (?, ?, 1)");
+            $updateStmt = $pdo->prepare("UPDATE survey_questions SET question_order = ?, text = ?, is_active = 1 WHERE id = ?");
+
+            foreach ($questions as $q) {
+                $qId = isset($q['id']) ? (int)$q['id'] : 0;
+                $text = trim($q['text'] ?? '');
+                if ($text === '') continue;
+
+                if ($qId > 0) {
+                    $updateStmt->execute([$order, $text, $qId]);
+                    $preservedIds[] = $qId;
+                } else {
+                    $insertStmt->execute([$order, $text]);
+                    $preservedIds[] = (int)$pdo->lastInsertId();
+                }
+                $order++;
+            }
+
+            // Hapus pertanyaan yang tidak ada lagi di daftar
+            if (!empty($preservedIds)) {
+                $inClause = implode(',', array_fill(0, count($preservedIds), '?'));
+                $deleteStmt = $pdo->prepare("DELETE FROM survey_questions WHERE id NOT IN ($inClause)");
+                $deleteStmt->execute($preservedIds);
+            } else {
+                $pdo->exec("DELETE FROM survey_questions");
+            }
+
+            $pdo->commit();
+
+            $stmt = $pdo->query("SELECT id, question_order, text, is_active FROM survey_questions WHERE is_active = 1 ORDER BY question_order ASC, id ASC");
+            $savedQuestions = $stmt->fetchAll();
+
+            sendJson([
+                'success' => true,
+                'message' => 'Daftar butir pertanyaan angket respon berhasil disimpan.',
+                'questions' => $savedQuestions
+            ]);
+        } catch (PDOException $e) {
+            $pdo->rollBack();
+            sendJson(['success' => false, 'message' => 'Gagal menyimpan pertanyaan angket: ' . $e->getMessage()], 500);
+        }
+        exit;
+    }
+
+    // ADMIN: Reset pertanyaan angket ke butir baku awal
+    if ($action === 'reset_questions') {
+        if ($currentUser['role'] !== 'admin') {
+            sendJson(['success' => false, 'message' => 'Akses ditolak.'], 403);
+        }
+
+        $pdo->beginTransaction();
+        try {
+            $pdo->exec("DELETE FROM survey_questions");
+            $defaults = getDefaultSurveyQuestionsList();
+            $ins = $pdo->prepare("INSERT INTO survey_questions (id, question_order, text) VALUES (?, ?, ?)");
+            foreach ($defaults as $dq) {
+                $ins->execute([$dq['id'], $dq['order'], $dq['text']]);
+            }
+            $pdo->commit();
+
+            $stmt = $pdo->query("SELECT id, question_order, text, is_active FROM survey_questions WHERE is_active = 1 ORDER BY question_order ASC, id ASC");
+            $resetQuestions = $stmt->fetchAll();
+
+            sendJson([
+                'success' => true,
+                'message' => 'Pertanyaan angket berhasil direset ke butir instrumen baku.',
+                'questions' => $resetQuestions
+            ]);
+        } catch (PDOException $e) {
+            $pdo->rollBack();
+            sendJson(['success' => false, 'message' => 'Gagal mereset pertanyaan angket: ' . $e->getMessage()], 500);
         }
         exit;
     }

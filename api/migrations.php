@@ -130,6 +130,55 @@ try {
         ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
     ");
 
+    // Auto-migration: survey_questions
+    $pdo->exec("
+        CREATE TABLE IF NOT EXISTS survey_questions (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            question_order INT NOT NULL DEFAULT 1,
+            text TEXT NOT NULL,
+            is_active TINYINT(1) NOT NULL DEFAULT 1,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+        ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    ");
+
+    $stmtCheckQ = $pdo->query("SELECT COUNT(*) FROM survey_questions");
+    if ((int)$stmtCheckQ->fetchColumn() === 0) {
+        $defaultSurveyQuestions = [
+            [1, 1, "Apakah kegiatan awal pembelajaran membantu anda memahami tujuan dan permasalahan yang akan dipelajari?"],
+            [2, 2, "Apakah kasus permasalahan lingkungan yang disajikan menarik perhatian anda untuk belajar?"],
+            [3, 3, "Apakah dengan bekerja secara berkelompok membantu anda bekerja sama dengan anggota kelompok secara efektif?"],
+            [5, 4, "Apakah anda lebih mudah mengidentifikasi masalah yang terdapat dalam kasus?"],
+            [6, 5, "Apakah anda lebih mudah menemukan penyebab masalah lingkungan yang dibahas?"],
+            [7, 6, "Apakah data dan informasi yang tersedia pada GAS website membantu anda menganalisis kasus?"],
+            [8, 7, "Apakah anda dapat merancang alternatif solusi terhadap masalah yang diberikan?"],
+            [9, 8, "Apakah anda memilih solusi yang paling tepat berdasarkan data dan fakta?"],
+            [10, 9, "Apakah anda menerapkan solusi dalam bentuk tindakan nyata?"],
+            [11, 10, "Apakah kegiatan mengkomunasikan hasil dalam bentuk video membantu anda mengomunikasikan hasil pemecahan masalah dengan lebih baik?"],
+            [12, 11, "Apakah GAS website mudah digunakan selama kegiatan pembelajaran?"],
+            [13, 12, "Apakah tampilan GAS website menarik dan mudah dipahami?"],
+            [14, 13, "Apakah fitur-fitur pada GAS website membantu anda memperoleh informasi yang dibutuhkan?"],
+            [15, 14, "Apakah GAS website membantu anda belajar secara mandiri?"],
+            [16, 15, "Apakah GAS website membantu anda mengikuti setiap tahapan pembelajaran CASUAL dengan lebih baik?"],
+            [17, 16, "Apakah pembelajaran ini membantu anda memahami hubungan antara aktivitas manusia dan lingkungan?"],
+            [18, 17, "Apakah pembelajaran ini meningkatkan kepedulian anda terhadap masalah lingkungan?"],
+            [19, 18, "Apakah pembelajaran ini mendorong anda melakukan tindakan yang lebih ramah lingkungan dalam kehidupan sehari-hari?"],
+            [20, 19, "Apakah anda mengevaluasi kembali solusi berupa aksi nyata yang telah dibuat?"],
+            [21, 20, "Apakah anda terbantu dalam memperbaiki kesalahan dalam proses pemecahan masalah?"],
+            [22, 21, "Apakah pembelajaran ini meningkatkan kemampuan anda dalam memecahkan masalah secara sistematis?"],
+            [23, 22, "Apakah bahan ajar yang digunakan mudah dipahami?"],
+            [24, 23, "Apakah bahan ajar membantu anda memahami materi yang dipelajari?"],
+            [25, 24, "Apakah lembar kerja murid (LKM) membantu anda menyelesaikan tugas pembelajaran?"],
+            [26, 25, "Apakah suasana kelas selama pembelajaran membuat anda aktif berdiskusi?"],
+            [27, 26, "Apakah cara guru menyajikan materi membantu anda memahami pembelajaran dengan baik?"]
+        ];
+
+        $insQStmt = $pdo->prepare("INSERT INTO survey_questions (id, question_order, text) VALUES (?, ?, ?)");
+        foreach ($defaultSurveyQuestions as $dq) {
+            $insQStmt->execute($dq);
+        }
+    }
+
     // Auto-migration: student_tests
     $pdo->exec("
         CREATE TABLE IF NOT EXISTS student_tests (

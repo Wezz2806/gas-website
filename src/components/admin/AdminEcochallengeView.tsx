@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { ClipboardList, Loader2, Eye, Download, Calendar, User, FileText, ArrowRight, Upload, Plus, Trash2, Save, File, Table, Image, BarChart3, ChevronUp, ChevronDown, Check, X, DoorOpen } from 'lucide-react';
+import { ClipboardList, Loader2, Eye, Download, Calendar, User, FileText, ArrowRight, Upload, Plus, Trash2, Save, File, Table, Image, BarChart3, ChevronUp, ChevronDown, Check, X, DoorOpen, RotateCcw, HelpCircle } from 'lucide-react';
 import { Meeting, JournalRow, Room } from '../../types';
 import { roomService } from '../../services/roomService';
 import { getImageUrl, handleImageError, getTestImageFallback } from '../../utils/imageUrl';
-import { TEST_CASES } from '../EcoChallengeView';
+import { TEST_CASES, SURVEY_QUESTIONS } from '../EcoChallengeView';
 interface AdminEcochallengeViewProps {
   roomId?: number;
 }
@@ -25,6 +25,11 @@ export default function AdminEcochallengeView({ roomId }: AdminEcochallengeViewP
   const [selectedSurveyFeedback, setSelectedSurveyFeedback] = useState('');
   const [isLoadingSurveyRows, setIsLoadingSurveyRows] = useState(false);
   const [showStatsDetail, setShowStatsDetail] = useState(false);
+  const [surveyAdminView, setSurveyAdminView] = useState<'submissions' | 'manage_questions'>('submissions');
+  const [surveyQuestions, setSurveyQuestions] = useState<any[]>(SURVEY_QUESTIONS);
+  const [isLoadingSurveyQuestions, setIsLoadingSurveyQuestions] = useState<boolean>(false);
+  const [isSavingSurveyQuestions, setIsSavingSurveyQuestions] = useState<boolean>(false);
+  const [surveyQuestionsDirty, setSurveyQuestionsDirty] = useState<boolean>(false);
 
   // Test admin states
   const [testStudents, setTestStudents] = useState<any[]>([]);
@@ -97,6 +102,131 @@ export default function AdminEcochallengeView({ roomId }: AdminEcochallengeViewP
         else alert(data.message || 'Gagal menghapus data angket.');
       })
       .catch(() => alert('Terjadi kesalahan jaringan.'));
+  };
+
+  const fetchSurveyQuestions = () => {
+    setIsLoadingSurveyQuestions(true);
+    fetch(`${API_BASE}/student-survey.php?action=get_questions`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && Array.isArray(data.questions) && data.questions.length > 0) {
+          setSurveyQuestions(data.questions);
+          setSurveyQuestionsDirty(false);
+        }
+      })
+      .catch(err => console.error(err))
+      .finally(() => setIsLoadingSurveyQuestions(false));
+  };
+
+  const handleAddSurveyQuestion = () => {
+    const nextOrder = surveyQuestions.length + 1;
+    const newQ = {
+      id: -Date.now(),
+      question_order: nextOrder,
+      text: '',
+      is_active: 1
+    };
+    setSurveyQuestions(prev => [...prev, newQ]);
+    setSurveyQuestionsDirty(true);
+  };
+
+  const handleUpdateSurveyQuestion = (index: number, text: string) => {
+    setSurveyQuestions(prev => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], text };
+      return updated;
+    });
+    setSurveyQuestionsDirty(true);
+  };
+
+  const handleDeleteSurveyQuestion = (index: number) => {
+    const q = surveyQuestions[index];
+    if (!window.confirm(`Hapus butir pertanyaan nomor ${q.question_order || (index + 1)}?`)) return;
+    setSurveyQuestions(prev => {
+      return prev.filter((_, idx) => idx !== index).map((item, idx) => ({
+        ...item,
+        question_order: idx + 1
+      }));
+    });
+    setSurveyQuestionsDirty(true);
+  };
+
+  const handleMoveSurveyQuestion = (index: number, direction: 'up' | 'down') => {
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= surveyQuestions.length) return;
+    setSurveyQuestions(prev => {
+      const updated = [...prev];
+      const temp = updated[index];
+      updated[index] = updated[targetIndex];
+      updated[targetIndex] = temp;
+      return updated.map((item, idx) => ({
+        ...item,
+        question_order: idx + 1
+      }));
+    });
+    setSurveyQuestionsDirty(true);
+  };
+
+  const handleSaveSurveyQuestions = () => {
+    for (let i = 0; i < surveyQuestions.length; i++) {
+      if (!surveyQuestions[i].text.trim()) {
+        alert(`Butir pertanyaan nomor ${i + 1} tidak boleh kosong.`);
+        return;
+      }
+    }
+
+    setIsSavingSurveyQuestions(true);
+    fetch(`${API_BASE}/student-survey.php`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'save_questions',
+        questions: surveyQuestions
+      })
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert(data.message || 'Daftar butir pertanyaan angket respon berhasil disimpan!');
+          if (Array.isArray(data.questions)) {
+            setSurveyQuestions(data.questions);
+          }
+          setSurveyQuestionsDirty(false);
+        } else {
+          alert(data.message || 'Gagal menyimpan pertanyaan angket.');
+        }
+      })
+      .catch(() => alert('Terjadi kesalahan jaringan saat menyimpan pertanyaan angket.'))
+      .finally(() => setIsSavingSurveyQuestions(false));
+  };
+
+  const handleResetSurveyQuestions = () => {
+    if (!window.confirm('Kembalikan pertanyaan angket respon ke butir instrumen baku awal? Perubahan kustom yang belum disimpan akan direset.')) {
+      return;
+    }
+
+    setIsSavingSurveyQuestions(true);
+    fetch(`${API_BASE}/student-survey.php`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'reset_questions'
+      })
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert(data.message || 'Pertanyaan angket berhasil direset ke instrumen baku.');
+          if (Array.isArray(data.questions)) {
+            setSurveyQuestions(data.questions);
+          }
+          setSurveyQuestionsDirty(false);
+        } else {
+          alert(data.message || 'Gagal mereset pertanyaan angket.');
+        }
+      })
+      .catch(() => alert('Terjadi kesalahan jaringan saat mereset pertanyaan angket.'))
+      .finally(() => setIsSavingSurveyQuestions(false));
   };
 
   const handleDeleteTest = (stud: any) => {
@@ -326,6 +456,7 @@ export default function AdminEcochallengeView({ roomId }: AdminEcochallengeViewP
   };
   useEffect(() => {
     fetchTestCases();
+    fetchSurveyQuestions();
     if (roomId === undefined) {
       roomService.getAdminRooms().then(data => setRooms(data)).catch(() => {});
     }
@@ -406,36 +537,9 @@ export default function AdminEcochallengeView({ roomId }: AdminEcochallengeViewP
         let totalYa = 0;
         let totalTidak = 0;
 
-        const questionsList = [
-          { id: 1, text: "Apakah kegiatan awal pembelajaran membantu anda memahami tujuan dan permasalahan yang akan dipelajari?" },
-          { id: 2, text: "Apakah kasus permasalahan lingkungan yang disajikan menarik perhatian anda untuk belajar?" },
-          { id: 3, text: "Apakah dengan bekerja secara berkelompok membantu anda bekerja sama dengan anggota kelompok secara efektif?" },
-          { id: 5, text: "Apakah anda lebih mudah mengidentifikasi masalah yang terdapat dalam kasus?" },
-          { id: 6, text: "Apakah anda lebih mudah menemukan penyebab masalah lingkungan yang dibahas?" },
-          { id: 7, text: "Apakah data dan informasi yang tersedia pada GAS website membantu anda menganalisis kasus?" },
-          { id: 8, text: "Apakah anda dapat merancang alternatif solusi terhadap masalah yang diberikan?" },
-          { id: 9, text: "Apakah anda memilih solusi yang paling tepat berdasarkan data dan fakta?" },
-          { id: 10, text: "Apakah anda menerapkan solusi dalam bentuk tindakan nyata?" },
-          { id: 11, text: "Apakah kegiatan mengkomunasikan hasil dalam bentuk video membantu anda mengomunikasikan hasil pemecahan masalah dengan lebih baik?" },
-          { id: 12, text: "Apakah GAS website mudah digunakan selama kegiatan pembelajaran?" },
-          { id: 13, text: "Apakah tampilan GAS website menarik dan mudah dipahami?" },
-          { id: 14, text: "Apakah fitur-fitur pada GAS website membantu anda memperoleh informasi yang dibutuhkan?" },
-          { id: 15, text: "Apakah GAS website membantu anda belajar secara mandiri?" },
-          { id: 16, text: "Apakah GAS website membantu anda mengikuti setiap tahapan pembelajaran CASUAL dengan lebih baik?" },
-          { id: 17, text: "Apakah pembelajaran ini membantu anda memahami hubungan antara aktivitas manusia dan lingkungan?" },
-          { id: 18, text: "Apakah pembelajaran ini meningkatkan kepedulian anda terhadap masalah lingkungan?" },
-          { id: 19, text: "Apakah pembelajaran ini mendorong anda melakukan tindakan yang lebih ramah lingkungan dalam kehidupan sehari-hari?" },
-          { id: 20, text: "Apakah anda mengevaluasi kembali solusi berupa aksi nyata yang telah dibuat?" },
-          { id: 21, text: "Apakah anda terbantu dalam memperbaiki kesalahan dalam proses pemecahan masalah?" },
-          { id: 22, text: "Apakah pembelajaran ini meningkatkan kemampuan anda dalam memecahkan masalah secara sistematis?" },
-          { id: 23, text: "Apakah bahan ajar yang digunakan mudah dipahami?" },
-          { id: 24, text: "Apakah bahan ajar membantu anda memahami materi yang dipelajari?" },
-          { id: 25, text: "Apakah lembar kerja murid (LKM) membantu anda menyelesaikan tugas pembelajaran?" },
-          { id: 26, text: "Apakah suasana kelas selama pembelajaran membuat anda aktif berdiskusi?" },
-          { id: 27, text: "Apakah cara guru menyajikan materi membantu anda memahami pembelajaran dengan baik?" }
-        ];
+        const questionsList = surveyQuestions && surveyQuestions.length > 0 ? surveyQuestions : SURVEY_QUESTIONS;
 
-        const questionStats = questionsList.map(q => {
+        const questionStats = questionsList.map((q, qIdx) => {
           const yaStudents: string[] = [];
           const tidakStudents: string[] = [];
 
@@ -460,6 +564,7 @@ export default function AdminEcochallengeView({ roomId }: AdminEcochallengeViewP
 
           return {
             id: q.id,
+            question_order: q.question_order || (qIdx + 1),
             text: q.text,
             yaCount: yaStudents.length,
             tidakCount: tidakStudents.length,
@@ -470,209 +575,394 @@ export default function AdminEcochallengeView({ roomId }: AdminEcochallengeViewP
 
         return (
           <section className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm space-y-6 animate-in fade-in duration-200">
-            <div className="flex justify-between items-start flex-wrap gap-4">
+            {/* Header with Sub-view Switcher */}
+            <div className="flex justify-between items-center flex-wrap gap-4 border-b border-slate-150 pb-4">
               <div>
                 <h3 className="font-display font-bold text-slate-800 text-base">
-                  Daftar Angket Respon Murid
+                  {surveyAdminView === 'submissions' ? 'Daftar Angket Respon Murid' : 'Kelola Butir Pertanyaan Angket Respon'}
                 </h3>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  Daftar murid yang telah mengisi angket respon evaluasi pembelajaran GAS Website.
+                  {surveyAdminView === 'submissions'
+                    ? 'Daftar murid yang telah mengisi angket respon evaluasi pembelajaran GAS Website.'
+                    : 'Tambah, sunting isi butir pertanyaan, atau ubah urutan butir kuesioner respon pembelajaran.'}
                 </p>
+              </div>
+
+              <div className="flex bg-slate-100 p-1 rounded-2xl w-fit">
+                <button
+                  type="button"
+                  onClick={() => setSurveyAdminView('submissions')}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    surveyAdminView === 'submissions'
+                      ? 'bg-white text-slate-800 shadow-sm'
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  Rekap Respon Murid
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSurveyAdminView('manage_questions')}
+                  className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    surveyAdminView === 'manage_questions'
+                      ? 'bg-white text-slate-800 shadow-sm'
+                      : 'text-slate-500 hover:text-slate-800'
+                  }`}
+                >
+                  Kelola Butir Soal Angket ({questionsList.length})
+                </button>
               </div>
             </div>
 
-            {/* Overall Statistics Summary Card */}
-            {surveyStudents.length > 0 && (
-              <div className="bg-slate-50 border border-slate-200 rounded-3xl p-5 space-y-4">
-                <div className="flex justify-between items-center flex-wrap gap-4 border-b border-slate-150 pb-3">
-                  <div>
-                    <h4 className="font-display font-bold text-sm text-slate-800 flex items-center gap-2">
-                      <BarChart3 className="w-5 h-5 text-cyan-600" />
-                      Statistika Respon Angket Murid
-                    </h4>
-                    <p className="text-[10px] text-slate-450">Analisis perbandingan jawaban Ya & Tidak dari {surveyStudents.length} murid yang mengisi angket.</p>
-                  </div>
-                  <button
-                    onClick={() => setShowStatsDetail(!showStatsDetail)}
-                    className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all hover:scale-[1.01] cursor-pointer"
-                  >
-                    {showStatsDetail ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
-                    <span>Detail</span>
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  {/* Total Respon */}
-                  <div className="bg-white border border-slate-150 p-4 rounded-2xl flex items-center gap-3">
-                    <div className="p-3 bg-cyan-50 text-cyan-600 rounded-xl">
-                      <User className="w-5 h-5 animate-pulse" />
-                    </div>
-                    <div>
-                      <span className="text-[10px] font-bold text-slate-450 uppercase tracking-wider block">Total Pengisi</span>
-                      <span className="text-lg font-black text-slate-855 block mt-0.5">{surveyStudents.length} Murid</span>
-                    </div>
+            {/* View Mode 1: Kelola Pertanyaan Angket */}
+            {surveyAdminView === 'manage_questions' ? (
+              <div className="space-y-6 text-left">
+                {/* Actions Top Toolbar */}
+                <div className="flex justify-between items-center flex-wrap gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                  <div className="flex items-center gap-2.5">
+                    <span className="px-3 py-1 bg-cyan-100 text-cyan-800 font-bold text-xs rounded-xl">
+                      {surveyQuestions.length} Butir Pertanyaan
+                    </span>
+                    {surveyQuestionsDirty && (
+                      <span className="px-3 py-1 bg-amber-100 text-amber-800 font-bold text-xs rounded-xl animate-pulse">
+                        Ada Perubahan Belum Disimpan
+                      </span>
+                    )}
                   </div>
 
-                  {/* Setuju (Ya) */}
-                  <div className="bg-white border border-slate-150 p-4 rounded-2xl flex flex-col justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl">
-                        <Check className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block">Jawaban Ya</span>
-                        <span className="text-lg font-black text-emerald-950 block mt-0.5">
-                          {totalYa} ({totalYa + totalTidak > 0 ? Math.round((totalYa / (totalYa + totalTidak)) * 100) : 0}%)
-                        </span>
-                      </div>
-                    </div>
-                    <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mt-3">
-                      <div
-                        className="bg-emerald-500 h-full rounded-full transition-all duration-500"
-                        style={{ width: `${totalYa + totalTidak > 0 ? (totalYa / (totalYa + totalTidak)) * 100 : 0}%` }}
-                      />
-                    </div>
-                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleAddSurveyQuestion}
+                      className="px-3.5 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-250 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+                    >
+                      <Plus className="w-4 h-4 text-cyan-600" />
+                      <span>Tambah Butir</span>
+                    </button>
 
-                  {/* Tidak Setuju (Tidak) */}
-                  <div className="bg-white border border-slate-150 p-4 rounded-2xl flex flex-col justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2.5 bg-rose-50 text-rose-600 rounded-xl">
-                        <X className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <span className="text-[10px] font-bold text-rose-800 uppercase tracking-wider block">Jawaban Tidak</span>
-                        <span className="text-lg font-black text-rose-950 block mt-0.5">
-                          {totalTidak} ({totalYa + totalTidak > 0 ? Math.round((totalTidak / (totalYa + totalTidak)) * 100) : 0}%)
-                        </span>
-                      </div>
-                    </div>
-                    <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mt-3">
-                      <div
-                        className="bg-rose-500 h-full rounded-full transition-all duration-500"
-                        style={{ width: `${totalYa + totalTidak > 0 ? (totalTidak / (totalYa + totalTidak)) * 100 : 0}%` }}
-                      />
-                    </div>
+                    <button
+                      type="button"
+                      onClick={handleResetSurveyQuestions}
+                      disabled={isSavingSurveyQuestions}
+                      className="px-3.5 py-2 bg-white hover:bg-rose-50 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      <span>Reset ke Baku</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleSaveSurveyQuestions}
+                      disabled={isSavingSurveyQuestions}
+                      className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm hover:scale-[1.01] cursor-pointer disabled:opacity-50"
+                    >
+                      {isSavingSurveyQuestions ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <Save className="w-4 h-4" />
+                      )}
+                      <span>Simpan Perubahan</span>
+                    </button>
                   </div>
                 </div>
 
-                {/* Detail Statistics per Question */}
-                {showStatsDetail && (
-                  <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-4 animate-in slide-in-from-top-4 duration-200 text-left mt-2">
-                    <h5 className="font-display font-bold text-xs text-slate-800 border-b border-slate-100 pb-2 flex items-center gap-1.5">
-                      <Table className="w-3.5 h-3.5 text-cyan-600" />
-                      Jumlah Respon Ya & Tidak di Setiap Pertanyaan
-                    </h5>
-                    <div className="overflow-x-auto max-h-[450px] overflow-y-auto border border-slate-100 rounded-xl">
-                      <table className="w-full border-collapse text-left text-xs min-w-[700px]">
-                        <thead>
-                          <tr className="bg-slate-50 border-b border-slate-150 text-slate-500 font-bold sticky top-0 z-10">
-                            <th className="p-3 w-12 text-center bg-slate-50">No</th>
-                            <th className="p-3 bg-slate-50">Pertanyaan Kuisioner</th>
-                            <th className="p-3 w-36 text-center bg-slate-50">Setuju (Ya)</th>
-                            <th className="p-3 w-36 text-center bg-slate-50">Tidak (Tidak)</th>
-                            <th className="p-3 w-44 text-center bg-slate-50">Total Keseluruhan Respon</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100 text-slate-700 font-sans">
-                          {questionStats.map((q) => {
-                            const totalQ = q.yaCount + q.tidakCount;
-                            const yaPercent = totalQ > 0 ? Math.round((q.yaCount / totalQ) * 100) : 0;
-                            const tidakPercent = totalQ > 0 ? Math.round((q.tidakCount / totalQ) * 100) : 0;
-                            return (
-                              <tr key={q.id} className="hover:bg-slate-50/50 transition-colors">
-                                <td className="p-3 text-center font-bold text-slate-400">{q.id}</td>
-                                <td className="p-3 leading-relaxed pr-4 font-medium text-slate-700">{q.text}</td>
-                                <td className="p-3 text-center font-bold text-emerald-600 bg-emerald-50/20 whitespace-nowrap">
-                                  {q.yaCount} Murid ({yaPercent}%)
-                                </td>
-                                <td className="p-3 text-center font-bold text-rose-600 bg-rose-50/20 whitespace-nowrap">
-                                  {q.tidakCount} Murid ({tidakPercent}%)
-                                </td>
-                                <td className="p-3 text-center font-bold text-slate-800 bg-slate-50/30 whitespace-nowrap">
-                                  {totalQ} Respon
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
+                {/* Questions List */}
+                {isLoadingSurveyQuestions ? (
+                  <div className="flex justify-center items-center py-12">
+                    <Loader2 className="w-6 h-6 animate-spin text-cyan-600" />
                   </div>
-                )}
-              </div>
-            )}
+                ) : (
+                  <div className="space-y-3.5">
+                    {surveyQuestions.map((q, idx) => (
+                      <div
+                        key={q.id || idx}
+                        className="bg-white border border-slate-200 hover:border-slate-300 rounded-2xl p-4 shadow-2xs transition-all space-y-3"
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-2.5">
+                            <span className="w-8 h-8 rounded-xl bg-slate-900 text-white flex items-center justify-center font-display font-black text-xs shrink-0 shadow-xs">
+                              {idx + 1}
+                            </span>
+                            <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                              Butir Angket #{idx + 1}
+                            </span>
+                          </div>
 
-            {isLoadingSurveys ? (
-              <div className="flex justify-center items-center py-12">
-                <Loader2 className="w-6 h-6 animate-spin text-cyan-600" />
-              </div>
-            ) : (
-              <div className="overflow-x-auto border border-slate-100 rounded-2xl">
-                <table className="w-full text-left border-collapse text-xs">
-                  <thead>
-                    <tr className="bg-slate-50 border-b border-slate-100 text-slate-455 uppercase font-bold tracking-wider">
-                      <th className="py-3.5 px-4 w-1/3">Nama Murid</th>
-                      <th className="py-3.5 px-4">Kritik & Saran</th>
-                      <th className="py-3.5 px-4">Waktu Pengisian</th>
-                      <th className="py-3.5 px-4 text-right w-44">Aksi</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100 text-slate-700 font-sans">
-                    {surveyStudents.map((stud) => (
-                      <tr key={stud.id} className="hover:bg-slate-50/50 transition-colors">
-                        <td className="py-4 px-4 space-y-0.5">
-                          <p className="font-bold text-slate-800 flex items-center gap-1.5 font-display">
-                            <User className="w-3.5 h-3.5 text-slate-400" />
-                            {stud.name}
-                          </p>
-                          <p className="text-[10px] text-slate-455">{stud.email}</p>
-                        </td>
-                        <td className="py-4 px-4 text-slate-600 max-w-xs truncate font-medium">
-                          {stud.feedback || <span className="text-slate-350 italic">Tidak ada kritik/saran</span>}
-                        </td>
-                        <td className="py-4 px-4 text-slate-500 font-medium">
-                          <span className="flex items-center gap-1">
-                            <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                            {stud.last_updated ? new Date(stud.last_updated).toLocaleDateString('id-ID', {
-                              day: 'numeric',
-                              month: 'long',
-                              year: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            }) : '-'}
-                          </span>
-                        </td>
-                        <td className="py-4 px-4 text-right">
-                          <div className="flex justify-end gap-2">
+                          <div className="flex items-center gap-1">
                             <button
-                              onClick={() => handleOpenStudentSurvey(stud)}
-                              className="px-3.5 py-1.5 bg-cyan-50 hover:bg-cyan-100 text-cyan-700 rounded-xl font-bold flex items-center gap-1 transition-colors cursor-pointer border border-cyan-100"
+                              type="button"
+                              onClick={() => handleMoveSurveyQuestion(idx, 'up')}
+                              disabled={idx === 0}
+                              title="Pindah ke atas"
+                              className="p-1.5 text-slate-400 hover:text-slate-700 disabled:opacity-25 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
                             >
-                              <Eye className="w-3.5 h-3.5 text-cyan-600" />
-                              <span>Detail Respon</span>
+                              <ChevronUp className="w-4 h-4" />
                             </button>
                             <button
-                              onClick={() => handleDeleteSurvey(stud)}
-                              className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl font-bold flex items-center gap-1 transition-colors cursor-pointer border border-rose-100"
+                              type="button"
+                              onClick={() => handleMoveSurveyQuestion(idx, 'down')}
+                              disabled={idx === surveyQuestions.length - 1}
+                              title="Pindah ke bawah"
+                              className="p-1.5 text-slate-400 hover:text-slate-700 disabled:opacity-25 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
                             >
-                              <Trash2 className="w-3.5 h-3.5 text-rose-600" />
-                              <span>Hapus</span>
+                              <ChevronDown className="w-4 h-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteSurveyQuestion(idx)}
+                              title="Hapus butir pertanyaan"
+                              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer ml-1"
+                            >
+                              <Trash2 className="w-4 h-4" />
                             </button>
                           </div>
-                        </td>
-                      </tr>
+                        </div>
+
+                        <div>
+                          <textarea
+                            rows={2}
+                            value={q.text}
+                            onChange={(e) => handleUpdateSurveyQuestion(idx, e.target.value)}
+                            placeholder={`Tuliskan butir pernyataan kuisioner nomor ${idx + 1}...`}
+                            className="w-full bg-slate-50/70 focus:bg-white border border-slate-200 rounded-xl p-3 text-xs text-slate-700 font-medium font-sans focus:outline-none focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-600 leading-relaxed transition-all"
+                          />
+                        </div>
+                      </div>
                     ))}
-                    {surveyStudents.length === 0 && (
-                      <tr>
-                        <td colSpan={4} className="py-12 text-center text-slate-400 font-medium">
-                          Belum ada murid yang mengisi angket respon.
-                        </td>
-                      </tr>
+
+                    {surveyQuestions.length === 0 && (
+                      <div className="text-center py-12 border border-dashed border-slate-300 rounded-2xl bg-slate-50/50">
+                        <HelpCircle className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+                        <p className="text-xs font-bold text-slate-600">Belum ada butir pertanyaan angket.</p>
+                        <p className="text-[11px] text-slate-400 mt-1">Klik tombol di bawah untuk menambah butir baru atau reset ke instrumen baku.</p>
+                      </div>
                     )}
-                  </tbody>
-                </table>
+                  </div>
+                )}
+
+                {/* Bottom Add & Save Actions */}
+                <div className="flex justify-between items-center pt-2">
+                  <button
+                    type="button"
+                    onClick={handleAddSurveyQuestion}
+                    className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <Plus className="w-4 h-4 text-cyan-600" />
+                    <span>Tambah Butir Pertanyaan</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleSaveSurveyQuestions}
+                    disabled={isSavingSurveyQuestions}
+                    className="px-6 py-2.5 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-md hover:shadow-lg cursor-pointer disabled:opacity-50"
+                  >
+                    {isSavingSurveyQuestions ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Save className="w-4 h-4" />
+                    )}
+                    <span>Simpan Semua Perubahan</span>
+                  </button>
+                </div>
               </div>
+            ) : (
+              /* View Mode 2: Rekap Respon Murid */
+              <>
+                {/* Overall Statistics Summary Card */}
+                {surveyStudents.length > 0 && (
+                  <div className="bg-slate-50 border border-slate-200 rounded-3xl p-5 space-y-4">
+                    <div className="flex justify-between items-center flex-wrap gap-4 border-b border-slate-150 pb-3">
+                      <div>
+                        <h4 className="font-display font-bold text-sm text-slate-800 flex items-center gap-2">
+                          <BarChart3 className="w-5 h-5 text-cyan-600" />
+                          Statistika Respon Angket Murid
+                        </h4>
+                        <p className="text-[10px] text-slate-450">Analisis perbandingan jawaban Ya & Tidak dari {surveyStudents.length} murid yang mengisi angket.</p>
+                      </div>
+                      <button
+                        onClick={() => setShowStatsDetail(!showStatsDetail)}
+                        className="px-4 py-2 bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl font-bold text-xs flex items-center gap-1.5 shadow-sm transition-all hover:scale-[1.01] cursor-pointer"
+                      >
+                        {showStatsDetail ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                        <span>Detail</span>
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      {/* Total Respon */}
+                      <div className="bg-white border border-slate-150 p-4 rounded-2xl flex items-center gap-3">
+                        <div className="p-3 bg-cyan-50 text-cyan-600 rounded-xl">
+                          <User className="w-5 h-5 animate-pulse" />
+                        </div>
+                        <div>
+                          <span className="text-[10px] font-bold text-slate-450 uppercase tracking-wider block">Total Pengisi</span>
+                          <span className="text-lg font-black text-slate-855 block mt-0.5">{surveyStudents.length} Murid</span>
+                        </div>
+                      </div>
+
+                      {/* Setuju (Ya) */}
+                      <div className="bg-white border border-slate-150 p-4 rounded-2xl flex flex-col justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2.5 bg-emerald-50 text-emerald-600 rounded-xl">
+                            <Check className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block">Jawaban Ya</span>
+                            <span className="text-lg font-black text-emerald-950 block mt-0.5">
+                              {totalYa} ({totalYa + totalTidak > 0 ? Math.round((totalYa / (totalYa + totalTidak)) * 100) : 0}%)
+                            </span>
+                          </div>
+                        </div>
+                        <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mt-3">
+                          <div
+                            className="bg-emerald-500 h-full rounded-full transition-all duration-500"
+                            style={{ width: `${totalYa + totalTidak > 0 ? (totalYa / (totalYa + totalTidak)) * 100 : 0}%` }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Tidak Setuju (Tidak) */}
+                      <div className="bg-white border border-slate-150 p-4 rounded-2xl flex flex-col justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2.5 bg-rose-50 text-rose-600 rounded-xl">
+                            <X className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <span className="text-[10px] font-bold text-rose-800 uppercase tracking-wider block">Jawaban Tidak</span>
+                            <span className="text-lg font-black text-rose-950 block mt-0.5">
+                              {totalTidak} ({totalYa + totalTidak > 0 ? Math.round((totalTidak / (totalYa + totalTidak)) * 100) : 0}%)
+                            </span>
+                          </div>
+                        </div>
+                        <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mt-3">
+                          <div
+                            className="bg-rose-500 h-full rounded-full transition-all duration-500"
+                            style={{ width: `${totalYa + totalTidak > 0 ? (totalTidak / (totalYa + totalTidak)) * 100 : 0}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Detail Statistics per Question */}
+                    {showStatsDetail && (
+                      <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-4 animate-in slide-in-from-top-4 duration-200 text-left mt-2">
+                        <h5 className="font-display font-bold text-xs text-slate-800 border-b border-slate-100 pb-2 flex items-center gap-1.5">
+                          <Table className="w-3.5 h-3.5 text-cyan-600" />
+                          Jumlah Respon Ya & Tidak di Setiap Pertanyaan
+                        </h5>
+                        <div className="overflow-x-auto max-h-[450px] overflow-y-auto border border-slate-100 rounded-xl">
+                          <table className="w-full border-collapse text-left text-xs min-w-[700px]">
+                            <thead>
+                              <tr className="bg-slate-50 border-b border-slate-150 text-slate-500 font-bold sticky top-0 z-10">
+                                <th className="p-3 w-12 text-center bg-slate-50">No</th>
+                                <th className="p-3 bg-slate-50">Pertanyaan Kuisioner</th>
+                                <th className="p-3 w-36 text-center bg-slate-50">Setuju (Ya)</th>
+                                <th className="p-3 w-36 text-center bg-slate-50">Tidak (Tidak)</th>
+                                <th className="p-3 w-44 text-center bg-slate-50">Total Keseluruhan Respon</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100 text-slate-700 font-sans">
+                              {questionStats.map((q) => {
+                                const totalQ = q.yaCount + q.tidakCount;
+                                const yaPercent = totalQ > 0 ? Math.round((q.yaCount / totalQ) * 100) : 0;
+                                const tidakPercent = totalQ > 0 ? Math.round((q.tidakCount / totalQ) * 100) : 0;
+                                return (
+                                  <tr key={q.id} className="hover:bg-slate-50/50 transition-colors">
+                                    <td className="p-3 text-center font-bold text-slate-400">{q.question_order}</td>
+                                    <td className="p-3 leading-relaxed pr-4 font-medium text-slate-700">{q.text}</td>
+                                    <td className="p-3 text-center font-bold text-emerald-600 bg-emerald-50/20 whitespace-nowrap">
+                                      {q.yaCount} Murid ({yaPercent}%)
+                                    </td>
+                                    <td className="p-3 text-center font-bold text-rose-600 bg-rose-50/20 whitespace-nowrap">
+                                      {q.tidakCount} Murid ({tidakPercent}%)
+                                    </td>
+                                    <td className="p-3 text-center font-bold text-slate-800 bg-slate-50/30 whitespace-nowrap">
+                                      {totalQ} Respon
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {isLoadingSurveys ? (
+                  <div className="flex justify-center items-center py-12">
+                    <Loader2 className="w-6 h-6 animate-spin text-cyan-600" />
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto border border-slate-100 rounded-2xl">
+                    <table className="w-full text-left border-collapse text-xs">
+                      <thead>
+                        <tr className="bg-slate-50 border-b border-slate-100 text-slate-455 uppercase font-bold tracking-wider">
+                          <th className="py-3.5 px-4 w-1/3">Nama Murid</th>
+                          <th className="py-3.5 px-4">Kritik & Saran</th>
+                          <th className="py-3.5 px-4">Waktu Pengisian</th>
+                          <th className="py-3.5 px-4 text-right w-44">Aksi</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 text-slate-700 font-sans">
+                        {surveyStudents.map((stud) => (
+                          <tr key={stud.id} className="hover:bg-slate-50/50 transition-colors">
+                            <td className="py-4 px-4 space-y-0.5">
+                              <p className="font-bold text-slate-800 flex items-center gap-1.5 font-display">
+                                <User className="w-3.5 h-3.5 text-slate-400" />
+                                {stud.name}
+                              </p>
+                              <p className="text-[10px] text-slate-455">{stud.email}</p>
+                            </td>
+                            <td className="py-4 px-4 text-slate-600 max-w-xs truncate font-medium">
+                              {stud.feedback || <span className="text-slate-355 italic">Tidak ada kritik/saran</span>}
+                            </td>
+                            <td className="py-4 px-4 text-slate-500 font-medium">
+                              <span className="flex items-center gap-1">
+                                <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                                {stud.last_updated ? new Date(stud.last_updated).toLocaleDateString('id-ID', {
+                                  day: 'numeric',
+                                  month: 'long',
+                                  year: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                }) : '-'}
+                              </span>
+                            </td>
+                            <td className="py-4 px-4 text-right">
+                              <div className="flex justify-end gap-2">
+                                <button
+                                  onClick={() => handleOpenStudentSurvey(stud)}
+                                  className="px-3.5 py-1.5 bg-cyan-50 hover:bg-cyan-100 text-cyan-700 rounded-xl font-bold flex items-center gap-1 transition-colors cursor-pointer border border-cyan-100"
+                                >
+                                  <Eye className="w-3.5 h-3.5 text-cyan-600" />
+                                  <span>Detail Respon</span>
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteSurvey(stud)}
+                                  className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-xl font-bold flex items-center gap-1 transition-colors cursor-pointer border border-rose-100"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                                  <span>Hapus</span>
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                        {surveyStudents.length === 0 && (
+                          <tr>
+                            <td colSpan={4} className="py-12 text-center text-slate-400 font-medium">
+                              Belum ada murid yang mengisi angket respon.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </>
             )}
           </section>
         );
@@ -715,13 +1005,13 @@ export default function AdminEcochallengeView({ roomId }: AdminEcochallengeViewP
                     <div className="bg-emerald-50 border border-emerald-100 p-4 rounded-2xl flex flex-col justify-center">
                       <span className="text-xs text-emerald-800 font-bold uppercase tracking-wider">Total Setuju (Ya)</span>
                       <span className="text-3xl font-black text-emerald-950 mt-1">
-                        {Object.values(selectedSurveyAnswers).filter(val => val === 'Ya').length} / 26
+                        {Object.values(selectedSurveyAnswers).filter(val => val === 'Ya').length} / {surveyQuestions.length || 26}
                       </span>
                     </div>
                     <div className="bg-rose-50 border border-rose-100 p-4 rounded-2xl flex flex-col justify-center">
                       <span className="text-xs text-rose-800 font-bold uppercase tracking-wider">Total Tidak Setuju (Tidak)</span>
                       <span className="text-3xl font-black text-rose-950 mt-1">
-                        {Object.values(selectedSurveyAnswers).filter(val => val === 'Tidak').length} / 26
+                        {Object.values(selectedSurveyAnswers).filter(val => val === 'Tidak').length} / {surveyQuestions.length || 26}
                       </span>
                     </div>
                   </div>
@@ -737,38 +1027,11 @@ export default function AdminEcochallengeView({ roomId }: AdminEcochallengeViewP
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-slate-100 text-slate-700 font-sans">
-                        {[
-                          { id: 1, text: "Apakah kegiatan awal pembelajaran membantu anda memahami tujuan dan permasalahan yang akan dipelajari?" },
-                          { id: 2, text: "Apakah kasus permasalahan lingkungan yang disajikan menarik perhatian anda untuk belajar?" },
-                          { id: 3, text: "Apakah dengan bekerja secara berkelompok membantu anda bekerja sama dengan anggota kelompok secara efektif?" },
-                          { id: 5, text: "Apakah anda lebih mudah mengidentifikasi masalah yang terdapat dalam kasus?" },
-                          { id: 6, text: "Apakah anda lebih mudah menemukan penyebab masalah lingkungan yang dibahas?" },
-                          { id: 7, text: "Apakah data dan informasi yang tersedia pada GAS website membantu anda menganalisis kasus?" },
-                          { id: 8, text: "Apakah anda dapat merancang alternatif solusi terhadap masalah yang diberikan?" },
-                          { id: 9, text: "Apakah anda memilih solusi yang paling tepat berdasarkan data dan fakta?" },
-                          { id: 10, text: "Apakah anda menerapkan solusi dalam bentuk tindakan nyata?" },
-                          { id: 11, text: "Apakah kegiatan mengkomunasikan hasil dalam bentuk video membantu anda mengomunikasikan hasil pemecahan masalah dengan lebih baik?" },
-                          { id: 12, text: "Apakah GAS website mudah digunakan selama kegiatan pembelajaran?" },
-                          { id: 13, text: "Apakah tampilan GAS website menarik dan mudah dipahami?" },
-                          { id: 14, text: "Apakah fitur-fitur pada GAS website membantu anda memperoleh informasi yang dibutuhkan?" },
-                          { id: 15, text: "Apakah GAS website membantu anda belajar secara mandiri?" },
-                          { id: 16, text: "Apakah GAS website membantu anda mengikuti setiap tahapan pembelajaran CASUAL dengan lebih baik?" },
-                          { id: 17, text: "Apakah pembelajaran ini membantu anda memahami hubungan antara aktivitas manusia dan lingkungan?" },
-                          { id: 18, text: "Apakah pembelajaran ini meningkatkan kepedulian anda terhadap masalah lingkungan?" },
-                          { id: 19, text: "Apakah pembelajaran ini mendorong anda melakukan tindakan yang lebih ramah lingkungan dalam kehidupan sehari-hari?" },
-                          { id: 20, text: "Apakah anda mengevaluasi kembali solusi berupa aksi nyata yang telah dibuat?" },
-                          { id: 21, text: "Apakah anda terbantu dalam memperbaiki kesalahan dalam proses pemecahan masalah?" },
-                          { id: 22, text: "Apakah pembelajaran ini meningkatkan kemampuan anda dalam memecahkan masalah secara sistematis?" },
-                          { id: 23, text: "Apakah bahan ajar yang digunakan mudah dipahami?" },
-                          { id: 24, text: "Apakah bahan ajar membantu anda memahami materi yang dipelajari?" },
-                          { id: 25, text: "Apakah lembar kerja murid (LKM) membantu anda menyelesaikan tugas pembelajaran?" },
-                          { id: 26, text: "Apakah suasana kelas selama pembelajaran membuat anda aktif berdiskusi?" },
-                          { id: 27, text: "Apakah cara guru menyajikan materi membantu anda memahami pembelajaran dengan baik?" }
-                        ].map((q) => {
+                        {(surveyQuestions && surveyQuestions.length > 0 ? surveyQuestions : SURVEY_QUESTIONS).map((q, qIdx) => {
                           const ans = selectedSurveyAnswers[q.id];
                           return (
                             <tr key={q.id} className="hover:bg-slate-50/50 transition-colors">
-                              <td className="p-3 text-center font-bold text-slate-400">{q.id}</td>
+                              <td className="p-3 text-center font-bold text-slate-400">{q.question_order || (qIdx + 1)}</td>
                               <td className="p-3 leading-relaxed pr-6">{q.text}</td>
                               <td className="p-3 text-center">
                                 {ans === 'Ya' ? (

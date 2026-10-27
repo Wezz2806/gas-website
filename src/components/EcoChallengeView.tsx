@@ -14,7 +14,7 @@ import {
 } from 'lucide-react';
 import { getImageUrl, handleImageError, getTestImageFallback } from '../utils/imageUrl';
 
-const SURVEY_QUESTIONS = [
+export const SURVEY_QUESTIONS = [
   { id: 1, text: "Apakah kegiatan awal pembelajaran membantu anda memahami tujuan dan permasalahan yang akan dipelajari?" },
   { id: 2, text: "Apakah kasus permasalahan lingkungan yang disajikan menarik perhatian anda untuk belajar?" },
   { id: 3, text: "Apakah dengan bekerja secara berkelompok membantu anda bekerja sama dengan anggota kelompok secara efektif?" },
@@ -344,6 +344,7 @@ export default function EcoChallengeView({ roomId }: EcoChallengeViewProps) {
   const [showSurveyModal, setShowSurveyModal] = useState(false);
   const [surveyAnswers, setSurveyAnswers] = useState<Record<number, 'Ya' | 'Tidak'>>({});
   const [surveyFeedback, setSurveyFeedback] = useState('');
+  const [surveyQuestions, setSurveyQuestions] = useState<any[]>(SURVEY_QUESTIONS);
   const [isSavingSurvey, setIsSavingSurvey] = useState(false);
   const [isLoadingSurvey, setIsLoadingSurvey] = useState(false);
   const [surveySuccessMessage, setSurveySuccessMessage] = useState<string | null>(null);
@@ -362,6 +363,16 @@ export default function EcoChallengeView({ roomId }: EcoChallengeViewProps) {
   React.useEffect(() => {
     const surveyUrl = roomId ? `/api/student-survey.php?room_id=${roomId}` : '/api/student-survey.php';
     const testUrl = roomId ? `/api/student-test.php?room_id=${roomId}` : '/api/student-test.php';
+
+    // Fetch survey questions
+    fetch('/api/student-survey.php?action=get_questions')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && Array.isArray(data.questions) && data.questions.length > 0) {
+          setSurveyQuestions(data.questions);
+        }
+      })
+      .catch(err => console.error(err));
 
     // Fetch survey
     fetch(surveyUrl)
@@ -653,11 +664,11 @@ export default function EcoChallengeView({ roomId }: EcoChallengeViewProps) {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-100 text-slate-700 font-sans">
-                        {SURVEY_QUESTIONS.map((q) => {
+                        {surveyQuestions.map((q, qIdx) => {
                           const answer = surveyAnswers[q.id];
                           return (
                             <tr key={q.id} className="hover:bg-slate-50/50 transition-colors">
-                              <td className="p-3.5 text-center font-bold text-slate-400">{q.id}</td>
+                              <td className="p-3.5 text-center font-bold text-slate-400">{q.question_order || (qIdx + 1)}</td>
                               <td className="p-3.5 leading-relaxed pr-6">{q.text}</td>
                               <td className="p-3.5">
                                 <div className="flex items-center justify-center gap-2">
