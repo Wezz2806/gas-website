@@ -5,16 +5,6 @@ require_once 'config.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 
-// Authentication protection
-if (!isset($_SESSION['user'])) {
-    sendJson([
-        'success' => false,
-        'message' => 'Silakan login terlebih dahulu.'
-    ], 401);
-}
-
-$currentUser = $_SESSION['user'];
-
 function getDefaultSurveyQuestionsList() {
     return [
         ['id' => 1, 'order' => 1, 'text' => "Apakah kegiatan awal pembelajaran membantu anda memahami tujuan dan permasalahan yang akan dipelajari?"],
@@ -46,48 +36,58 @@ function getDefaultSurveyQuestionsList() {
     ];
 }
 
-if ($method === 'GET') {
-    $action = isset($_GET['action']) ? trim($_GET['action']) : '';
+// 1. PUBLIC READ: Ambil daftar butir pertanyaan angket
+if ($method === 'GET' && isset($_GET['action']) && trim($_GET['action']) === 'get_questions') {
+    try {
+        $pdo->exec("
+            CREATE TABLE IF NOT EXISTS survey_questions (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                question_order INT NOT NULL DEFAULT 1,
+                text TEXT NOT NULL,
+                is_active TINYINT(1) NOT NULL DEFAULT 1,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+        ");
 
-    // Ambil daftar pertanyaan angket
-    if ($action === 'get_questions') {
-        try {
-            $pdo->exec("
-                CREATE TABLE IF NOT EXISTS survey_questions (
-                    id INT AUTO_INCREMENT PRIMARY KEY,
-                    question_order INT NOT NULL DEFAULT 1,
-                    text TEXT NOT NULL,
-                    is_active TINYINT(1) NOT NULL DEFAULT 1,
-                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-                ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-            ");
+        $stmt = $pdo->query("SELECT id, question_order, text, is_active FROM survey_questions WHERE is_active = 1 ORDER BY question_order ASC, id ASC");
+        $questions = $stmt->fetchAll();
 
+        if (empty($questions)) {
+            $defaults = getDefaultSurveyQuestionsList();
+            $ins = $pdo->prepare("INSERT INTO survey_questions (id, question_order, text) VALUES (?, ?, ?)");
+            foreach ($defaults as $dq) {
+                $ins->execute([$dq['id'], $dq['order'], $dq['text']]);
+            }
             $stmt = $pdo->query("SELECT id, question_order, text, is_active FROM survey_questions WHERE is_active = 1 ORDER BY question_order ASC, id ASC");
             $questions = $stmt->fetchAll();
-
-            if (empty($questions)) {
-                $defaults = getDefaultSurveyQuestionsList();
-                $ins = $pdo->prepare("INSERT INTO survey_questions (id, question_order, text) VALUES (?, ?, ?)");
-                foreach ($defaults as $dq) {
-                    $ins->execute([$dq['id'], $dq['order'], $dq['text']]);
-                }
-                $stmt = $pdo->query("SELECT id, question_order, text, is_active FROM survey_questions WHERE is_active = 1 ORDER BY question_order ASC, id ASC");
-                $questions = $stmt->fetchAll();
-            }
-
-            sendJson([
-                'success' => true,
-                'questions' => $questions
-            ]);
-        } catch (PDOException $e) {
-            sendJson([
-                'success' => false,
-                'message' => 'Gagal mengambil data pertanyaan angket: ' . $e->getMessage()
-            ], 500);
         }
-        exit;
+
+        sendJson([
+            'success' => true,
+            'questions' => $questions
+        ]);
+    } catch (PDOException $e) {
+        sendJson([
+            'success' => false,
+            'message' => 'Gagal mengambil data pertanyaan angket: ' . $e->getMessage()
+        ], 500);
     }
+    exit;
+}
+
+// Authentication protection for all other actions
+if (!isset($_SESSION['user'])) {
+    sendJson([
+        'success' => false,
+        'message' => 'Silakan login terlebih dahulu.'
+    ], 401);
+}
+
+$currentUser = $_SESSION['user'];
+
+if ($method === 'GET') {
+    $action = isset($_GET['action']) ? trim($_GET['action']) : '';
 
     if ($action === 'get_students') {
         // ADMIN ONLY: get list of students who submitted surveys
