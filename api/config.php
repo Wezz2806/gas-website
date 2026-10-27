@@ -228,7 +228,7 @@ if (isset($_SESSION['user']['email']) && strtolower(trim($_SESSION['user']['emai
 // ── AUTO-MIGRATION RUNNER (ONCE PER CONTAINER/DEPLOYMENT LIFECYCLE) ──────────
 // Menjalankan migrasi dan seeding hanya satu kali saat container/server dimulai.
 // Ini mencegah eksekusi puluhan query DDL (CREATE/ALTER) yang lambat di setiap request HTTP.
-$migrationVersion = 'v6';
+$migrationVersion = 'v7';
 $migrationFlag = sys_get_temp_dir() . '/gas_db_migrated_' . $migrationVersion . '.flag';
 
 if (!file_exists($migrationFlag)) {

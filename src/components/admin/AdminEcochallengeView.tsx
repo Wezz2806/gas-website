@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { ClipboardList, Loader2, Eye, Download, Calendar, User, FileText, ArrowRight, Upload, Plus, Trash2, Save, File, Table, Image, BarChart3, ChevronUp, ChevronDown, Check, X, DoorOpen } from 'lucide-react';
 import { Meeting, JournalRow, Room } from '../../types';
 import { roomService } from '../../services/roomService';
+import { getImageUrl, handleImageError, getTestImageFallback } from '../../utils/imageUrl';
+import { TEST_CASES } from '../EcoChallengeView';
 interface AdminEcochallengeViewProps {
   roomId?: number;
 }
@@ -876,7 +878,7 @@ export default function AdminEcochallengeView({ roomId }: AdminEcochallengeViewP
                           <p className="text-[10px] text-slate-455">{stud.email}</p>
                         </td>
                         <td className="py-4 px-4 text-slate-650 font-bold font-display">
-                          Kasus {stud.current_step || 1} / {testCases.length || 3}
+                          Kasus {stud.current_step || 1} / {testCases.length || 5}
                         </td>
                         <td className="py-4 px-4">
                           {stud.submitted === 1 ? (
@@ -944,11 +946,7 @@ export default function AdminEcochallengeView({ roomId }: AdminEcochallengeViewP
             <div className="space-y-6 text-left">
               {/* Select Case Category */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                {(testCases && testCases.length > 0 ? testCases : [
-                  { id: 1, title: 'KASUS 1: Dari Botol ke Mikroplastik...' },
-                  { id: 2, title: 'KASUS 2: Limbah Deterjen Rumah Tangga' },
-                  { id: 3, title: 'KASUS 3: Pestisida Kimia...' }
-                ]).map((c, idx) => {
+                {(testCases && testCases.length > 0 ? testCases : TEST_CASES).map((c, idx) => {
                   const isSelected = selectedCaseId === c.id;
                   const stepNum = idx + 1;
                   return (
@@ -1186,7 +1184,13 @@ export default function AdminEcochallengeView({ roomId }: AdminEcochallengeViewP
                                   {(el.value || (el.values && el.values.length > 0)) ? (
                                     <div className="flex flex-row flex-wrap items-center justify-center gap-2">
                                       {(el.values && Array.isArray(el.values) ? el.values : [el.value]).map((imgSrc: string, imgIdx: number) => (
-                                        <img key={imgIdx} src={imgSrc} className="max-h-[160px] object-contain rounded-xl border border-slate-200 shadow-sm" alt="Preview" />
+                                        <img
+                                          key={imgIdx}
+                                          src={getImageUrl(imgSrc)}
+                                          className="max-h-[160px] object-contain rounded-xl border border-slate-200 shadow-sm"
+                                          alt="Preview"
+                                          onError={(e) => handleImageError(e, getTestImageFallback(imgSrc) || undefined)}
+                                        />
                                       ))}
                                     </div>
                                   ) : (
@@ -1633,7 +1637,7 @@ export default function AdminEcochallengeView({ roomId }: AdminEcochallengeViewP
                     Detail Test Murid
                   </h4>
                   <p className="text-[11px] text-slate-400 mt-0.5">
-                    Murid: <strong>{selectedTestStudent.name}</strong> ({selectedTestStudent.email}) | Progres: Kasus {selectedTestStep}/{testCases.length || 3} | Status: {selectedTestSubmitted ? 'DISERAHKAN' : 'DRAF'}
+                    Murid: <strong>{selectedTestStudent.name}</strong> ({selectedTestStudent.email}) | Progres: Kasus {selectedTestStep}/{testCases.length || 5} | Status: {selectedTestSubmitted ? 'DISERAHKAN' : 'DRAF'}
                   </p>
                 </div>
               </div>
@@ -1654,37 +1658,7 @@ export default function AdminEcochallengeView({ roomId }: AdminEcochallengeViewP
                 </div>
               ) : (
                 <div className="space-y-8">
-                  {(testCases && testCases.length > 0 ? testCases : [
-                    {
-                      id: 1,
-                      title: "KASUS 1: Dari Botol ke Mikroplastik yang Kembali ke Meja Makan Kita",
-                      questions: [
-                        { id: "q1", label: "1. Berdasarkan kasus diatas di jelaskan jika plastik menyumbang 17% sampah di Indonesia. Jelaskan mengapa plastik sekali pakai dapat menyebabkan pencemaran lingkungan yang berkepanjangan!" },
-                        { id: "q2", label: "2. Identifikasilah faktor-faktor utama yang menyebabkan meningkatnya pencemaran plastik sekali pakai di lingkungan sekolah dan perkotaan." },
-                        { id: "q3", label: "3. Analisislah dampak keberadaan mikroplastik terhadap organisme hidup dengan meninjau aspek kimia dan ekologi." },
-                        { id: "q4", label: "4. Rancanglah solusi alternatif untuk mengurangi penggunaan plastik sekali pakai di lingkungan sekolah dengan menerapkan minimal dua prinsip green chemistry!" }
-                      ]
-                    },
-                    {
-                      id: 2,
-                      title: "KASUS 2: Limbah Deterjen Rumah Tangga",
-                      questions: [
-                        { id: "q5", label: "5. Berdasarkan data kualitas air dan penjelasan tentang surfaktan dalam kasus, jelaskan bagaimana sifat kimia surfaktan dapat memengaruhi kualitas air sungai!" },
-                        { id: "q6", label: "6. Perhatikan data kadar fosfat dan kondisi air pada kasus. Jelaskan hubungan antara peningkatan kadar fosfat dengan terjadinya eutrofikasi di perairan!" },
-                        { id: "q7", label: "7. Berdasarkan narasi kasus, identifikasi: a. Sumber utama pencemaran air, b. Zat kimia yang berperan dalam pencemaran. Jelaskan alasan Anda!" },
-                        { id: "q8", label: "8. Jelaskan salah satu solusi adalah penggunaan deterjen ramah lingkungan. Evaluasilah solusi tersebut berdasarkan prinsip green chemistry!" }
-                      ]
-                    },
-                    {
-                      id: 3,
-                      title: "KASUS 3: Pestisida Kimia: Panen Melimpah atau Lingkungan Terancam?",
-                      questions: [
-                        { id: "q9", label: "9. Berdasarkan data pada kasus, residu pestisida pada sayuran melebihi batas aman. Jelaskan bagaimana sifat kimia pestisida sintetis dapat menyebabkan dampak tersebut terhadap lingkungan dan organisme hidup!" },
-                        { id: "q10", label: "10. Petani masih bergantung pada pestisida kimia. Rancang satu solusi berbasis prinsip green chemistry yang dapat digunakan sebagai alternatif pestisida kimia!" },
-                        { id: "q11", label: "11. Pestisida yang bersifat lipofilik dapat masuk ke rantai makanan dan mengalami peningkatan konsentrasi. Analisis bagaimana proses ini terjadi dari lingkungan hingga ke manusia!" }
-                      ]
-                    }
-                  ]).map((c, idx) => {
+                  {(testCases && testCases.length > 0 ? testCases : TEST_CASES).map((c, idx) => {
                     const stepNum = c.step || c.id || (idx + 1);
                     return (
                       <div key={stepNum} className="bg-slate-50 border border-slate-250/70 p-5 rounded-2xl space-y-4">
@@ -1692,6 +1666,22 @@ export default function AdminEcochallengeView({ roomId }: AdminEcochallengeViewP
                           <span className="text-[10px] font-bold text-cyan-700 tracking-wider uppercase">KASUS {stepNum}</span>
                           <h5 className="font-display font-bold text-slate-800 text-sm">{c.title}</h5>
                         </div>
+
+                        {c.elements && c.elements.some((el: any) => el.type === 'image') && (
+                          <div className="flex flex-wrap gap-2 pt-1 pb-2">
+                            {c.elements.filter((el: any) => el.type === 'image').flatMap((el: any) => el.values && Array.isArray(el.values) ? el.values : [el.value]).filter(Boolean).map((imgSrc: string, iIdx: number) => (
+                              <div key={iIdx} className="overflow-hidden rounded-lg border border-slate-200 bg-white max-h-36 shadow-sm">
+                                <img
+                                  src={getImageUrl(imgSrc)}
+                                  alt={`Ilustrasi Kasus`}
+                                  className="max-h-36 w-auto object-contain"
+                                  onError={(e) => handleImageError(e, getTestImageFallback(imgSrc) || undefined)}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
                         <div className="space-y-4">
                           {c.questions && c.questions.map((q: any) => {
                             const caseId = c.id || c.step || stepNum;
@@ -1711,6 +1701,23 @@ export default function AdminEcochallengeView({ roomId }: AdminEcochallengeViewP
                             return (
                               <div key={q.id} className="space-y-1.5 text-left">
                                 <span className="block text-xs font-bold text-slate-650 whitespace-pre-wrap">{q.label}</span>
+                                {((q as any).image || ((q as any).images && (q as any).images.length > 0)) && (
+                                  <div className="my-2.5 flex flex-col items-start">
+                                    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm max-w-md">
+                                      <img
+                                        src={getImageUrl((q as any).image || (q as any).images[0])}
+                                        alt={`Ilustrasi Soal ${q.id}`}
+                                        className="max-h-60 w-auto object-contain mx-auto"
+                                        onError={(e) => handleImageError(e, getTestImageFallback((q as any).image || (q as any).images?.[0]) || undefined)}
+                                      />
+                                    </div>
+                                    {(q as any).caption && (
+                                      <p className="mt-1 text-[11px] italic text-slate-500 font-medium">
+                                        {(q as any).caption}
+                                      </p>
+                                    )}
+                                  </div>
+                                )}
                                 {parsedTable ? (
                                   <div className="overflow-x-auto border border-slate-200 rounded-xl bg-white shadow-sm mt-1">
                                     <table className="w-full text-xs text-left border-collapse">

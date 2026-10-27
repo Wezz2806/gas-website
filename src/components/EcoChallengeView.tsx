@@ -12,6 +12,7 @@ import {
   Save,
   Loader2
 } from 'lucide-react';
+import { getImageUrl, handleImageError, getTestImageFallback } from '../utils/imageUrl';
 
 const SURVEY_QUESTIONS = [
   { id: 1, text: "Apakah kegiatan awal pembelajaran membantu anda memahami tujuan dan permasalahan yang akan dipelajari?" },
@@ -42,19 +43,51 @@ const SURVEY_QUESTIONS = [
   { id: 27, text: "Apakah cara guru menyajikan materi membantu anda memahami pembelajaran dengan baik?" }
 ];
 
-const TEST_CASES = [
+export const TEST_CASES = [
   {
     step: 1,
+    id: 1,
     title: "KASUS 1: Dari Botol ke Mikroplastik yang Kembali ke Meja Makan Kita",
-    text: `Setiap pagi, kantin sekolah dipenuhi murid yang membeli minuman dalam botol plastik sekali pakai. Dalam sehari, satu sekolah dapat menghasilkan ratusan botol plastik berbahan PET (polyethylene terephthalate). Tren menunjukkan peningkatan produksi plastik global meningkat dari ±200 juta ton (2000) menjadi lebih dari 400 juta ton (2024) melonjak dua kali lipat karena tuntutan masyarakat terhadap konsumsi kemasan sekali pakai.
-
-Namun sampah plastik ini berakhir langsung dibuang, sebagian dibuang ke tempat sampah, tetapi tidak sedikit yang tercecer di lingkungan dan terbawa air hujan menuju selokan.
-
-Data dari Kementerian Lingkungan Hidup dan Kehutanan (KLHK) menunjukkan bahwa Indonesia menghasilkan sekitar 68,5 juta ton sampah per tahun, dengan plastik mencapai ±17%. Di kota besar seperti Surabaya, sebagian sampah plastik ini berakhir di sungai yang bermuara ke laut. Plastik yang tidak terkelola akan terpapar sinar UV dan mengalami degradasi fisik menjadi mikroplastik.
-
-Mikroplastik ini masuk ke rantai makanan melalui organisme air seperti plankton dan ikan kecil. Studi global oleh UNEP menunjukkan bahwa mikroplastik telah ditemukan dalam air minum, garam, dan bahkan tubuh manusia. Ironisnya, plastik yang awalnya digunakan untuk kenyamanan manusia justru kembali sebagai ancaman kesehatan dan lingkungan. Di sisi lain, kebiasaan konsumsi praktis terus meningkat. Tanpa perubahan perilaku dan inovasi material, pencemaran ini akan semakin sulit dikendalikan.`,
-    table: null,
-    extraInfo: null,
+    elements: [
+      {
+        type: "paragraph",
+        value: "Setiap pagi, kantin sekolah dipenuhi murid yang membeli minuman dalam botol plastik sekali pakai. Dalam sehari, satu sekolah dapat menghasilkan ratusan botol plastik berbahan PET (polyethylene terephthalate). Tren menunjukkan peningkatan produksi plastik global meningkat dari ±200 juta ton (2000) menjadi lebih dari 400 juta ton (2024) melonjak dua kali lipat karena tuntutan masyarakat terhadap konsumsi kemasan sekali pakai."
+      },
+      {
+        type: "image",
+        value: "/uploads/test/kasus1_sampah_plastik.jpg",
+        values: ["/uploads/test/kasus1_sampah_plastik.jpg"],
+        caption: "Gambar 1. Sampah Plastik Menimbun"
+      },
+      {
+        type: "table",
+        value: {
+          headers: ["Jenis Sampah", "Persentase (%)", "Perkiraan Volume (juta ton/tahun)"],
+          rows: [
+            ["Organik", "60%", "41,1"],
+            ["Plastik", "17%", "11,6"],
+            ["Kertas", "10%", "6,8"],
+            ["Logam & Kaca", "5%", "3,4"],
+            ["Lainnya", "8%", "5,6"]
+          ]
+        },
+        caption: "Tabel 1. Komposisi Sampah di Indonesia"
+      },
+      {
+        type: "paragraph",
+        value: "Data dari Kementerian Lingkungan Hidup dan Kehutanan (KLHK) menunjukkan bahwa Indonesia menghasilkan sekitar 68,5 juta ton sampah per tahun, dengan plastik mencapai ±17%. Di kota besar seperti Surabaya, sebagian sampah plastik ini berakhir di sungai yang bermuara ke laut. Plastik yang tidak terkelola akan terpapar sinar UV dan mengalami degradasi fisik menjadi mikroplastik."
+      },
+      {
+        type: "image",
+        value: "/uploads/test/kasus1_alur_mikroplastik.png",
+        values: ["/uploads/test/kasus1_alur_mikroplastik.png"],
+        caption: "Gambar 2. Diagram Alur Proses Plastik dapat Masuk ke Makanan"
+      },
+      {
+        type: "paragraph",
+        value: "Mikroplastik ini masuk ke rantai makanan melalui organisme air seperti plankton dan ikan kecil. Studi global oleh UNEP menunjukkan bahwa mikroplastik telah ditemukan dalam air minum, garam, dan bahkan tubuh manusia. Ironisnya, plastik yang awalnya digunakan untuk kenyamanan manusia justru kembali sebagai ancaman kesehatan dan lingkungan. Di sisi lain, kebiasaan konsumsi praktis terus meningkat. Tanpa perubahan perilaku dan inovasi material, pencemaran ini akan semakin sulit dikendalikan."
+      }
+    ],
     questions: [
       {
         id: "q1",
@@ -70,25 +103,59 @@ Mikroplastik ini masuk ke rantai makanan melalui organisme air seperti plankton 
       },
       {
         id: "q4",
-        label: "4. Rancanglah solusi alternatif untuk mengurangi penggunaan plastik sekali pakai di lingkungan sekolah dengan menerapkan minimal dua prinsip green chemistry!"
+        label: "4. Rancanglah solusi alternatif untuk mengurangi penggunaan plastik sekali pakai di lingkungan sekolah dengan menerapkan minimal dua prinsip green chemistry!",
+        question_table: {
+          headers: ["No", "Jenis Bahan/Produk Alternatif", "Prinsip Green Chemistry", "Keunggulan", "Tantangan Penerapan"],
+          rows: [
+            ["1.", "", "", "", ""],
+            ["2.", "", "", "", ""]
+          ]
+        }
       }
     ]
   },
   {
     step: 2,
+    id: 2,
     title: "KASUS 2: Limbah Deterjen Rumah Tangga",
-    text: `Di kawasan aliran Sungai Cikarang Bekasi Laut (CBL), aktivitas rumah tangga menjadi salah satu sumber utama pencemaran air. Setiap hari, masyarakat menggunakan deterjen untuk mencuci pakaian dan peralatan rumah tangga. Air limbah cucian yang mengandung surfaktan dan fosfat langsung dialirkan ke saluran drainase tanpa pengolahan lalu bermuara ke sungai yang juga dimanfaatkan untuk kebutuhan sehari-hari.
-
-Surfaktan dalam deterjen memiliki sifat hidrofilik dan hidrofobik yang efektif mengangkat kotoran, tetapi juga berpotensi mengganggu organisme air. Sementara itu, fosfat berperan sebagai “nutrisi” bagi alga. Ketika jumlahnya berlebih terjadi eutrofikasi atau ledakan pertumbuhan alga yang menutupi permukaan air. Akibatnya cahaya matahari terhalang dan kadar oksigen terlarut menurun drastis.`,
-    table: {
-      headers: ["Jenis Deterjen", "Kandungan Fosfat (%)", "Biodegradabilitas", "Dampak Lingkungan"],
-      rows: [
-        ["Deterjen konvensional", "20–35%", "Rendah", "Tinggi (eutrofikasi)"],
-        ["Deterjen rendah fosfat", "5–10%", "Sedang", "Sedang"],
-        ["Deterjen ramah lingkungan", "<1%", "Tinggi", "Rendah"]
-      ]
-    },
-    extraInfo: null,
+    elements: [
+      {
+        type: "paragraph",
+        value: "Di kawasan aliran Sungai Cikarang Bekasi Laut (CBL), aktivitas rumah tangga menjadi salah satu sumber utama pencemaran air. Setiap hari, masyarakat menggunakan deterjen untuk mencuci pakaian dan peralatan rumah tangga. Air limbah cucian yang mengandung surfaktan dan fosfat langsung dialirkan ke saluran drainase tanpa pengolahan lalu bermuara ke sungai yang juga dimanfaatkan untuk kebutuhan sehari-hari."
+      },
+      {
+        type: "image",
+        value: "/uploads/test/kasus2_busa_sungai.jpg",
+        values: ["/uploads/test/kasus2_busa_sungai.jpg"],
+        caption: "Gambar 3. Busa Tebal Menutup Sungai"
+      },
+      {
+        type: "table",
+        value: {
+          headers: ["Jenis Deterjen", "Kandungan Fosfat (%)", "Biodegradabilitas", "Dampak Lingkungan"],
+          rows: [
+            ["Deterjen konvensional", "20–35%", "Rendah", "Tinggi (eutrofikasi)"],
+            ["Deterjen rendah fosfat", "5–10%", "Sedang", "Sedang"],
+            ["Deterjen ramah lingkungan", "<1%", "Tinggi", "Rendah"]
+          ]
+        },
+        caption: "Tabel 2. Kandungan Fosfat pada Berbagai Jenis Deterjen"
+      },
+      {
+        type: "paragraph",
+        value: "Surfaktan dalam deterjen memiliki sifat hidrofilik dan hidrofobik yang efektif mengangkat kotoran, tetapi juga berpotensi mengganggu organisme air. Sementara itu, fosfat berperan sebagai “nutrisi” bagi alga. Ketika jumlahnya berlebih terjadi eutrofikasi atau ledakan pertumbuhan alga yang menutupi permukaan air. Akibatnya cahaya matahari terhalang dan kadar oksigen terlarut menurun drastis."
+      },
+      {
+        type: "image",
+        value: "/uploads/test/kasus2_alur_eutrofikasi.png",
+        values: ["/uploads/test/kasus2_alur_eutrofikasi.png"],
+        caption: "Gambar 4. Alur Pencemaram Detergen dan Proses Eutrofikasi"
+      },
+      {
+        type: "paragraph",
+        value: "Dalam beberapa titik pengamatan, masyarakat melaporkan munculnya busa tebal di permukaan sungai serta kematian ikan secara massal. Kondisi ini tidak hanya mengganggu ekosistem tetapi juga berpotensi membahayakan kesehatan manusia yang menggunakan air tersebut."
+      }
+    ],
     questions: [
       {
         id: "q5",
@@ -100,7 +167,7 @@ Surfaktan dalam deterjen memiliki sifat hidrofilik dan hidrofobik yang efektif m
       },
       {
         id: "q7",
-        label: "7. Berdasarkan narasi kasus, identifikasi: a. Sumber utama pencemaran air, b. Zat kimia yang berperan dalam pencemaran. Jelaskan alasan Anda!"
+        label: "7. Berdasarkan narasi kasus, identifikasi:\na. Sumber utama pencemaran air\nb. Zat kimia yang berperan dalam pencemaran\nJelaskan alasan Anda!"
       },
       {
         id: "q8",
@@ -110,14 +177,34 @@ Surfaktan dalam deterjen memiliki sifat hidrofilik dan hidrofobik yang efektif m
   },
   {
     step: 3,
+    id: 3,
     title: "KASUS 3: Pestisida Kimia: Panen Melimpah atau Lingkungan Terancam?",
-    text: `Pertanian sayur di Jawa Timur rutin menggunakan pestisida kimia sintetis untuk mengatasi serangan hama ulat dan wereng. Dalam satu musim tanam, penyemprotan dilakukan hingga 8–12 kali demi menjaga hasil panen tetap tinggi. Salah satu pestisida yang digunakan mengandung senyawa organofosfat yang bersifat toksik dan relatif persisten di lingkungan.
-
-Namun, dalam beberapa tahun terakhir, masyarakat mulai mengeluhkan perubahan lingkungan. Populasi lebah penyerbuk menurun drastis, ikan di saluran irigasi sering ditemukan mati, dan beberapa petani mengalami gejala pusing serta iritasi kulit setelah penyemprotan. Hasil uji sederhana menunjukkan adanya residu pestisida pada sayuran yang melebihi batas aman.
-
-Di sisi lain, petani menghadapi dilema jika harus memilih tanpa pestisida maka risiko gagal panen meningkat dan berdampak pada ekonomi mereka. Penggunaan pestisida memang meningkatkan produktivitas tetapi juga memicu pencemaran tanah, air, serta berpotensi membahayakan kesehatan manusia melalui rantai makanan.`,
-    table: null,
-    extraInfo: "Diagram Tren Penggunaan Pestisida (Indonesia) - 2018 (45000), 2019 (48500), 2020 (52000), 2021 (55000), 2022 (58000)",
+    elements: [
+      {
+        type: "paragraph",
+        value: "Pertanian sayur di Jawa Timur rutin menggunakan pestisida kimia sintetis untuk mengatasi serangan hama ulat dan wereng. Dalam satu musim tanam, penyemprotan dilakukan hingga 8–12 kali demi menjaga hasil panen tetap tinggi. Salah satu pestisida yang digunakan mengandung senyawa organofosfat yang bersifat toksik dan relatif persisten di lingkungan."
+      },
+      {
+        type: "image",
+        value: "/uploads/test/kasus3_penggunaan_pestisida.jpg",
+        values: ["/uploads/test/kasus3_penggunaan_pestisida.jpg"],
+        caption: "Gambar 5. Penggunaan Peptisida di Sawah"
+      },
+      {
+        type: "paragraph",
+        value: "Namun, dalam beberapa tahun terakhir, masyarakat mulai mengeluhkan perubahan lingkungan. Populasi lebah penyerbuk menurun drastis, ikan di saluran irigasi sering ditemukan mati, dan beberapa petani mengalami gejala pusing serta iritasi kulit setelah penyemprotan. Hasil uji sederhana menunjukkan adanya residu pestisida pada sayuran yang melebihi batas aman."
+      },
+      {
+        type: "image",
+        value: "/uploads/test/kasus3_tren_pestisida.png",
+        values: ["/uploads/test/kasus3_tren_pestisida.png"],
+        caption: "Gambar 6. Diagram Tren Penggunaan Peptisida"
+      },
+      {
+        type: "paragraph",
+        value: "Di sisi lain, petani menghadapi dilema jika harus memilih tanpa pestisida maka risiko gagal panen meningkat dan berdampak pada ekonomi mereka. Penggunaan pestisida memang meningkatkan produktivitas tetapi juga memicu pencemaran tanah, air, serta berpotensi membahayakan kesehatan manusia melalui rantai makanan."
+      }
+    ],
     questions: [
       {
         id: "q9",
@@ -130,6 +217,116 @@ Di sisi lain, petani menghadapi dilema jika harus memilih tanpa pestisida maka r
       {
         id: "q11",
         label: "11. Pestisida yang bersifat lipofilik dapat masuk ke rantai makanan dan mengalami peningkatan konsentrasi. Analisis bagaimana proses ini terjadi dari lingkungan hingga ke manusia, serta kaitkan dengan dampaknya terhadap kesehatan!"
+      }
+    ]
+  },
+  {
+    step: 4,
+    id: 4,
+    title: "KASUS 4: Sintesis Kimia Industri",
+    elements: [
+      {
+        type: "paragraph",
+        value: "Sebuah industri kimia di Indonesia memproduksi bahan baku plastik melalui reaksi sintesis organik. Proses produksi ini menghasilkan berbagai produk samping dan limbah yang memerlukan penanganan khusus sebelum dilepaskan ke lingkungan."
+      },
+      {
+        type: "image",
+        value: "/uploads/test/kasus4_pabrik_gas.jpg",
+        values: ["/uploads/test/kasus4_pabrik_gas.jpg"],
+        caption: "Gambar 6. Pabrik dengan Cerobong Mengeluarkan Gas"
+      },
+      {
+        type: "table",
+        value: {
+          headers: ["Jenis Limbah", "Sifat", "Dampak"],
+          rows: [
+            ["Limbah cair organik", "Toksik", "Mencemari air"],
+            ["VOC (gas)", "Mudah menguap", "Polusi udara"],
+            ["Limbah padat", "Sulit terurai", "Akumulasi lingkungan"]
+          ]
+        },
+        caption: "Tabel 3. Jenis Limbah Industri Kimia"
+      },
+      {
+        type: "paragraph",
+        value: "Selain itu, penggunaan pelarut organik yang mudah menguap menyebabkan pelepasan senyawa organik volatil (VOC) ke udara. Dalam evaluasi efisiensi sintesis, perusahaan mengukur nilai atom economy untuk tiga jalur reaksi berbeda:\n- Metode A (konvensional, tanpa katalis): Atom Economy = 65%\n- Metode B (dengan katalis daur ulang): Atom Economy = 85%\n- Metode C (jalur hijau biokatalis): Atom Economy = 95%"
+      }
+    ],
+    questions: [
+      {
+        id: "q12",
+        label: "12. Berdasarkan data atom economy (65%, 85%, 95%), jelaskan mengapa proses dengan atom economy lebih tinggi lebih ramah lingkungan!"
+      },
+      {
+        id: "q13",
+        label: "13. Usulkan perbaikan metode sintesis agar lebih ramah lingkungan berdasarkan data atom economy dan tabel limbah di atas!"
+      },
+      {
+        id: "q14",
+        label: "14. Bandingkan proses tanpa katalis (65%) dan dengan katalis (85%). Jelaskan keuntungan penggunaan katalis dalam green chemistry!"
+      },
+      {
+        id: "q15",
+        label: "15. Dari tiga metode (A, B, C), tentukan metode terbaik dan jelaskan alasan berdasarkan prinsip green chemistry!"
+      }
+    ]
+  },
+  {
+    step: 5,
+    id: 5,
+    title: "KASUS 5: Terangnya Lampu dibalik Menipisnya Energi Fosil",
+    elements: [
+      {
+        type: "table",
+        value: {
+          headers: ["Sumber Energi", "Emisi CO₂ (g/kWh)", "Keterangan"],
+          rows: [
+            ["Batu bara", "820", "Emisi tertinggi"],
+            ["Minyak bumi", "650", "Digunakan pada transportasi"],
+            ["Gas alam", "490", "Lebih rendah dari batu bara"],
+            ["Energi surya", "50", "Hampir tanpa emisi langsung"],
+            ["Energi angin", "12", "Paling rendah"]
+          ]
+        },
+        caption: "Tabel 4. Emisi CO₂ dari Sumber Energi"
+      },
+      {
+        type: "paragraph",
+        value: "Setiap hari, rumah tangga, sekolah, dan industri di Indonesia bergantung pada listrik dan bahan bakar untuk beraktivitas. Sebagian besar energi tersebut masih berasal dari pembakaran bahan bakar fosil seperti batu bara, minyak bumi, dan gas alam. Data menunjukkan bahwa lebih dari 80% pembangkit listrik di Indonesia masih menggunakan batu bara sebagai sumber utama energi."
+      },
+      {
+        type: "image",
+        value: "/uploads/test/kasus5_proses_pembakaran.png",
+        values: ["/uploads/test/kasus5_proses_pembakaran.png"],
+        caption: "Gambar 7. Proses Pembakaran Bahan Bakar Fosil"
+      },
+      {
+        type: "paragraph",
+        value: "Namun, di balik kemudahan tersebut, terdapat konsekuensi lingkungan yang serius. Proses pembakaran bahan bakar fosil menghasilkan gas karbon dioksida (CO₂), sulfur dioksida (SO₂), dan nitrogen oksida (NOₓ) yang berkontribusi terhadap pemanasan global, hujan asam, dan penurunan kualitas udara."
+      },
+      {
+        type: "image",
+        value: "/uploads/test/kasus5_energi_perubahan_iklim.png",
+        values: ["/uploads/test/kasus5_energi_perubahan_iklim.png"],
+        caption: "Gambar 8. Hubungan Energi Fosil dan Perubahan Iklim"
+      },
+      {
+        type: "paragraph",
+        value: "Di sisi lain, kebutuhan energi terus meningkat seiring pertumbuhan populasi dan ekonomi. Hal ini menimbulkan dilema: apakah tetap bergantung pada energi fosil yang murah dan tersedia, atau beralih ke energi terbarukan yang lebih ramah lingkungan namun memerlukan investasi awal."
+      }
+    ],
+    questions: [
+      {
+        id: "q16",
+        label: "16. Berdasarkan data emisi CO₂ dari berbagai sumber energi, jelaskan bagaimana proses pembakaran bahan bakar fosil dapat menyebabkan pencemaran udara dan pemanasan global!"
+      },
+      {
+        id: "q17",
+        label: "17. Berdasarkan data perbandingan emisi energi, usulkan satu solusi energi alternatif yang lebih ramah lingkungan untuk menggantikan energi fosil di kehidupan sehari-hari, serta jelaskan alasannya berdasarkan prinsip green chemistry!"
+      },
+      {
+        id: "q18",
+        label: "18. Evaluasi kelebihan dan kekurangan dari solusi energi alternatif yang kamu usulkan sebelumnya jika diterapkan di Indonesia!"
       }
     ]
   }
@@ -628,9 +825,10 @@ export default function EcoChallengeView({ roomId }: EcoChallengeViewProps) {
                                       {images.map((imgSrc: string, imgIdx: number) => (
                                         <img 
                                           key={imgIdx}
-                                          src={imgSrc} 
-                                          alt="Ilustrasi Kasus" 
-                                          className="max-w-full rounded-xl border border-slate-100 shadow-sm max-h-[220px] object-contain animate-in fade-in zoom-in duration-200" 
+                                          src={getImageUrl(imgSrc)} 
+                                          alt={el.caption || "Ilustrasi Kasus"} 
+                                          onError={(e) => handleImageError(e, getTestImageFallback(imgSrc) || undefined)}
+                                          className="max-w-full rounded-xl border border-slate-100 shadow-sm max-h-[260px] object-contain animate-in fade-in zoom-in duration-200 bg-slate-50" 
                                         />
                                       ))}
                                     </div>
@@ -745,6 +943,23 @@ export default function EcoChallengeView({ roomId }: EcoChallengeViewProps) {
                                 <label className="block text-xs font-bold text-slate-700 leading-relaxed whitespace-pre-wrap">
                                   {q.label}
                                 </label>
+                                {((q as any).image || ((q as any).images && (q as any).images.length > 0)) && (
+                                  <div className="my-3 flex flex-col items-center">
+                                    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm max-w-lg">
+                                      <img
+                                        src={getImageUrl((q as any).image || (q as any).images[0])}
+                                        alt={`Ilustrasi Soal ${q.id}`}
+                                        className="max-h-72 w-auto object-contain mx-auto"
+                                        onError={(e) => handleImageError(e, getTestImageFallback((q as any).image || (q as any).images?.[0]) || undefined)}
+                                      />
+                                    </div>
+                                    {(q as any).caption && (
+                                      <p className="mt-1.5 text-center text-[11px] italic text-slate-500 font-medium">
+                                        {(q as any).caption}
+                                      </p>
+                                    )}
+                                  </div>
+                                )}
                                 {q.question_table ? (() => {
                                   const tbl = q.question_table;
                                   const grid = getTableGrid(q.id, tbl);

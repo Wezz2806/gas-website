@@ -58,6 +58,11 @@ function parseDocx(string $filePath, string $uploadDir, string $webPathPrefix): 
             $content = $zip->getFromIndex($i);
             if ($content !== false) {
                 file_put_contents($destPath, $content);
+                // Mirror to public/test if directory exists to ensure permanent accessibility
+                $publicTestDir = dirname(__DIR__) . '/public/test';
+                if (is_dir($publicTestDir)) {
+                    @file_put_contents($publicTestDir . '/' . $newName, $content);
+                }
                 $imageWebPaths[$baseName] = $webPathPrefix . '/' . $newName;
             }
         }
@@ -90,6 +95,7 @@ function parseDocx(string $filePath, string $uploadDir, string $webPathPrefix): 
     $questions = [];
     $skippedNodes = [];
     $pendingTableCaption = null;
+    $lastProcessedWasQuestion = false;
 
     // Traverse body children to maintain sequential order
     foreach ($body->childNodes as $node) {
@@ -98,25 +104,45 @@ function parseDocx(string $filePath, string $uploadDir, string $webPathPrefix): 
         }
 
         if ($node->nodeName === 'w:p') {
-            // Check for images embedded in this paragraph
+            // Check for images embedded in this paragraph (w:drawing or w:pict)
+            $paraImages = [];
             $drawings = $xpath->query('.//w:drawing', $node);
             if ($drawings && $drawings->length > 0) {
                 foreach ($drawings as $drawing) {
                     $blips = $xpath->query('.//a:blip', $drawing);
                     if ($blips && $blips->length > 0) {
-                        $embedId = $blips->item(0)->getAttribute('r:embed');
-                        if ($embedId && isset($relsMap[$embedId])) {
-                            $mediaFile = $relsMap[$embedId];
-                            if (isset($imageWebPaths[$mediaFile])) {
-                                $elements[] = [
-                                    'type' => 'image',
-                                    'value' => $imageWebPaths[$mediaFile]
-                                ];
+                        foreach ($blips as $blip) {
+                            $embedId = $blip->getAttribute('r:embed') ?: $blip->getAttribute('r:link') ?: $blip->getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships', 'embed') ?: $blip->getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships', 'link');
+                            if ($embedId && isset($relsMap[$embedId])) {
+                                $mediaFile = $relsMap[$embedId];
+                                if (isset($imageWebPaths[$mediaFile])) {
+                                    $paraImages[] = $imageWebPaths[$mediaFile];
+                                }
                             }
                         }
                     }
                 }
             }
+
+            // Check w:pict (v:imagedata)
+            $picts = $xpath->query('.//w:pict', $node);
+            if ($picts && $picts->length > 0) {
+                foreach ($picts as $pict) {
+                    $imgDatas = $xpath->query('.//*[local-name()="imagedata"]', $pict);
+                    if ($imgDatas && $imgDatas->length > 0) {
+                        foreach ($imgDatas as $idNode) {
+                            $rId = $idNode->getAttribute('r:id') ?: $idNode->getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships', 'id');
+                            if ($rId && isset($relsMap[$rId])) {
+                                $mediaFile = $relsMap[$rId];
+                                if (isset($imageWebPaths[$mediaFile])) {
+                                    $paraImages[] = $imageWebPaths[$mediaFile];
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            $paraImages = array_values(array_unique($paraImages));
 
             // Extract text from w:t elements inside the paragraph
             $text = '';
@@ -173,12 +199,29 @@ function parseDocx(string $filePath, string $uploadDir, string $webPathPrefix): 
                         }
                     }
 
-                    $questions[] = [
+                    $qItem = [
                         'id' => 'q' . $qNum,
                         'label' => $text,
                         'question_table' => $questionTable
                     ];
+                    if (!empty($paraImages)) {
+                        $qItem['image'] = $paraImages[0];
+                        $qItem['images'] = $paraImages;
+                    }
+                    $questions[] = $qItem;
+                    $lastProcessedWasQuestion = true;
                 } else {
+                    $lastProcessedWasQuestion = false;
+
+                    if (!empty($paraImages)) {
+                        foreach ($paraImages as $imgSrc) {
+                            $elements[] = [
+                                'type' => 'image',
+                                'value' => $imgSrc
+                            ];
+                        }
+                    }
+
                     // Check if this text is a label/caption (starts with Gambar, Tabel, Diagram, Figure)
                     if (preg_match('/^(Gambar|Tabel|Diagram|Figure)\s+\d+[\.:\-\s]/ui', $text, $capMatches)) {
                         $capType = strtolower($capMatches[1]);
@@ -212,6 +255,23 @@ function parseDocx(string $filePath, string $uploadDir, string $webPathPrefix): 
                         $elements[] = [
                             'type' => 'paragraph',
                             'value' => $text
+                        ];
+                    }
+                }
+            } else {
+                // Paragraph has no text, check if it contains images
+                if (!empty($paraImages)) {
+                    if ($lastProcessedWasQuestion && !empty($questions)) {
+                        $lastQIdx = count($questions) - 1;
+                        if (empty($questions[$lastQIdx]['image'])) {
+                            $questions[$lastQIdx]['image'] = $paraImages[0];
+                            $questions[$lastQIdx]['images'] = $paraImages;
+                        }
+                    }
+                    foreach ($paraImages as $imgSrc) {
+                        $elements[] = [
+                            'type' => 'image',
+                            'value' => $imgSrc
                         ];
                     }
                 }

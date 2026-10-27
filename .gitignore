@@ -10,7 +10,10 @@ coverage/
 vendor/
 uploads/*
 !uploads/**/.gitkeep
+!uploads/test/
+!uploads/test/**
 api/uploads/*
 !api/uploads/**/.gitkeep
 brain/
+soal_source/
 
