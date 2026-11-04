@@ -365,7 +365,8 @@ export default function EcoChallengeView({ roomId }: EcoChallengeViewProps) {
     const testUrl = roomId ? `/api/student-test.php?room_id=${roomId}` : '/api/student-test.php';
 
     // Fetch survey questions
-    fetch('/api/student-survey.php?action=get_questions')
+    const surveyQuestionsUrl = roomId ? `/api/student-survey.php?action=get_questions&room_id=${roomId}` : '/api/student-survey.php?action=get_questions';
+    fetch(surveyQuestionsUrl)
       .then(res => res.json())
       .then(data => {
         if (data.success && Array.isArray(data.questions) && data.questions.length > 0) {
@@ -409,7 +410,8 @@ export default function EcoChallengeView({ roomId }: EcoChallengeViewProps) {
       .catch(err => console.error(err));
 
     // Fetch cases
-    fetch('/api/student-test.php?action=get_cases')
+    const casesUrl = roomId ? `/api/student-test.php?action=get_cases&room_id=${roomId}` : '/api/student-test.php?action=get_cases';
+    fetch(casesUrl)
       .then(res => res.json())
       .then(data => {
         if (data.success && data.cases && data.cases.length > 0) {

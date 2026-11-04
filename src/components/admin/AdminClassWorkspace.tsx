@@ -36,6 +36,7 @@ import {
   DoorOpen,
   UserX,
   RefreshCw,
+  RotateCcw,
   Building2,
   Phone,
   Mail,
@@ -534,6 +535,7 @@ function TabEcoLab({ roomId, showToast }: { roomId: number; showToast: (m: strin
   const [subTab, setSubTab] = useState<'grading' | 'meetings'>('grading');
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
 
   // Modal meeting
   const [showModal, setShowModal] = useState(false);
@@ -564,6 +566,33 @@ function TabEcoLab({ roomId, showToast }: { roomId: number; showToast: (m: strin
       loadMeetings();
     }
   }, [subTab, roomId]);
+
+  const handleResetDefault = async () => {
+    if (!window.confirm('Kembalikan modul pertemuan LKM kelas ini ke template default? Perubahan kustom di kelas ini akan digantikan dengan template default.')) return;
+    setActionLoading(true);
+    try {
+      const msg = await roomService.resetRoomMeetingsDefault(roomId);
+      showToast(msg);
+      loadMeetings();
+    } catch (err: any) {
+      showToast(err.message || 'Gagal mengembalikan modul LKM ke default', 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleApplyToAll = async () => {
+    if (!window.confirm('Terapkan susunan modul pertemuan LKM kelas ini ke SEMUA kelas lainnya? Seluruh kelas lain akan diperbarui dengan materi kelas ini.')) return;
+    setActionLoading(true);
+    try {
+      const msg = await roomService.applyRoomMeetingsToAll(roomId);
+      showToast(msg);
+    } catch (err: any) {
+      showToast(err.message || 'Gagal menerapkan modul LKM ke semua kelas', 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   const handleOpenAdd = () => {
     setEditingMeeting(null);
@@ -661,20 +690,45 @@ function TabEcoLab({ roomId, showToast }: { roomId: number; showToast: (m: strin
         </div>
       ) : (
         <div className="bg-white rounded-3xl border border-slate-200/80 p-6 md:p-8 shadow-xs space-y-6">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <h3 className="font-display font-bold text-lg text-slate-800">
-                Daftar Pertemuan EcoLab ({meetings.length})
+                Daftar Pertemuan Modul LKM Kelas ({meetings.length})
               </h3>
-              <p className="text-xs text-slate-400 mt-0.5">Atur tautan Google Drive / PDF embed dan berkas download per pertemuan</p>
+              <p className="text-xs text-slate-400 mt-0.5">Atur tautan Google Drive / PDF embed dan berkas download per modul pertemuan untuk kelas ini</p>
             </div>
-            <button
-              onClick={handleOpenAdd}
-              className="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Tambah Pertemuan</span>
-            </button>
+
+            <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+              <button
+                type="button"
+                onClick={handleResetDefault}
+                disabled={actionLoading}
+                title="Kembalikan modul pertemuan LKM kelas ini ke template default bawaan sistem"
+                className="px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer border border-slate-200 disabled:opacity-50"
+              >
+                {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-600" /> : <RotateCcw className="w-3.5 h-3.5 text-slate-600" />}
+                <span>Default (Default Kelas)</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleApplyToAll}
+                disabled={actionLoading}
+                title="Terapkan modul pertemuan LKM kelas ini ke seluruh kelas lainnya"
+                className="px-3.5 py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer border border-emerald-200 disabled:opacity-50"
+              >
+                {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-emerald-600" />}
+                <span>Terapkan pada Semua Kelas</span>
+              </button>
+
+              <button
+                onClick={handleOpenAdd}
+                className="px-4 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Tambah Pertemuan</span>
+              </button>
+            </div>
           </div>
 
           {loading ? (
@@ -873,6 +927,7 @@ function TabEcoLab({ roomId, showToast }: { roomId: number; showToast: (m: strin
 function TabEcoPedia({ roomId, showToast }: { roomId: number; showToast: (m: string, t?: any) => void }) {
   const [books, setBooks] = useState<Book[]>([]);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
 
   // Modal State
   const [showModal, setShowModal] = useState(false);
@@ -900,6 +955,33 @@ function TabEcoPedia({ roomId, showToast }: { roomId: number; showToast: (m: str
   useEffect(() => {
     loadBooks();
   }, [roomId]);
+
+  const handleResetDefault = async () => {
+    if (!window.confirm('Kembalikan modul & buku EcoPedia kelas ini ke template default? Perubahan kustom di kelas ini akan digantikan dengan template default.')) return;
+    setActionLoading(true);
+    try {
+      const msg = await roomService.resetRoomEcopediaDefault(roomId);
+      showToast(msg);
+      loadBooks();
+    } catch (err: any) {
+      showToast(err.message || 'Gagal mengembalikan EcoPedia ke default', 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleApplyToAll = async () => {
+    if (!window.confirm('Terapkan modul & buku EcoPedia kelas ini ke SEMUA kelas lainnya? Seluruh kelas lain akan diperbarui dengan materi buku kelas ini.')) return;
+    setActionLoading(true);
+    try {
+      const msg = await roomService.applyRoomEcopediaToAll(roomId);
+      showToast(msg);
+    } catch (err: any) {
+      showToast(err.message || 'Gagal menerapkan EcoPedia ke semua kelas', 'error');
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   const handleOpenAdd = () => {
     setEditingBook(null);
@@ -971,13 +1053,37 @@ function TabEcoPedia({ roomId, showToast }: { roomId: number; showToast: (m: str
           <p className="text-xs text-slate-400 mt-0.5">Kelola pustaka bacaan interaktif FlipHTML5 dan referensi PDF untuk kelas ini</p>
         </div>
 
-        <button
-          onClick={handleOpenAdd}
-          className="px-4 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs flex items-center gap-1.5 transition-all shadow-xs cursor-pointer self-start sm:self-auto"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Tambah Buku Materi</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-auto">
+          <button
+            type="button"
+            onClick={handleResetDefault}
+            disabled={actionLoading}
+            title="Kembalikan modul & buku kelas ini ke template default bawaan sistem"
+            className="px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer border border-slate-200 disabled:opacity-50"
+          >
+            {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-600" /> : <RotateCcw className="w-3.5 h-3.5 text-slate-600" />}
+            <span>Default (Default Kelas)</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleApplyToAll}
+            disabled={actionLoading}
+            title="Terapkan modul & buku kelas ini ke seluruh kelas lainnya"
+            className="px-3.5 py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer border border-emerald-200 disabled:opacity-50"
+          >
+            {actionLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-600" /> : <Copy className="w-3.5 h-3.5 text-emerald-600" />}
+            <span>Terapkan pada Semua Kelas</span>
+          </button>
+
+          <button
+            onClick={handleOpenAdd}
+            className="px-4 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-700 text-white font-bold text-xs flex items-center gap-1.5 transition-all shadow-xs cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Tambah Buku Materi</span>
+          </button>
+        </div>
       </div>
 
       {loading ? (

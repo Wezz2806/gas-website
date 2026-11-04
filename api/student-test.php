@@ -65,17 +65,38 @@ if ($method === 'GET') {
 
     if ($action === 'get_cases') {
         // Anyone logged in can fetch cases
+        $roomId = isset($_GET['room_id']) ? (int)$_GET['room_id'] : 0;
         try {
-            $stmt = $pdo->query("SELECT * FROM test_cases ORDER BY id ASC");
             $cases = [];
-            foreach ($stmt->fetchAll() as $row) {
-                $cases[] = [
-                    'id' => (int)$row['id'],
-                    'title' => $row['title'],
-                    'elements' => json_decode($row['content_json'], true) ?: [],
-                    'questions' => json_decode($row['questions_json'], true) ?: []
-                ];
+            if ($roomId > 0) {
+                try {
+                    $stmt = $pdo->prepare("SELECT * FROM room_test_cases WHERE room_id = :room_id ORDER BY case_number ASC, id ASC");
+                    $stmt->execute(['room_id' => $roomId]);
+                    foreach ($stmt->fetchAll() as $row) {
+                        $cases[] = [
+                            'id' => (int)($row['case_number'] ?? $row['id']),
+                            'title' => $row['title'],
+                            'elements' => json_decode($row['content_json'], true) ?: [],
+                            'questions' => json_decode($row['questions_json'], true) ?: []
+                        ];
+                    }
+                } catch (PDOException $ex) {
+                    // Ignore if table doesn't exist
+                }
             }
+
+            if (empty($cases)) {
+                $stmt = $pdo->query("SELECT * FROM test_cases ORDER BY id ASC");
+                foreach ($stmt->fetchAll() as $row) {
+                    $cases[] = [
+                        'id' => (int)$row['id'],
+                        'title' => $row['title'],
+                        'elements' => json_decode($row['content_json'], true) ?: [],
+                        'questions' => json_decode($row['questions_json'], true) ?: []
+                    ];
+                }
+            }
+
             sendJson([
                 'success' => true,
                 'cases' => $cases
@@ -248,6 +269,7 @@ if ($method === 'GET') {
         $title = isset($body['title']) ? trim($body['title']) : '';
         $elements = $body['elements'] ?? [];
         $questions = $body['questions'] ?? [];
+        $roomId = isset($body['room_id']) ? (int)$body['room_id'] : 0;
 
         if ($caseId < 1 || empty($title)) {
             sendJson([
@@ -257,20 +279,62 @@ if ($method === 'GET') {
         }
 
         try {
-            $stmt = $pdo->prepare("
-                INSERT INTO test_cases (id, title, content_json, questions_json)
-                VALUES (:id, :title, :content_json, :questions_json)
-                ON DUPLICATE KEY UPDATE
-                    title = VALUES(title),
-                    content_json = VALUES(content_json),
-                    questions_json = VALUES(questions_json)
-            ");
-            $stmt->execute([
-                'id' => $caseId,
-                'title' => $title,
-                'content_json' => json_encode($elements, JSON_UNESCAPED_UNICODE),
-                'questions_json' => json_encode($questions, JSON_UNESCAPED_UNICODE)
-            ]);
+            if ($roomId > 0) {
+                // Ensure room_test_cases has initial cases for this room
+                $checkStmt = $pdo->prepare("SELECT COUNT(*) FROM room_test_cases WHERE room_id = :room_id");
+                $checkStmt->execute(['room_id' => $roomId]);
+                if ((int)$checkStmt->fetchColumn() === 0) {
+                    $pdo->prepare("
+                        INSERT INTO room_test_cases (room_id, case_number, title, content_json, questions_json)
+                        SELECT :room_id, id, title, content_json, questions_json FROM test_cases ORDER BY id ASC
+                    ")->execute(['room_id' => $roomId]);
+                }
+
+                $existStmt = $pdo->prepare("SELECT id FROM room_test_cases WHERE room_id = :room_id AND case_number = :case_number");
+                $existStmt->execute(['room_id' => $roomId, 'case_number' => $caseId]);
+                $existingId = $existStmt->fetchColumn();
+
+                if ($existingId) {
+                    $stmt = $pdo->prepare("
+                        UPDATE room_test_cases
+                        SET title = :title, content_json = :content_json, questions_json = :questions_json
+                        WHERE id = :id
+                    ");
+                    $stmt->execute([
+                        'title' => $title,
+                        'content_json' => json_encode($elements, JSON_UNESCAPED_UNICODE),
+                        'questions_json' => json_encode($questions, JSON_UNESCAPED_UNICODE),
+                        'id' => $existingId
+                    ]);
+                } else {
+                    $stmt = $pdo->prepare("
+                        INSERT INTO room_test_cases (room_id, case_number, title, content_json, questions_json)
+                        VALUES (:room_id, :case_number, :title, :content_json, :questions_json)
+                    ");
+                    $stmt->execute([
+                        'room_id' => $roomId,
+                        'case_number' => $caseId,
+                        'title' => $title,
+                        'content_json' => json_encode($elements, JSON_UNESCAPED_UNICODE),
+                        'questions_json' => json_encode($questions, JSON_UNESCAPED_UNICODE)
+                    ]);
+                }
+            } else {
+                $stmt = $pdo->prepare("
+                    INSERT INTO test_cases (id, title, content_json, questions_json)
+                    VALUES (:id, :title, :content_json, :questions_json)
+                    ON DUPLICATE KEY UPDATE
+                        title = VALUES(title),
+                        content_json = VALUES(content_json),
+                        questions_json = VALUES(questions_json)
+                ");
+                $stmt->execute([
+                    'id' => $caseId,
+                    'title' => $title,
+                    'content_json' => json_encode($elements, JSON_UNESCAPED_UNICODE),
+                    'questions_json' => json_encode($questions, JSON_UNESCAPED_UNICODE)
+                ]);
+            }
 
             sendJson([
                 'success' => true,
@@ -295,6 +359,7 @@ if ($method === 'GET') {
 
         $body = getRequestBody();
         $caseId = isset($body['case_id']) ? (int)$body['case_id'] : 0;
+        $roomId = isset($body['room_id']) ? (int)$body['room_id'] : 0;
 
         if ($caseId < 1) {
             sendJson([
@@ -306,24 +371,47 @@ if ($method === 'GET') {
         try {
             $pdo->beginTransaction();
 
-            $stmt = $pdo->prepare("DELETE FROM test_cases WHERE id = :id");
-            $stmt->execute(['id' => $caseId]);
+            if ($roomId > 0) {
+                $checkStmt = $pdo->prepare("SELECT COUNT(*) FROM room_test_cases WHERE room_id = :room_id");
+                $checkStmt->execute(['room_id' => $roomId]);
+                if ((int)$checkStmt->fetchColumn() === 0) {
+                    $pdo->prepare("
+                        INSERT INTO room_test_cases (room_id, case_number, title, content_json, questions_json)
+                        SELECT :room_id, id, title, content_json, questions_json FROM test_cases ORDER BY id ASC
+                    ")->execute(['room_id' => $roomId]);
+                }
 
-            // Fetch all remaining cases ordered by current id ASC
-            $remaining = $pdo->query("SELECT * FROM test_cases ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
+                $stmt = $pdo->prepare("DELETE FROM room_test_cases WHERE room_id = :room_id AND case_number = :case_number");
+                $stmt->execute(['room_id' => $roomId, 'case_number' => $caseId]);
 
-            // Temporarily offset their IDs to avoid duplicate key conflicts during update
-            $pdo->exec("UPDATE test_cases SET id = id + 10000");
+                $remStmt = $pdo->prepare("SELECT id FROM room_test_cases WHERE room_id = :room_id ORDER BY case_number ASC, id ASC");
+                $remStmt->execute(['room_id' => $roomId]);
+                $remaining = $remStmt->fetchAll(PDO::FETCH_ASSOC);
 
-            // Update the IDs to be 1-based sequential indices (1, 2, 3, ...)
-            $updateStmt = $pdo->prepare("UPDATE test_cases SET id = :new_id WHERE id = :old_id");
-            foreach ($remaining as $idx => $case) {
-                $oldId = (int)$case['id'] + 10000;
-                $newId = $idx + 1;
-                $updateStmt->execute([
-                    'new_id' => $newId,
-                    'old_id' => $oldId
-                ]);
+                $upStmt = $pdo->prepare("UPDATE room_test_cases SET case_number = :num WHERE id = :id");
+                foreach ($remaining as $idx => $case) {
+                    $upStmt->execute(['num' => $idx + 1, 'id' => $case['id']]);
+                }
+            } else {
+                $stmt = $pdo->prepare("DELETE FROM test_cases WHERE id = :id");
+                $stmt->execute(['id' => $caseId]);
+
+                // Fetch all remaining cases ordered by current id ASC
+                $remaining = $pdo->query("SELECT * FROM test_cases ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
+
+                // Temporarily offset their IDs to avoid duplicate key conflicts during update
+                $pdo->exec("UPDATE test_cases SET id = id + 10000");
+
+                // Update the IDs to be 1-based sequential indices (1, 2, 3, ...)
+                $updateStmt = $pdo->prepare("UPDATE test_cases SET id = :new_id WHERE id = :old_id");
+                foreach ($remaining as $idx => $case) {
+                    $oldId = (int)$case['id'] + 10000;
+                    $newId = $idx + 1;
+                    $updateStmt->execute([
+                        'new_id' => $newId,
+                        'old_id' => $oldId
+                    ]);
+                }
             }
 
             $pdo->commit();

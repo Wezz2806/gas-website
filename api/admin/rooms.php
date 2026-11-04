@@ -91,6 +91,22 @@ if ($method === 'GET') {
                 FROM ecopedia_books
             ");
 
+            try {
+                $pdo->exec("
+                    INSERT INTO room_test_cases (room_id, case_number, title, content_json, questions_json)
+                    SELECT $newRoomId, id, title, content_json, questions_json
+                    FROM test_cases
+                ");
+
+                $pdo->exec("
+                    INSERT INTO room_survey_questions (room_id, question_order, text, is_active)
+                    SELECT $newRoomId, question_order, text, is_active
+                    FROM survey_questions
+                ");
+            } catch (PDOException $eIgnore) {
+                // Ignore if tables are not yet migrated
+            }
+
             sendJson([
                 'success' => true,
                 'message' => 'Kelas berhasil dibuat.',

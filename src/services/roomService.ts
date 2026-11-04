@@ -314,5 +314,125 @@ export const roomService = {
     if (!response.ok || !data.success) {
       throw new Error(data.message || 'Gagal menghapus pertemuan');
     }
+  },
+
+  async resetRoomEcopediaDefault(roomId: number): Promise<string> {
+    const response = await fetch(`${API_BASE}/room-content.php`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: JSON.stringify({
+        action: 'reset_ecopedia_default',
+        room_id: roomId
+      })
+    });
+    const data = await response.json();
+    if (!response.ok || !data.success) {
+      throw new Error(data.message || 'Gagal mengembalikan EcoPedia ke default kelas');
+    }
+    return data.message || 'Materi EcoPedia berhasil dikembalikan ke default kelas';
+  },
+
+  async applyRoomEcopediaToAll(roomId: number): Promise<string> {
+    const response = await fetch(`${API_BASE}/room-content.php`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: JSON.stringify({
+        action: 'apply_ecopedia_to_all',
+        room_id: roomId
+      })
+    });
+    const data = await response.json();
+    if (!response.ok || !data.success) {
+      throw new Error(data.message || 'Gagal menerapkan EcoPedia ke semua kelas');
+    }
+    return data.message || 'Materi EcoPedia berhasil diterapkan pada semua kelas';
+  },
+
+  async resetRoomMeetingsDefault(roomId: number): Promise<string> {
+    const response = await fetch(`${API_BASE}/room-content.php`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: JSON.stringify({
+        action: 'reset_meetings_default',
+        room_id: roomId
+      })
+    });
+    const data = await response.json();
+    if (!response.ok || !data.success) {
+      throw new Error(data.message || 'Gagal mengembalikan modul LKM ke default kelas');
+    }
+    return data.message || 'Modul LKM berhasil dikembalikan ke default kelas';
+  },
+
+  async applyRoomMeetingsToAll(roomId: number): Promise<string> {
+    const response = await fetch(`${API_BASE}/room-content.php`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: JSON.stringify({
+        action: 'apply_meetings_to_all',
+        room_id: roomId
+      })
+    });
+    const data = await response.json();
+    if (!response.ok || !data.success) {
+      throw new Error(data.message || 'Gagal menerapkan modul LKM ke semua kelas');
+    }
+    return data.message || 'Modul LKM berhasil diterapkan pada semua kelas';
+  },
+
+  async resetRoomEcochallengeDefault(roomId: number): Promise<string> {
+    const response = await fetch(`${API_BASE}/room-content.php`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: JSON.stringify({
+        action: 'reset_ecochallenge_default',
+        room_id: roomId
+      })
+    });
+    const data = await response.json();
+    if (!response.ok || !data.success) {
+      throw new Error(data.message || 'Gagal mengembalikan EcoChallenge ke default kelas');
+    }
+    return data.message || 'Modul EcoChallenge berhasil dikembalikan ke default kelas';
+  },
+
+  async applyRoomEcochallengeToAll(roomId: number): Promise<string> {
+    const response = await fetch(`${API_BASE}/room-content.php`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: JSON.stringify({
+        action: 'apply_ecochallenge_to_all',
+        room_id: roomId
+      })
+    });
+    const data = await response.json();
+    if (!response.ok || !data.success) {
+      throw new Error(data.message || 'Gagal menerapkan EcoChallenge ke semua kelas');
+    }
+    return data.message || 'Modul EcoChallenge berhasil diterapkan pada semua kelas';
   }
 };

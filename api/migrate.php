@@ -8,7 +8,7 @@ requireAdmin();
 require_once __DIR__ . '/migrations.php';
 runDatabaseMigrations($pdo);
 
-$migrationVersion = 'v5';
+$migrationVersion = 'v9';
 $migrationFlag = sys_get_temp_dir() . '/gas_db_migrated_' . $migrationVersion . '.flag';
 @file_put_contents($migrationFlag, (string)time());
 

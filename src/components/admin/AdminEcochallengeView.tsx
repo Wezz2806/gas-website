@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ClipboardList, Loader2, Eye, Download, Calendar, User, FileText, ArrowRight, Upload, Plus, Trash2, Save, File, Table, Image, BarChart3, ChevronUp, ChevronDown, Check, X, DoorOpen, RotateCcw, HelpCircle } from 'lucide-react';
+import { ClipboardList, Loader2, Eye, Download, Calendar, User, FileText, ArrowRight, Upload, Plus, Trash2, Save, File, Table, Image, BarChart3, ChevronUp, ChevronDown, Check, X, DoorOpen, RotateCcw, HelpCircle, Copy } from 'lucide-react';
 import { Meeting, JournalRow, Room } from '../../types';
 import { roomService } from '../../services/roomService';
 import { getImageUrl, handleImageError, getTestImageFallback } from '../../utils/imageUrl';
@@ -106,7 +106,10 @@ export default function AdminEcochallengeView({ roomId }: AdminEcochallengeViewP
 
   const fetchSurveyQuestions = () => {
     setIsLoadingSurveyQuestions(true);
-    fetch(`${API_BASE}/student-survey.php?action=get_questions`)
+    const qUrl = effectiveRoomId > 0
+      ? `${API_BASE}/student-survey.php?action=get_questions&room_id=${effectiveRoomId}`
+      : `${API_BASE}/student-survey.php?action=get_questions`;
+    fetch(qUrl)
       .then(res => res.json())
       .then(data => {
         if (data.success && Array.isArray(data.questions) && data.questions.length > 0) {
@@ -181,7 +184,8 @@ export default function AdminEcochallengeView({ roomId }: AdminEcochallengeViewP
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         action: 'save_questions',
-        questions: surveyQuestions
+        questions: surveyQuestions,
+        room_id: effectiveRoomId
       })
     })
       .then(res => res.json())
@@ -210,7 +214,8 @@ export default function AdminEcochallengeView({ roomId }: AdminEcochallengeViewP
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        action: 'reset_questions'
+        action: 'reset_questions',
+        room_id: effectiveRoomId
       })
     })
       .then(res => res.json())
@@ -310,7 +315,10 @@ export default function AdminEcochallengeView({ roomId }: AdminEcochallengeViewP
   };
 
   const fetchTestCases = () => {
-    fetch(`${API_BASE}/student-test.php?action=get_cases`, { credentials: 'include' })
+    const casesUrl = effectiveRoomId > 0
+      ? `${API_BASE}/student-test.php?action=get_cases&room_id=${effectiveRoomId}`
+      : `${API_BASE}/student-test.php?action=get_cases`;
+    fetch(casesUrl, { credentials: 'include' })
       .then(res => res.json())
       .then(data => {
         if (data.success && data.cases) {
@@ -405,7 +413,8 @@ export default function AdminEcochallengeView({ roomId }: AdminEcochallengeViewP
           case_id: selectedCaseId,
           title: tempCaseTitle,
           elements: tempCaseElements,
-          questions: tempCaseQuestions
+          questions: tempCaseQuestions,
+          room_id: effectiveRoomId
         }),
         credentials: 'include'
       });
@@ -433,7 +442,10 @@ export default function AdminEcochallengeView({ roomId }: AdminEcochallengeViewP
       const res = await fetch(`${API_BASE}/student-test.php?action=delete_case`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ case_id: caseId }),
+        body: JSON.stringify({ 
+          case_id: caseId,
+          room_id: effectiveRoomId
+        }),
         credentials: 'include'
       });
       const data = await res.json();
@@ -454,13 +466,51 @@ export default function AdminEcochallengeView({ roomId }: AdminEcochallengeViewP
       alert('Terjadi kesalahan saat menghapus kasus.');
     }
   };
+
+  const [isEcochallengeActionLoading, setIsEcochallengeActionLoading] = useState(false);
+
+  const handleResetEcochallengeDefault = async () => {
+    const confirmMsg = effectiveRoomId > 0
+      ? 'Kembalikan seluruh modul EcoChallenge (soal kasus evaluasi & butir pertanyaan angket) kelas ini ke template default? Perubahan kustom di kelas ini akan digantikan.'
+      : 'Kembalikan seluruh modul EcoChallenge ke template default baku awal bawaan sistem?';
+    if (!window.confirm(confirmMsg)) return;
+
+    setIsEcochallengeActionLoading(true);
+    try {
+      const msg = await roomService.resetRoomEcochallengeDefault(effectiveRoomId);
+      alert(msg);
+      fetchTestCases();
+      fetchSurveyQuestions();
+    } catch (err: any) {
+      alert(err.message || 'Gagal mengembalikan modul EcoChallenge ke default.');
+    } finally {
+      setIsEcochallengeActionLoading(false);
+    }
+  };
+
+  const handleApplyEcochallengeToAll = async () => {
+    const confirmMsg = effectiveRoomId > 0
+      ? 'Terapkan susunan modul EcoChallenge (soal kasus evaluasi & butir pertanyaan angket) kelas ini ke SEMUA kelas lainnya? Seluruh kelas lain akan diperbarui dengan susunan materi ini.'
+      : 'Terapkan modul EcoChallenge saat ini ke seluruh kelas pembelajaran?';
+    if (!window.confirm(confirmMsg)) return;
+
+    setIsEcochallengeActionLoading(true);
+    try {
+      const msg = await roomService.applyRoomEcochallengeToAll(effectiveRoomId);
+      alert(msg);
+    } catch (err: any) {
+      alert(err.message || 'Gagal menerapkan modul EcoChallenge ke semua kelas.');
+    } finally {
+      setIsEcochallengeActionLoading(false);
+    }
+  };
   useEffect(() => {
     fetchTestCases();
     fetchSurveyQuestions();
     if (roomId === undefined) {
       roomService.getAdminRooms().then(data => setRooms(data)).catch(() => {});
     }
-  }, [roomId]);
+  }, [roomId, effectiveRoomId]);
 
   useEffect(() => {
     if (activeSubTab === 'survey') {
@@ -482,6 +532,38 @@ export default function AdminEcochallengeView({ roomId }: AdminEcochallengeViewP
           <p className="text-sm text-slate-500 mt-1">
             Pantau data angket respon murid dan kelola kasus/soal test evaluasi.
           </p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={handleResetEcochallengeDefault}
+            disabled={isEcochallengeActionLoading}
+            title="Kembalikan modul EcoChallenge (soal kasus & butir angket) ke template default bawaan sistem"
+            className="px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer border border-slate-200 disabled:opacity-50"
+          >
+            {isEcochallengeActionLoading ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-slate-600" />
+            ) : (
+              <RotateCcw className="w-3.5 h-3.5 text-slate-600" />
+            )}
+            <span>Default (Default Kelas)</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleApplyEcochallengeToAll}
+            disabled={isEcochallengeActionLoading}
+            title="Terapkan modul EcoChallenge (soal kasus & butir angket) kelas ini ke seluruh kelas lainnya"
+            className="px-3.5 py-2.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 font-bold text-xs flex items-center gap-1.5 transition-colors cursor-pointer border border-emerald-200 disabled:opacity-50"
+          >
+            {isEcochallengeActionLoading ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-600" />
+            ) : (
+              <Copy className="w-3.5 h-3.5 text-emerald-600" />
+            )}
+            <span>Terapkan pada Semua Kelas</span>
+          </button>
         </div>
       </header>
 
@@ -644,10 +726,22 @@ export default function AdminEcochallengeView({ roomId }: AdminEcochallengeViewP
                       type="button"
                       onClick={handleResetSurveyQuestions}
                       disabled={isSavingSurveyQuestions}
+                      title="Kembalikan pertanyaan angket respon kelas ini ke default baku"
                       className="px-3.5 py-2 bg-white hover:bg-rose-50 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
                     >
                       <RotateCcw className="w-3.5 h-3.5" />
-                      <span>Reset ke Baku</span>
+                      <span>Default (Default Kelas)</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleApplyEcochallengeToAll}
+                      disabled={isEcochallengeActionLoading}
+                      title="Terapkan susunan butir angket kelas ini ke semua kelas lainnya"
+                      className="px-3.5 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+                    >
+                      <Copy className="w-3.5 h-3.5 text-emerald-600" />
+                      <span>Terapkan pada Semua Kelas</span>
                     </button>
 
                     <button
@@ -1294,7 +1388,29 @@ export default function AdminEcochallengeView({ roomId }: AdminEcochallengeViewP
                     <h4 className="font-display font-bold text-slate-800 text-sm">Editor Konten Kasus {selectedCaseId}</h4>
                     <p className="text-[11px] text-slate-400 mt-0.5">Sesuaikan judul, paragraf, dan butir pertanyaan kasus di bawah ini.</p>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={handleResetEcochallengeDefault}
+                      disabled={isEcochallengeActionLoading}
+                      title="Kembalikan kasus soal kelas ini ke template default"
+                      className="px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs flex items-center gap-1 border border-slate-200 transition-all cursor-pointer"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5 text-slate-600" />
+                      <span>Default (Default Kelas)</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleApplyEcochallengeToAll}
+                      disabled={isEcochallengeActionLoading}
+                      title="Terapkan susunan kasus soal kelas ini ke semua kelas lainnya"
+                      className="px-3.5 py-2.5 bg-cyan-50 hover:bg-cyan-100 text-cyan-800 rounded-xl font-bold text-xs flex items-center gap-1 border border-cyan-200 transition-all cursor-pointer"
+                    >
+                      <Copy className="w-3.5 h-3.5 text-cyan-700" />
+                      <span>Terapkan pada Semua Kelas</span>
+                    </button>
+
                     {testCases.some(c => c.id === selectedCaseId) && (
                       <button
                         onClick={() => handleDeleteCase(selectedCaseId)}

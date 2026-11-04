@@ -38,29 +38,41 @@ function getDefaultSurveyQuestionsList() {
 
 // 1. PUBLIC READ: Ambil daftar butir pertanyaan angket
 if ($method === 'GET' && isset($_GET['action']) && trim($_GET['action']) === 'get_questions') {
+    $roomId = isset($_GET['room_id']) ? (int)$_GET['room_id'] : 0;
     try {
-        $pdo->exec("
-            CREATE TABLE IF NOT EXISTS survey_questions (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                question_order INT NOT NULL DEFAULT 1,
-                text TEXT NOT NULL,
-                is_active TINYINT(1) NOT NULL DEFAULT 1,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-            ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-        ");
-
-        $stmt = $pdo->query("SELECT id, question_order, text, is_active FROM survey_questions WHERE is_active = 1 ORDER BY question_order ASC, id ASC");
-        $questions = $stmt->fetchAll();
+        $questions = [];
+        if ($roomId > 0) {
+            try {
+                $stmt = $pdo->prepare("SELECT id, question_order, text, is_active FROM room_survey_questions WHERE room_id = :room_id AND is_active = 1 ORDER BY question_order ASC, id ASC");
+                $stmt->execute(['room_id' => $roomId]);
+                $questions = $stmt->fetchAll();
+            } catch (PDOException $ex) {}
+        }
 
         if (empty($questions)) {
-            $defaults = getDefaultSurveyQuestionsList();
-            $ins = $pdo->prepare("INSERT INTO survey_questions (id, question_order, text) VALUES (?, ?, ?)");
-            foreach ($defaults as $dq) {
-                $ins->execute([$dq['id'], $dq['order'], $dq['text']]);
-            }
+            $pdo->exec("
+                CREATE TABLE IF NOT EXISTS survey_questions (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    question_order INT NOT NULL DEFAULT 1,
+                    text TEXT NOT NULL,
+                    is_active TINYINT(1) NOT NULL DEFAULT 1,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                ) ENGINE=InnoDB CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+            ");
+
             $stmt = $pdo->query("SELECT id, question_order, text, is_active FROM survey_questions WHERE is_active = 1 ORDER BY question_order ASC, id ASC");
             $questions = $stmt->fetchAll();
+
+            if (empty($questions)) {
+                $defaults = getDefaultSurveyQuestionsList();
+                $ins = $pdo->prepare("INSERT INTO survey_questions (id, question_order, text) VALUES (?, ?, ?)");
+                foreach ($defaults as $dq) {
+                    $ins->execute([$dq['id'], $dq['order'], $dq['text']]);
+                }
+                $stmt = $pdo->query("SELECT id, question_order, text, is_active FROM survey_questions WHERE is_active = 1 ORDER BY question_order ASC, id ASC");
+                $questions = $stmt->fetchAll();
+            }
         }
 
         sendJson([
@@ -200,46 +212,65 @@ if ($method === 'GET') {
             sendJson(['success' => false, 'message' => 'Akses ditolak.'], 403);
         }
         $questions = $body['questions'] ?? [];
+        $roomId = isset($body['room_id']) ? (int)$body['room_id'] : 0;
         if (!is_array($questions)) {
             sendJson(['success' => false, 'message' => 'Format data pertanyaan tidak valid.'], 400);
         }
 
         $pdo->beginTransaction();
         try {
-            $preservedIds = [];
             $order = 1;
+            if ($roomId > 0) {
+                $delStmt = $pdo->prepare("DELETE FROM room_survey_questions WHERE room_id = :room_id");
+                $delStmt->execute(['room_id' => $roomId]);
 
-            $insertStmt = $pdo->prepare("INSERT INTO survey_questions (question_order, text, is_active) VALUES (?, ?, 1)");
-            $updateStmt = $pdo->prepare("UPDATE survey_questions SET question_order = ?, text = ?, is_active = 1 WHERE id = ?");
-
-            foreach ($questions as $q) {
-                $qId = isset($q['id']) ? (int)$q['id'] : 0;
-                $text = trim($q['text'] ?? '');
-                if ($text === '') continue;
-
-                if ($qId > 0) {
-                    $updateStmt->execute([$order, $text, $qId]);
-                    $preservedIds[] = $qId;
-                } else {
-                    $insertStmt->execute([$order, $text]);
-                    $preservedIds[] = (int)$pdo->lastInsertId();
+                $insertRoomStmt = $pdo->prepare("INSERT INTO room_survey_questions (room_id, question_order, text, is_active) VALUES (?, ?, ?, 1)");
+                foreach ($questions as $q) {
+                    $text = trim($q['text'] ?? '');
+                    if ($text === '') continue;
+                    $insertRoomStmt->execute([$roomId, $order, $text]);
+                    $order++;
                 }
-                $order++;
-            }
 
-            // Hapus pertanyaan yang tidak ada lagi di daftar
-            if (!empty($preservedIds)) {
-                $inClause = implode(',', array_fill(0, count($preservedIds), '?'));
-                $deleteStmt = $pdo->prepare("DELETE FROM survey_questions WHERE id NOT IN ($inClause)");
-                $deleteStmt->execute($preservedIds);
+                $pdo->commit();
+
+                $stmt = $pdo->prepare("SELECT id, question_order, text, is_active FROM room_survey_questions WHERE room_id = :room_id AND is_active = 1 ORDER BY question_order ASC, id ASC");
+                $stmt->execute(['room_id' => $roomId]);
+                $savedQuestions = $stmt->fetchAll();
             } else {
-                $pdo->exec("DELETE FROM survey_questions");
+                $preservedIds = [];
+                $insertStmt = $pdo->prepare("INSERT INTO survey_questions (question_order, text, is_active) VALUES (?, ?, 1)");
+                $updateStmt = $pdo->prepare("UPDATE survey_questions SET question_order = ?, text = ?, is_active = 1 WHERE id = ?");
+
+                foreach ($questions as $q) {
+                    $qId = isset($q['id']) ? (int)$q['id'] : 0;
+                    $text = trim($q['text'] ?? '');
+                    if ($text === '') continue;
+
+                    if ($qId > 0) {
+                        $updateStmt->execute([$order, $text, $qId]);
+                        $preservedIds[] = $qId;
+                    } else {
+                        $insertStmt->execute([$order, $text]);
+                        $preservedIds[] = (int)$pdo->lastInsertId();
+                    }
+                    $order++;
+                }
+
+                // Hapus pertanyaan yang tidak ada lagi di daftar
+                if (!empty($preservedIds)) {
+                    $inClause = implode(',', array_fill(0, count($preservedIds), '?'));
+                    $deleteStmt = $pdo->prepare("DELETE FROM survey_questions WHERE id NOT IN ($inClause)");
+                    $deleteStmt->execute($preservedIds);
+                } else {
+                    $pdo->exec("DELETE FROM survey_questions");
+                }
+
+                $pdo->commit();
+
+                $stmt = $pdo->query("SELECT id, question_order, text, is_active FROM survey_questions WHERE is_active = 1 ORDER BY question_order ASC, id ASC");
+                $savedQuestions = $stmt->fetchAll();
             }
-
-            $pdo->commit();
-
-            $stmt = $pdo->query("SELECT id, question_order, text, is_active FROM survey_questions WHERE is_active = 1 ORDER BY question_order ASC, id ASC");
-            $savedQuestions = $stmt->fetchAll();
 
             sendJson([
                 'success' => true,
@@ -259,18 +290,34 @@ if ($method === 'GET') {
             sendJson(['success' => false, 'message' => 'Akses ditolak.'], 403);
         }
 
+        $roomId = isset($body['room_id']) ? (int)$body['room_id'] : 0;
         $pdo->beginTransaction();
         try {
-            $pdo->exec("DELETE FROM survey_questions");
             $defaults = getDefaultSurveyQuestionsList();
-            $ins = $pdo->prepare("INSERT INTO survey_questions (id, question_order, text) VALUES (?, ?, ?)");
-            foreach ($defaults as $dq) {
-                $ins->execute([$dq['id'], $dq['order'], $dq['text']]);
-            }
-            $pdo->commit();
+            if ($roomId > 0) {
+                $delStmt = $pdo->prepare("DELETE FROM room_survey_questions WHERE room_id = :room_id");
+                $delStmt->execute(['room_id' => $roomId]);
 
-            $stmt = $pdo->query("SELECT id, question_order, text, is_active FROM survey_questions WHERE is_active = 1 ORDER BY question_order ASC, id ASC");
-            $resetQuestions = $stmt->fetchAll();
+                $ins = $pdo->prepare("INSERT INTO room_survey_questions (room_id, question_order, text, is_active) VALUES (?, ?, ?, 1)");
+                foreach ($defaults as $dq) {
+                    $ins->execute([$roomId, $dq['order'], $dq['text']]);
+                }
+                $pdo->commit();
+
+                $stmt = $pdo->prepare("SELECT id, question_order, text, is_active FROM room_survey_questions WHERE room_id = :room_id AND is_active = 1 ORDER BY question_order ASC, id ASC");
+                $stmt->execute(['room_id' => $roomId]);
+                $resetQuestions = $stmt->fetchAll();
+            } else {
+                $pdo->exec("DELETE FROM survey_questions");
+                $ins = $pdo->prepare("INSERT INTO survey_questions (id, question_order, text) VALUES (?, ?, ?)");
+                foreach ($defaults as $dq) {
+                    $ins->execute([$dq['id'], $dq['order'], $dq['text']]);
+                }
+                $pdo->commit();
+
+                $stmt = $pdo->query("SELECT id, question_order, text, is_active FROM survey_questions WHERE is_active = 1 ORDER BY question_order ASC, id ASC");
+                $resetQuestions = $stmt->fetchAll();
+            }
 
             sendJson([
                 'success' => true,

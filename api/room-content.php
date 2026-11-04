@@ -71,7 +71,7 @@ if ($method === 'GET') {
     $action = isset($body['action']) ? trim($body['action']) : '';
     $roomId = isset($body['room_id']) ? (int)$body['room_id'] : 0;
 
-    if ($roomId <= 0) {
+    if ($roomId <= 0 && $action !== 'reset_ecochallenge_default' && $action !== 'apply_ecochallenge_to_all') {
         sendJson(['success' => false, 'message' => 'ID kelas wajib diisi.'], 400);
     }
 
@@ -197,6 +197,252 @@ if ($method === 'GET') {
         } catch (PDOException $e) {
             error_log('delete_meeting error: ' . $e->getMessage());
             sendJson(['success' => false, 'message' => 'Gagal menghapus pertemuan.'], 500);
+        }
+    }
+
+    // ── ECOPEDIA BATCH (DEFAULT & TERAPKAN SEMUA KELAS) ──
+    if ($action === 'reset_ecopedia_default') {
+        try {
+            $pdo->beginTransaction();
+            $del = $pdo->prepare("DELETE FROM room_ecopedia WHERE room_id = :room_id");
+            $del->execute(['room_id' => $roomId]);
+
+            $ins = $pdo->prepare("
+                INSERT INTO room_ecopedia (room_id, title, category, cover_url, description, content, pdf_url, flip_url, sort_order)
+                SELECT :room_id, title, category, cover_url, description, content, pdf_url, flip_url, 0
+                FROM ecopedia_books
+                ORDER BY id ASC
+            ");
+            $ins->execute(['room_id' => $roomId]);
+            $pdo->commit();
+
+            sendJson(['success' => true, 'message' => 'Materi EcoPedia berhasil dikembalikan ke default kelas.']);
+        } catch (PDOException $e) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            error_log('reset_ecopedia_default error: ' . $e->getMessage());
+            sendJson(['success' => false, 'message' => 'Gagal mengembalikan ke default: ' . $e->getMessage()], 500);
+        }
+    }
+
+    if ($action === 'apply_ecopedia_to_all') {
+        try {
+            // Ambil daftar buku dari kelas sumber
+            $stmt = $pdo->prepare("SELECT title, category, cover_url, description, content, pdf_url, flip_url, sort_order FROM room_ecopedia WHERE room_id = :room_id ORDER BY sort_order ASC, id ASC");
+            $stmt->execute(['room_id' => $roomId]);
+            $sourceBooks = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            if (empty($sourceBooks)) {
+                $stmtDef = $pdo->query("SELECT title, category, cover_url, description, content, pdf_url, flip_url, 0 as sort_order FROM ecopedia_books ORDER BY id ASC");
+                $sourceBooks = $stmtDef->fetchAll(PDO::FETCH_ASSOC);
+            }
+
+            $allRooms = $pdo->query("SELECT id FROM rooms WHERE id != $roomId")->fetchAll(PDO::FETCH_COLUMN);
+
+            $pdo->beginTransaction();
+            if (!empty($allRooms)) {
+                $inClause = implode(',', array_map('intval', $allRooms));
+                $pdo->exec("DELETE FROM room_ecopedia WHERE room_id IN ($inClause)");
+
+                $insStmt = $pdo->prepare("
+                    INSERT INTO room_ecopedia (room_id, title, category, cover_url, description, content, pdf_url, flip_url, sort_order)
+                    VALUES (:room_id, :title, :category, :cover_url, :description, :content, :pdf_url, :flip_url, :sort_order)
+                ");
+
+                foreach ($allRooms as $targetRoomId) {
+                    foreach ($sourceBooks as $idx => $b) {
+                        $insStmt->execute([
+                            'room_id' => $targetRoomId,
+                            'title' => $b['title'],
+                            'category' => $b['category'] ?? 'Umum',
+                            'cover_url' => $b['cover_url'] ?? '',
+                            'description' => $b['description'] ?? '',
+                            'content' => $b['content'] ?? '',
+                            'pdf_url' => $b['pdf_url'] ?? '#',
+                            'flip_url' => $b['flip_url'] ?? '',
+                            'sort_order' => isset($b['sort_order']) ? (int)$b['sort_order'] : $idx
+                        ]);
+                    }
+                }
+            }
+            $pdo->commit();
+
+            sendJson(['success' => true, 'message' => 'Materi EcoPedia berhasil diterapkan pada semua kelas.']);
+        } catch (PDOException $e) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            error_log('apply_ecopedia_to_all error: ' . $e->getMessage());
+            sendJson(['success' => false, 'message' => 'Gagal menerapkan ke semua kelas: ' . $e->getMessage()], 500);
+        }
+    }
+
+    // ── MEETINGS / LKM BATCH (DEFAULT & TERAPKAN SEMUA KELAS) ──
+    if ($action === 'reset_meetings_default') {
+        try {
+            $pdo->beginTransaction();
+            $del = $pdo->prepare("DELETE FROM room_meetings WHERE room_id = :room_id");
+            $del->execute(['room_id' => $roomId]);
+
+            $ins = $pdo->prepare("
+                INSERT INTO room_meetings (room_id, meeting_code, number, title, description, icon, status, embed_url, download_url)
+                SELECT :room_id, id, number, title, description, icon, status, embed_url, download_url
+                FROM ecolab_meetings
+                ORDER BY number ASC
+            ");
+            $ins->execute(['room_id' => $roomId]);
+            $pdo->commit();
+
+            sendJson(['success' => true, 'message' => 'Modul pertemuan LKM berhasil dikembalikan ke default kelas.']);
+        } catch (PDOException $e) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            error_log('reset_meetings_default error: ' . $e->getMessage());
+            sendJson(['success' => false, 'message' => 'Gagal mengembalikan ke default: ' . $e->getMessage()], 500);
+        }
+    }
+
+    if ($action === 'apply_meetings_to_all') {
+        try {
+            $stmt = $pdo->prepare("SELECT meeting_code, number, title, description, icon, status, embed_url, download_url FROM room_meetings WHERE room_id = :room_id ORDER BY number ASC, id ASC");
+            $stmt->execute(['room_id' => $roomId]);
+            $sourceMeetings = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            if (empty($sourceMeetings)) {
+                $stmtDef = $pdo->query("SELECT id as meeting_code, number, title, description, icon, status, embed_url, download_url FROM ecolab_meetings ORDER BY number ASC");
+                $sourceMeetings = $stmtDef->fetchAll(PDO::FETCH_ASSOC);
+            }
+
+            $allRooms = $pdo->query("SELECT id FROM rooms WHERE id != $roomId")->fetchAll(PDO::FETCH_COLUMN);
+
+            $pdo->beginTransaction();
+            if (!empty($allRooms)) {
+                $inClause = implode(',', array_map('intval', $allRooms));
+                $pdo->exec("DELETE FROM room_meetings WHERE room_id IN ($inClause)");
+
+                $insStmt = $pdo->prepare("
+                    INSERT INTO room_meetings (room_id, meeting_code, number, title, description, icon, status, embed_url, download_url)
+                    VALUES (:room_id, :meeting_code, :number, :title, :description, :icon, :status, :embed_url, :download_url)
+                ");
+
+                foreach ($allRooms as $targetRoomId) {
+                    foreach ($sourceMeetings as $m) {
+                        $insStmt->execute([
+                            'room_id' => $targetRoomId,
+                            'meeting_code' => $m['meeting_code'] ?? ('m' . ($m['number'] ?? 1)),
+                            'number' => $m['number'] ?? 1,
+                            'title' => $m['title'] ?? '',
+                            'description' => $m['description'] ?? '',
+                            'icon' => $m['icon'] ?? 'science',
+                            'status' => $m['status'] ?? 'scheduled',
+                            'embed_url' => $m['embed_url'] ?? '',
+                            'download_url' => $m['download_url'] ?? ''
+                        ]);
+                    }
+                }
+            }
+            $pdo->commit();
+
+            sendJson(['success' => true, 'message' => 'Modul pertemuan LKM berhasil diterapkan pada semua kelas.']);
+        } catch (PDOException $e) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            error_log('apply_meetings_to_all error: ' . $e->getMessage());
+            sendJson(['success' => false, 'message' => 'Gagal menerapkan ke semua kelas: ' . $e->getMessage()], 500);
+        }
+    }
+
+    // ── ECOCHALLENGE BATCH (DEFAULT & TERAPKAN SEMUA KELAS) ──
+    if ($action === 'reset_ecochallenge_default') {
+        try {
+            $pdo->beginTransaction();
+            if ($roomId > 0) {
+                $pdo->prepare("DELETE FROM room_test_cases WHERE room_id = :room_id")->execute(['room_id' => $roomId]);
+                $pdo->prepare("DELETE FROM room_survey_questions WHERE room_id = :room_id")->execute(['room_id' => $roomId]);
+
+                $pdo->prepare("
+                    INSERT INTO room_test_cases (room_id, case_number, title, content_json, questions_json)
+                    SELECT :room_id, id, title, content_json, questions_json FROM test_cases ORDER BY id ASC
+                ")->execute(['room_id' => $roomId]);
+
+                $pdo->prepare("
+                    INSERT INTO room_survey_questions (room_id, question_order, text, is_active)
+                    SELECT :room_id, question_order, text, is_active FROM survey_questions WHERE is_active = 1 ORDER BY question_order ASC
+                ")->execute(['room_id' => $roomId]);
+            } else {
+                // Global mode: delete all room custom overrides
+                $pdo->exec("DELETE FROM room_test_cases");
+                $pdo->exec("DELETE FROM room_survey_questions");
+            }
+            $pdo->commit();
+
+            sendJson(['success' => true, 'message' => 'Modul EcoChallenge berhasil dikembalikan ke default kelas.']);
+        } catch (PDOException $e) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            error_log('reset_ecochallenge_default error: ' . $e->getMessage());
+            sendJson(['success' => false, 'message' => 'Gagal mengembalikan ke default: ' . $e->getMessage()], 500);
+        }
+    }
+
+    if ($action === 'apply_ecochallenge_to_all') {
+        try {
+            // Source cases
+            $sourceCases = [];
+            if ($roomId > 0) {
+                $cStmt = $pdo->prepare("SELECT case_number, title, content_json, questions_json FROM room_test_cases WHERE room_id = :room_id ORDER BY case_number ASC");
+                $cStmt->execute(['room_id' => $roomId]);
+                $sourceCases = $cStmt->fetchAll(PDO::FETCH_ASSOC);
+            }
+            if (empty($sourceCases)) {
+                $sourceCases = $pdo->query("SELECT id as case_number, title, content_json, questions_json FROM test_cases ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
+            }
+
+            // Source questions
+            $sourceQuestions = [];
+            if ($roomId > 0) {
+                $qStmt = $pdo->prepare("SELECT question_order, text, is_active FROM room_survey_questions WHERE room_id = :room_id AND is_active = 1 ORDER BY question_order ASC");
+                $qStmt->execute(['room_id' => $roomId]);
+                $sourceQuestions = $qStmt->fetchAll(PDO::FETCH_ASSOC);
+            }
+            if (empty($sourceQuestions)) {
+                $sourceQuestions = $pdo->query("SELECT question_order, text, is_active FROM survey_questions WHERE is_active = 1 ORDER BY question_order ASC")->fetchAll(PDO::FETCH_ASSOC);
+            }
+
+            $allRooms = $roomId > 0 
+                ? $pdo->query("SELECT id FROM rooms WHERE id != $roomId")->fetchAll(PDO::FETCH_COLUMN)
+                : $pdo->query("SELECT id FROM rooms")->fetchAll(PDO::FETCH_COLUMN);
+
+            $pdo->beginTransaction();
+            if (!empty($allRooms)) {
+                $inClause = implode(',', array_map('intval', $allRooms));
+                $pdo->exec("DELETE FROM room_test_cases WHERE room_id IN ($inClause)");
+                $pdo->exec("DELETE FROM room_survey_questions WHERE room_id IN ($inClause)");
+
+                $insCase = $pdo->prepare("INSERT INTO room_test_cases (room_id, case_number, title, content_json, questions_json) VALUES (?, ?, ?, ?, ?)");
+                $insQ = $pdo->prepare("INSERT INTO room_survey_questions (room_id, question_order, text, is_active) VALUES (?, ?, ?, ?)");
+
+                foreach ($allRooms as $targetRoomId) {
+                    foreach ($sourceCases as $c) {
+                        $insCase->execute([
+                            $targetRoomId,
+                            $c['case_number'],
+                            $c['title'],
+                            $c['content_json'],
+                            $c['questions_json']
+                        ]);
+                    }
+                    foreach ($sourceQuestions as $q) {
+                        $insQ->execute([
+                            $targetRoomId,
+                            $q['question_order'],
+                            $q['text'],
+                            $q['is_active'] ?? 1
+                        ]);
+                    }
+                }
+            }
+            $pdo->commit();
+
+            sendJson(['success' => true, 'message' => 'Modul EcoChallenge berhasil diterapkan pada semua kelas.']);
+        } catch (PDOException $e) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            error_log('apply_ecochallenge_to_all error: ' . $e->getMessage());
+            sendJson(['success' => false, 'message' => 'Gagal menerapkan ke semua kelas: ' . $e->getMessage()], 500);
         }
     }
 }
