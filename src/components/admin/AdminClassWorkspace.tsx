@@ -611,7 +611,7 @@ function TabEcoLab({ roomId, showToast }: { roomId: number; showToast: (m: strin
   const handleOpenEdit = (m: Meeting) => {
     setEditingMeeting(m);
     setFNumber(m.number);
-    setFCode(m.id);
+    setFCode(m.meeting_code || m.id);
     setFTitle(m.title);
     setFDesc(m.description);
     setFIcon(m.icon);
@@ -628,8 +628,12 @@ function TabEcoLab({ roomId, showToast }: { roomId: number; showToast: (m: strin
       return;
     }
     try {
+      const dbId = editingMeeting
+        ? (editingMeeting.raw_id || (!isNaN(Number(editingMeeting.id)) ? Number(editingMeeting.id) : 0))
+        : 0;
+
       await roomService.saveRoomMeeting(roomId, {
-        id: editingMeeting ? Number(editingMeeting.id) || 0 : 0,
+        id: dbId,
         number: fNumber,
         meeting_code: fCode,
         title: fTitle,
@@ -650,7 +654,9 @@ function TabEcoLab({ roomId, showToast }: { roomId: number; showToast: (m: strin
   const handleDeleteMeeting = async (m: Meeting) => {
     if (!window.confirm(`Hapus pertemuan "${m.title}"?`)) return;
     try {
-      await roomService.deleteRoomMeeting(roomId, Number(m.id) || 0);
+      const dbId = m.raw_id || (!isNaN(Number(m.id)) ? Number(m.id) : 0);
+      const code = m.meeting_code || m.id;
+      await roomService.deleteRoomMeeting(roomId, dbId, code, m.number);
       showToast('Pertemuan berhasil dihapus.');
       loadMeetings();
     } catch (err: any) {

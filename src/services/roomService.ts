@@ -266,6 +266,8 @@ export const roomService = {
     }
     return (data.meetings || []).map((m: any) => ({
       id: m.meeting_code || String(m.id),
+      raw_id: Number(m.raw_id !== undefined ? m.raw_id : m.id) || 0,
+      meeting_code: m.meeting_code || String(m.id),
       number: Number(m.number),
       title: m.title || '',
       description: m.description || '',
@@ -296,7 +298,7 @@ export const roomService = {
     }
   },
 
-  async deleteRoomMeeting(roomId: number, meetingId: number): Promise<void> {
+  async deleteRoomMeeting(roomId: number, meetingId: number, meetingCode?: string, number?: number): Promise<void> {
     const response = await fetch(`${API_BASE}/room-content.php`, {
       method: 'POST',
       credentials: 'include',
@@ -307,7 +309,9 @@ export const roomService = {
       body: JSON.stringify({
         action: 'delete_meeting',
         room_id: roomId,
-        id: meetingId
+        id: meetingId,
+        meeting_code: meetingCode || '',
+        number: number !== undefined ? number : 0
       })
     });
     const data = await response.json();

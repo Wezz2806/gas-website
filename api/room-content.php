@@ -41,7 +41,7 @@ if ($method === 'GET') {
     if ($type === 'meetings') {
         try {
             $stmt = $pdo->prepare("
-                SELECT id, room_id, meeting_code, number, title, description, icon, status, embed_url, download_url
+                SELECT id as raw_id, id, room_id, meeting_code, number, title, description, icon, status, embed_url, download_url
                 FROM room_meetings
                 WHERE room_id = :room_id
                 ORDER BY number ASC
@@ -51,7 +51,7 @@ if ($method === 'GET') {
 
             // Jika belum ada pertemuan khusus, ambil dari template default
             if (empty($meetings)) {
-                $stmtDef = $pdo->query("SELECT id as meeting_code, id, number, title, description, icon, status, embed_url, download_url FROM ecolab_meetings ORDER BY number ASC");
+                $stmtDef = $pdo->query("SELECT 0 as raw_id, id as meeting_code, id, number, title, description, icon, status, embed_url, download_url FROM ecolab_meetings ORDER BY number ASC");
                 $meetings = $stmtDef->fetchAll();
             }
 
@@ -155,6 +155,31 @@ if ($method === 'GET') {
         }
 
         try {
+            // Pastikan jika room_meetings belum ada baris sama sekali, seed dulu dari template default
+            $checkStmt = $pdo->prepare("SELECT COUNT(*) FROM room_meetings WHERE room_id = :room_id");
+            $checkStmt->execute(['room_id' => $roomId]);
+            $count = (int)$checkStmt->fetchColumn();
+
+            if ($count === 0) {
+                $seedStmt = $pdo->prepare("
+                    INSERT INTO room_meetings (room_id, meeting_code, number, title, description, icon, status, embed_url, download_url)
+                    SELECT :room_id, id, number, title, description, icon, status, embed_url, download_url
+                    FROM ecolab_meetings
+                    ORDER BY number ASC
+                ");
+                $seedStmt->execute(['room_id' => $roomId]);
+            }
+
+            // Jika $id <= 0 tetapi ada meetingCode yang sudah ada di room_meetings, jadikan UPDATE
+            if ($id <= 0 && !empty($meetingCode)) {
+                $chk = $pdo->prepare("SELECT id FROM room_meetings WHERE room_id = :room_id AND meeting_code = :meeting_code LIMIT 1");
+                $chk->execute(['room_id' => $roomId, 'meeting_code' => $meetingCode]);
+                $foundId = $chk->fetchColumn();
+                if ($foundId) {
+                    $id = (int)$foundId;
+                }
+            }
+
             if ($id > 0) {
                 $stmt = $pdo->prepare("
                     UPDATE room_meetings
@@ -190,10 +215,45 @@ if ($method === 'GET') {
 
     if ($action === 'delete_meeting') {
         $id = isset($body['id']) ? (int)$body['id'] : 0;
+        $meetingCode = isset($body['meeting_code']) ? trim($body['meeting_code']) : '';
+        $number = isset($body['number']) ? (int)$body['number'] : 0;
+
         try {
-            $stmt = $pdo->prepare("DELETE FROM room_meetings WHERE id = :id AND room_id = :room_id");
-            $stmt->execute(['id' => $id, 'room_id' => $roomId]);
-            sendJson(['success' => true, 'message' => 'Pertemuan berhasil dihapus.']);
+            // Pastikan jika room_meetings belum ada baris sama sekali, seed dulu dari template default
+            $checkStmt = $pdo->prepare("SELECT COUNT(*) FROM room_meetings WHERE room_id = :room_id");
+            $checkStmt->execute(['room_id' => $roomId]);
+            $count = (int)$checkStmt->fetchColumn();
+
+            if ($count === 0) {
+                $seedStmt = $pdo->prepare("
+                    INSERT INTO room_meetings (room_id, meeting_code, number, title, description, icon, status, embed_url, download_url)
+                    SELECT :room_id, id, number, title, description, icon, status, embed_url, download_url
+                    FROM ecolab_meetings
+                    ORDER BY number ASC
+                ");
+                $seedStmt->execute(['room_id' => $roomId]);
+            }
+
+            $deleted = 0;
+            if ($id > 0) {
+                $stmt = $pdo->prepare("DELETE FROM room_meetings WHERE id = :id AND room_id = :room_id");
+                $stmt->execute(['id' => $id, 'room_id' => $roomId]);
+                $deleted = $stmt->rowCount();
+            }
+
+            if ($deleted === 0 && !empty($meetingCode)) {
+                $stmt = $pdo->prepare("DELETE FROM room_meetings WHERE meeting_code = :meeting_code AND room_id = :room_id");
+                $stmt->execute(['meeting_code' => $meetingCode, 'room_id' => $roomId]);
+                $deleted = $stmt->rowCount();
+            }
+
+            if ($deleted === 0 && $number > 0) {
+                $stmt = $pdo->prepare("DELETE FROM room_meetings WHERE number = :number AND room_id = :room_id");
+                $stmt->execute(['number' => $number, 'room_id' => $roomId]);
+                $deleted = $stmt->rowCount();
+            }
+
+            sendJson(['success' => true, 'message' => 'Pertemuan berhasil dihapus.', 'deleted_rows' => $deleted]);
         } catch (PDOException $e) {
             error_log('delete_meeting error: ' . $e->getMessage());
             sendJson(['success' => false, 'message' => 'Gagal menghapus pertemuan.'], 500);

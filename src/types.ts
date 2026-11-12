@@ -93,11 +93,15 @@ export interface Book {
 
 export interface Meeting {
   id: string;
+  raw_id?: number;
+  meeting_code?: string;
   number: number;
   title: string;
   description: string;
   icon: string;
   status: 'completed' | 'ongoing' | 'scheduled';
+  embed_url?: string;
+  download_url?: string;
 }
 
 export interface VideoItem {

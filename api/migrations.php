@@ -1159,6 +1159,24 @@ try {
             ")->execute([$firstRoomId]);
         }
     }
+
+    // Seeding: room_meetings (auto-seed all existing rooms that have no rows in room_meetings yet)
+    $unseededRooms = $pdo->query("
+        SELECT r.id FROM rooms r
+        WHERE NOT EXISTS (SELECT 1 FROM room_meetings rm WHERE rm.room_id = r.id)
+    ")->fetchAll(PDO::FETCH_COLUMN);
+
+    if (!empty($unseededRooms)) {
+        $seedMeetingStmt = $pdo->prepare("
+            INSERT INTO room_meetings (room_id, meeting_code, number, title, description, icon, status, embed_url, download_url)
+            SELECT :room_id, id, number, title, description, icon, status, embed_url, download_url
+            FROM ecolab_meetings
+            ORDER BY number ASC
+        ");
+        foreach ($unseededRooms as $rId) {
+            $seedMeetingStmt->execute(['room_id' => $rId]);
+        }
+    }
 } catch (PDOException $e) {
     error_log('Failed to auto-migrate/seed database: ' . $e->getMessage());
 }
